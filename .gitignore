@@ -1,0 +1,15 @@
+# Keil5
+DebugConfig/
+Listings/
+Objects/
+*.uvguix.Lenovo
+*.uvoptx
+
+# VS Code & Embedded IDE plugin
+.cmsis/
+.eide/
+.vscode/
+build/
+.clang-format
+.eide.usr.ctx.json
+*.code-workspace
