@@ -9,7 +9,7 @@
 #define TEST_ENCODER 0
 #define TEST_TB6612 0
 #define TEST_MPU6050 0
-#define TEST_W25Q64 1
+#define TEST_W25Q64 0
 
 
 #if TEST_W25Q64

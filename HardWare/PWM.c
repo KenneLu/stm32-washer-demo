@@ -4,8 +4,8 @@
 void PWM_Init(void)
 {
     // 1.开启通用时钟，默认内部时钟源
-    RCC_APB2PeriphClockCmd(PWM_GPIO_RCC, ENABLE);   //开启GPIO的时钟
-    RCC_APB2PeriphClockCmd(PWM_TIM_RCC, ENABLE);	//开启TIM的时钟
+    RCC_APB2PeriphClockCmd(PWM_GPIO_RCC, ENABLE);   // 开启GPIO的时钟
+    RCC_APB2PeriphClockCmd(PWM_TIM_RCC, ENABLE);	// 开启TIM的时钟
     TIM_InternalClockConfig(PWM_TIM_x);             // 配置时钟源
 
     // 2.配置时基单元
@@ -24,18 +24,21 @@ void PWM_Init(void)
     TIM_OCInitStructure.TIM_OCPolarity = TIM_OCPolarity_High;       // 设置极性
     TIM_OCInitStructure.TIM_OutputState = TIM_OutputState_Enable;   // 设置输出使能
     TIM_OCInitStructure.TIM_Pulse = 0;                              // 设置CCR
-    TIM_OC1Init(PWM_TIM_x, &TIM_OCInitStructure);
+    if (PWM_TIM_x == TIM1) TIM_OC1Init(PWM_TIM_x, &TIM_OCInitStructure);
+    else if (PWM_TIM_x == TIM2) TIM_OC2Init(PWM_TIM_x, &TIM_OCInitStructure);
+    else if (PWM_TIM_x == TIM3) TIM_OC3Init(PWM_TIM_x, &TIM_OCInitStructure);
+    else if (PWM_TIM_x == TIM4) TIM_OC4Init(PWM_TIM_x, &TIM_OCInitStructure);
 
     // 4.配置GPIO输出模式
     RCC_APB2PeriphClockCmd(PWM_GPIO_RCC, ENABLE);
     GPIO_InitTypeDef GPIO_InitStructure;
-    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF_PP; // 复用推挽输出，引脚AP0的控制权交给外设CH1，参考手册 8.1.11
-    GPIO_InitStructure.GPIO_Pin = PWM_GOIO_PIN_OC;  // PWM输出引脚
+    GPIO_InitStructure.GPIO_Mode = PWM_GOIO_MODE;
+    GPIO_InitStructure.GPIO_Pin = PWM_GOIO_PIN_OC;
     GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
     GPIO_Init(GPIOA, &GPIO_InitStructure);
 
     // 5.启动定时器
-    TIM_CtrlPWMOutputs(TIM1,ENABLE);    // 定时器1是高级定时器
+    if (PWM_TIM_x == TIM1) TIM_CtrlPWMOutputs(PWM_TIM_x, ENABLE);    // 定时器1是高级定时器
     TIM_Cmd(PWM_TIM_x, ENABLE);
 }
 

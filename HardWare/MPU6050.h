@@ -9,6 +9,7 @@
 #define MPU6050_GOIO_MODE      GPIO_Mode_AF_OD	// 复用开漏，GPIO控制权交给I2C外设
 
 //I2C
+#define MPU6050_I2C_RCC	       RCC_APB1Periph_I2C2
 #define MPU6050_I2C_x	       I2C2
 
 void MPU6050_Init(void);

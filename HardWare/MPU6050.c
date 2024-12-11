@@ -9,8 +9,9 @@ uint8_t MPU6050_ReadReg(uint8_t RegAddress);
 
 void MPU6050_Init(void)
 {
-	RCC_APB1PeriphClockCmd(RCC_APB1Periph_I2C2, ENABLE);
+	RCC_APB1PeriphClockCmd(MPU6050_I2C_RCC, ENABLE);
 	RCC_APB2PeriphClockCmd(MPU6050_GPIO_RCC, ENABLE);
+
 	GPIO_InitTypeDef GPIO_InitStructure;
 	GPIO_InitStructure.GPIO_Mode = MPU6050_GOIO_MODE;
 	GPIO_InitStructure.GPIO_Pin = MPU6050_GOIO_PIN_SCL | MPU6050_GOIO_PIN_SDA;
