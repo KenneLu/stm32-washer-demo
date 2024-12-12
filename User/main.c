@@ -6,12 +6,16 @@
 #include "ServoMotor.h"
 #include "MPU6050.h"
 #include "W25Q64.h"
+#include "Buzzer.h"
+#include "DHT11.h"
 
 #define TEST_ENCODER 0
 #define TEST_TB6612 0
 #define TEST_SERVO_MOTOR 0
 #define TEST_MPU6050 0
 #define TEST_W25Q64 0
+#define TEST_BUZZER 0
+#define TEST_DHT11 1
 
 #if TEST_W25Q64
 uint8_t MID;
@@ -130,7 +134,18 @@ int main(void)
 	Show_R();            // 66 77 88 FF = 写覆盖页首
 	Delay_s(1);
 #endif
-
+#if TEST_BUZZER
+	Buzzer_Init();
+#endif
+#if TEST_DHT11
+	Delay_s(1);
+	OLED_ShowString(1, 1, "Humi:"); // 温度 Temperature
+	OLED_ShowString(2, 1, "Temp:");	// 湿度 Relative Humidity
+	OLED_ShowString(1, 8, ".");
+	OLED_ShowString(2, 8, ".");
+	OLED_ShowChinese(1, 11, 1);		// %
+	OLED_ShowChinese(2, 11, 0);		// ℃
+#endif
 
 	//-------Main Loop-------
 	while (1)
@@ -156,6 +171,20 @@ int main(void)
 		OLED_ShowSignedNum(4, 11, GyroZ, 4);
 		Delay_ms(100);
 #endif
+#if TEST_BUZZER
+		Buzzer_Breathe();
+#endif
+#if TEST_DHT11
+		DHT11_Data_t DHT11_Data;
+		DHT11_Recive_Data(&DHT11_Data); //接收温度和湿度的数据
 
+		OLED_ShowNum(1, 6, (uint32_t)DHT11_Data.Humi, 2);
+		OLED_ShowNum(1, 9, (uint32_t)DHT11_Data.Humi_Dec, 2);
+
+		OLED_ShowNum(2, 6, (uint32_t)DHT11_Data.Temp, 2);
+		OLED_ShowNum(2, 9, (uint32_t)DHT11_Data.Temp_Dec, 2);
+
+		Delay_s(1);
+#endif
 	}
 }
