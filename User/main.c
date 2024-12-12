@@ -8,6 +8,7 @@
 #include "W25Q64.h"
 #include "Buzzer.h"
 #include "DHT11.h"
+#include "MyAD.h"
 
 #define TEST_ENCODER 0
 #define TEST_TB6612 0
@@ -15,7 +16,8 @@
 #define TEST_MPU6050 0
 #define TEST_W25Q64 0
 #define TEST_BUZZER 0
-#define TEST_DHT11 1
+#define TEST_DHT11 0
+#define TEST_TCRT5000 1
 
 #if TEST_W25Q64
 uint8_t MID;
@@ -146,6 +148,11 @@ int main(void)
 	OLED_ShowChinese(1, 11, 1);		// %
 	OLED_ShowChinese(2, 11, 0);		// ℃
 #endif
+#if TEST_TCRT5000
+	MyAD_Init();
+	OLED_ShowString(1, 1, "AD4:");
+	uint16_t* pADValue;
+#endif
 
 	//-------Main Loop-------
 	while (1)
@@ -186,5 +193,11 @@ int main(void)
 
 		Delay_s(1);
 #endif
+#if TEST_TCRT5000
+		pADValue = MyAD_GetValue();
+		OLED_ShowNum(1, 5, pADValue[AD_Comp_TCRT5000], 4);
+		Delay_ms(500);
+#endif
+
 	}
 }
