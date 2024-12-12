@@ -3,14 +3,15 @@
 #include "OLED.h"
 #include "Encoder.h"
 #include "TB6612.h"
+#include "ServoMotor.h"
 #include "MPU6050.h"
 #include "W25Q64.h"
 
 #define TEST_ENCODER 0
 #define TEST_TB6612 0
+#define TEST_SERVO_MOTOR 0
 #define TEST_MPU6050 0
 #define TEST_W25Q64 0
-
 
 #if TEST_W25Q64
 uint8_t MID;
@@ -52,7 +53,9 @@ int main(void)
 #endif
 #if TEST_TB6612
 	TB6612_Init();
-	OLED_ShowString(3, 1, "Speed:+000");
+#endif
+#if TEST_SERVO_MOTOR
+	Servo_Motor_Init();
 #endif
 #if TEST_MPU6050
 	MPU6050_Init();
@@ -139,6 +142,9 @@ int main(void)
 #endif
 #if TEST_TB6612
 		TB6612_Motor_Breathe();
+#endif
+#if TEST_SERVO_MOTOR
+		Servo_Motorr_Breathe();
 #endif
 #if TEST_MPU6050
 		MPU6050_GetData(&AccX, &AccY, &AccZ, &GyroX, &GyroY, &GyroZ);

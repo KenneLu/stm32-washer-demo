@@ -1,18 +1,51 @@
+#pragma once
+
 #ifndef __PWM_H
 #define __PWM_H
 
-//GPIOA
-#define PWM_GPIO_RCC      RCC_APB2Periph_GPIOA
-#define PWM_GOIO_x        GPIOA
-#define PWM_GOIO_PIN_OC   GPIO_Pin_8        // PWM输出引脚
-#define PWM_GOIO_MODE     GPIO_Mode_AF_PP   // 复用推挽输出，引脚PINx的控制权交给外设CHx，参考手册 8.1.11
+typedef enum
+{
+    FALSE,
+    TRUE
+}INT_Status;
 
-//TIM1 OC 编码器接口
-#define PWM_TIM_RCC       RCC_APB2Periph_TIM1
-#define PWM_TIM_x         TIM1
+typedef enum
+{
+    Basic,
+    General,
+    Advanced
+}TIM_Level;
 
-void PWM_Init(void);
-void PWM_SetCompare1(uint16_t Compare);
-void PWM_SetPrescaler(uint16_t Prescaler);
+typedef enum
+{
+    OC1, OC2, OC3, OC4
+}OC_ID;
+
+typedef struct
+{
+    uint16_t PIN;
+    INT_Status Inited;
+}OC_PIN;
+
+typedef struct
+{
+    TIM_TypeDef* TIM_x;
+    INT_Status Inited;
+    TIM_Level Level;
+    uint32_t TIM_RCC;
+    TIM_TimeBaseInitTypeDef* InitStructure;
+    uint32_t GPIO_RCC;
+    GPIO_TypeDef* GPIO_x;
+    OC_PIN* OC_PIN_List;
+    uint8_t OC_PIN_Count;
+    GPIOMode_TypeDef GPIO_MODE;
+}PWM_TIM;
+
+extern PWM_TIM PWM_TIM1, PWM_TIM2;
+
+void PWM_TIM_Init(PWM_TIM* T, TIM_TimeBaseInitTypeDef* CustomStruct);
+void PWM_GPIO_Init(PWM_TIM* T, OC_ID OC_x);
+void PWM_SetCompare_x(PWM_TIM* T, OC_ID OC_x, uint16_t Compare);
+void PWM_SetPrescaler(PWM_TIM* T, uint16_t Prescaler);
 
 #endif
