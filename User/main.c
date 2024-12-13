@@ -10,6 +10,7 @@
 #include "DHT11.h"
 #include "MyAD.h"
 #include "Timer.h"
+#include "Key.h"
 
 #define TEST_ENCODER 0
 #define TEST_TB6612 0
@@ -20,6 +21,7 @@
 #define TEST_DHT11 0
 #define TEST_TCRT5000 0
 #define TEST_TIM 0
+#define TEST_KEY 1
 
 #if TEST_W25Q64
 uint8_t MID;
@@ -46,9 +48,43 @@ void Show_R(void)
 	OLED_ShowHexNum(3, 13, ArrayRead[3], 2);
 }
 #endif
-
-
+#if TEST_TIM
 uint16_t i = 0;
+#endif
+#if TEST_KEY
+void Key_CB_Press(void)
+{
+	OLED_Clear();
+	OLED_ShowString(1, 1, "Key Press");
+}
+
+void Key_CB_Release(void)
+{
+	OLED_Clear();
+	OLED_ShowString(1, 1, "Key Releas");
+}
+
+void Key_CB_LongPress(void)
+{
+	OLED_Clear();
+	OLED_ShowString(1, 1, "Key LP");
+}
+
+void Key_CB_LongPress_Continuos(void)
+{
+	OLED_Clear();
+	OLED_ShowString(1, 1, "Key LP Cont");
+}
+
+void Key_CB_LongPress_Release(void)
+{
+	OLED_Clear();
+	OLED_ShowString(1, 1, "Key LP Release");
+}
+#endif
+
+
+
 
 int main(void)
 {
@@ -161,6 +197,19 @@ int main(void)
 	Timer_Init();
 	OLED_ShowString(3, 1, "TIM2:");
 #endif
+#if TEST_KEY
+	Key_Init();
+	Timer_Init();
+	Encoder_Init();
+	OLED_ShowString(1, 1, "Init");
+	Key_CBRegister_P(KEY_ENCODER_PRESS, Key_CB_Press);
+	Key_CBRegister_R(KEY_ENCODER_PRESS, Key_CB_Release);
+	Key_CBRegister_LP(KEY_ENCODER_PRESS, Key_CB_LongPress);
+	Key_CBRegister_LP_Cont(KEY_ENCODER_PRESS, Key_CB_LongPress_Continuos);
+	Key_CBRegister_LP_R(KEY_ENCODER_PRESS, Key_CB_LongPress_Release);
+#endif
+
+
 	//-------Main Loop-------
 	while (1)
 	{
@@ -220,6 +269,17 @@ void TIM2_IRQHandler(void) //1ms
 	if (TIM_GetITStatus(TIM2, TIM_IT_Update) == SET)
 	{
 		i++;
+		TIM_ClearITPendingBit(TIM2, TIM_IT_Update);
+	}
+}
+#endif
+
+#if TEST_KEY
+void TIM2_IRQHandler(void) //1ms
+{
+	if (TIM_GetITStatus(TIM2, TIM_IT_Update) == SET)
+	{
+		Key_Scan();
 		TIM_ClearITPendingBit(TIM2, TIM_IT_Update);
 	}
 }
