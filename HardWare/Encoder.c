@@ -58,3 +58,16 @@ int16_t Encoder_GetSpeed(void)
     TIM_SetCounter(Encoder_TIM_x, 0);
     return Temp;
 }
+
+int16_t Encoder_Get_Div4(void)
+{
+    /*除以4输出*/
+    int16_t Temp = TIM_GetCounter(Encoder_TIM_x);	//踩坑记录:TIM_GetCounter()返回无符号16位整数, 赋值给有符号整型前不要做运算
+
+    if (Temp / 4)
+    {
+        TIM_SetCounter(Encoder_TIM_x, Temp % 4);
+        return Temp / 4;
+    }
+    return 0;
+}

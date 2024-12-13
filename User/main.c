@@ -11,6 +11,7 @@
 #include "MyAD.h"
 #include "Timer.h"
 #include "Key.h"
+#include "Menu.h"
 
 #define TEST_ENCODER 0
 #define TEST_TB6612 0
@@ -21,7 +22,8 @@
 #define TEST_DHT11 0
 #define TEST_TCRT5000 0
 #define TEST_TIM 0
-#define TEST_KEY 1
+#define TEST_KEY 0
+#define TEST_MENU 1
 
 #if TEST_W25Q64
 uint8_t MID;
@@ -52,6 +54,37 @@ void Show_R(void)
 uint16_t i = 0;
 #endif
 #if TEST_KEY
+void Key_CB_Press(void)
+{
+	OLED_Clear();
+	OLED_ShowString_Easy(1, 1, "Key Press");
+}
+
+void Key_CB_Release(void)
+{
+	OLED_Clear();
+	OLED_ShowString_Easy(1, 1, "Key Releas");
+}
+
+void Key_CB_LongPress(void)
+{
+	OLED_Clear();
+	OLED_ShowString_Easy(1, 1, "Key LP");
+}
+
+void Key_CB_LongPress_Continuos(void)
+{
+	OLED_Clear();
+	OLED_ShowString_Easy(1, 1, "Key LP Cont");
+}
+
+void Key_CB_LongPress_Release(void)
+{
+	OLED_Clear();
+	OLED_ShowString_Easy(1, 1, "Key LP Release");
+}
+#endif
+#if TEST_MUNE
 void Key_CB_Press(void)
 {
 	OLED_Clear();
@@ -207,6 +240,12 @@ int main(void)
 	Key_CBRegister_LP_Cont(KEY_ENCODER_PRESS, Key_CB_LongPress_Continuos);
 	Key_CBRegister_LP_R(KEY_ENCODER_PRESS, Key_CB_LongPress_Release);
 #endif
+#if TEST_MENU
+	Key_Init();
+	Timer_Init();
+	Encoder_Init();
+	Menu_Init();
+#endif
 
 
 	//-------Main Loop-------
@@ -254,8 +293,11 @@ int main(void)
 		Delay_ms(500);
 #endif
 #if TEST_TIM
-		OLED_ShowNum(3, 6, (uint32_t)i, 5);
-		OLED_ShowNum(4, 1, (uint32_t)Timer_GetCounter(), 5);
+		OLED_ShowNum_Easy(3, 6, (uint32_t)i, 5);
+		OLED_ShowNum_Easy(4, 1, (uint32_t)Timer_GetCounter(), 5);
+#endif
+#if TEST_MENU
+		Main_Menu();
 #endif
 
 	}
@@ -272,8 +314,17 @@ void TIM2_IRQHandler(void) //1ms
 	}
 }
 #endif
-
 #if TEST_KEY
+void TIM2_IRQHandler(void) //1ms
+{
+	if (TIM_GetITStatus(TIM2, TIM_IT_Update) == SET)
+	{
+		Key_Scan();
+		TIM_ClearITPendingBit(TIM2, TIM_IT_Update);
+	}
+}
+#endif
+#if TEST_MENU
 void TIM2_IRQHandler(void) //1ms
 {
 	if (TIM_GetITStatus(TIM2, TIM_IT_Update) == SET)

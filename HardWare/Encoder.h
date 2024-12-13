@@ -19,5 +19,6 @@ void Encoder_Init(void);
 uint8_t Encoder_Pressed(void);
 int16_t Encoder_GetCount(void);
 int16_t Encoder_GetSpeed(void);
+int16_t Encoder_Get_Div4(void);
 
 #endif
