@@ -9,6 +9,7 @@
 #include "Buzzer.h"
 #include "DHT11.h"
 #include "MyAD.h"
+#include "Timer.h"
 
 #define TEST_ENCODER 0
 #define TEST_TB6612 0
@@ -17,7 +18,8 @@
 #define TEST_W25Q64 0
 #define TEST_BUZZER 0
 #define TEST_DHT11 0
-#define TEST_TCRT5000 1
+#define TEST_TCRT5000 0
+#define TEST_TIM 0
 
 #if TEST_W25Q64
 uint8_t MID;
@@ -45,6 +47,8 @@ void Show_R(void)
 }
 #endif
 
+
+uint16_t i = 0;
 
 int main(void)
 {
@@ -153,7 +157,10 @@ int main(void)
 	OLED_ShowString(1, 1, "AD4:");
 	uint16_t* pADValue;
 #endif
-
+#if TEST_TIM
+	Timer_Init();
+	OLED_ShowString(3, 1, "TIM2:");
+#endif
 	//-------Main Loop-------
 	while (1)
 	{
@@ -198,6 +205,23 @@ int main(void)
 		OLED_ShowNum(1, 5, pADValue[AD_Comp_TCRT5000], 4);
 		Delay_ms(500);
 #endif
+#if TEST_TIM
+		OLED_ShowNum(3, 6, (uint32_t)i, 5);
+		OLED_ShowNum(4, 1, (uint32_t)Timer_GetCounter(), 5);
+#endif
 
 	}
 }
+
+
+#if TEST_TIM
+void TIM2_IRQHandler(void) //1ms
+{
+	if (TIM_GetITStatus(TIM2, TIM_IT_Update) == SET)
+	{
+		i++;
+		TIM_ClearITPendingBit(TIM2, TIM_IT_Update);
+	}
+}
+#endif
+
