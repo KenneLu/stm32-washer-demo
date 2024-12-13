@@ -1,7 +1,6 @@
 #include "stm32f10x.h"                  // Device header
 #include  "DHT11.h"
 #include  "Delay.h"
-#include  "OLED.h"
 
 void DH11_GPIO_Init_Out(void)
 {

@@ -34,18 +34,18 @@ uint8_t ArrayRead[4];
 
 void Show_W(uint8_t* Array_W)
 {
-	OLED_ShowHexNum(2, 4, Array_W[0], 2);
-	OLED_ShowHexNum(2, 7, Array_W[1], 2);
-	OLED_ShowHexNum(2, 10, Array_W[2], 2);
-	OLED_ShowHexNum(2, 13, Array_W[3], 2);
+	OLED_ShowHexNum_Easy(2, 4, Array_W[0], 2);
+	OLED_ShowHexNum_Easy(2, 7, Array_W[1], 2);
+	OLED_ShowHexNum_Easy(2, 10, Array_W[2], 2);
+	OLED_ShowHexNum_Easy(2, 13, Array_W[3], 2);
 }
 
 void Show_R(void)
 {
-	OLED_ShowHexNum(3, 4, ArrayRead[0], 2);
-	OLED_ShowHexNum(3, 7, ArrayRead[1], 2);
-	OLED_ShowHexNum(3, 10, ArrayRead[2], 2);
-	OLED_ShowHexNum(3, 13, ArrayRead[3], 2);
+	OLED_ShowHexNum_Easy(3, 4, ArrayRead[0], 2);
+	OLED_ShowHexNum_Easy(3, 7, ArrayRead[1], 2);
+	OLED_ShowHexNum_Easy(3, 10, ArrayRead[2], 2);
+	OLED_ShowHexNum_Easy(3, 13, ArrayRead[3], 2);
 }
 #endif
 #if TEST_TIM
@@ -55,31 +55,31 @@ uint16_t i = 0;
 void Key_CB_Press(void)
 {
 	OLED_Clear();
-	OLED_ShowString(1, 1, "Key Press");
+	OLED_ShowString_Easy(1, 1, "Key Press");
 }
 
 void Key_CB_Release(void)
 {
 	OLED_Clear();
-	OLED_ShowString(1, 1, "Key Releas");
+	OLED_ShowString_Easy(1, 1, "Key Releas");
 }
 
 void Key_CB_LongPress(void)
 {
 	OLED_Clear();
-	OLED_ShowString(1, 1, "Key LP");
+	OLED_ShowString_Easy(1, 1, "Key LP");
 }
 
 void Key_CB_LongPress_Continuos(void)
 {
 	OLED_Clear();
-	OLED_ShowString(1, 1, "Key LP Cont");
+	OLED_ShowString_Easy(1, 1, "Key LP Cont");
 }
 
 void Key_CB_LongPress_Release(void)
 {
 	OLED_Clear();
-	OLED_ShowString(1, 1, "Key LP Release");
+	OLED_ShowString_Easy(1, 1, "Key LP Release");
 }
 #endif
 
@@ -94,8 +94,8 @@ int main(void)
 	OLED_Init();
 #if TEST_ENCODER
 	Encoder_Init();
-	OLED_ShowString(1, 1, "CNT:+00000Times");
-	OLED_ShowString(2, 1, "Pressed:");
+	OLED_ShowString_Easy_Easy(1, 1, "CNT:+00000Times");
+	OLED_ShowString_Easy_Easy(2, 1, "Pressed:");
 #endif
 #if TEST_TB6612
 	TB6612_Init();
@@ -106,30 +106,30 @@ int main(void)
 #if TEST_MPU6050
 	MPU6050_Init();
 	uint8_t ID = MPU6050_GetID();
-	OLED_ShowString(1, 1, "ID:");
-	OLED_ShowHexNum(1, 4, ID, 2);
+	OLED_ShowString_Easy(1, 1, "ID:");
+	OLED_ShowHexNum_Easy(1, 4, ID, 2);
 	int16_t AccX, AccY, AccZ, GyroX, GyroY, GyroZ;
-	OLED_ShowString(2, 1, "AX");
-	OLED_ShowString(3, 1, "AY");
-	OLED_ShowString(4, 1, "AZ");
-	OLED_ShowString(2, 9, "GX");
-	OLED_ShowString(3, 9, "GY");
-	OLED_ShowString(4, 9, "GZ");
+	OLED_ShowString_Easy(2, 1, "AX");
+	OLED_ShowString_Easy(3, 1, "AY");
+	OLED_ShowString_Easy(4, 1, "AZ");
+	OLED_ShowString_Easy(2, 9, "GX");
+	OLED_ShowString_Easy(3, 9, "GY");
+	OLED_ShowString_Easy(4, 9, "GZ");
 #endif
 #if TEST_W25Q64
 	//W25Q64初始化
 	W25Q64_Init();
-	OLED_ShowString(1, 1, "MID:   DID:");
+	OLED_ShowString_Easy(1, 1, "MID:   DID:");
 	W25Q64_ReadID(&MID, &DID);
-	OLED_ShowHexNum(1, 5, MID, 2);
-	OLED_ShowHexNum(1, 12, DID, 4);
+	OLED_ShowHexNum_Easy(1, 5, MID, 2);
+	OLED_ShowHexNum_Easy(1, 12, DID, 4);
 
 	// 擦除写入1
 	W25Q64_SectorErase(0x000000);
 	W25Q64_PageProgram(0x000000, ArrayWrite1, 4);
 	W25Q64_ReadData(0x000000, ArrayRead, 4);
-	OLED_ShowString(2, 1, "W1:");
-	OLED_ShowString(3, 1, "R1:");
+	OLED_ShowString_Easy(2, 1, "W1:");
+	OLED_ShowString_Easy(3, 1, "R1:");
 	Show_W(ArrayWrite1); // 01 02 03 04
 	Show_R();            // 01 02 03 04
 	Delay_s(1);
@@ -138,8 +138,8 @@ int main(void)
 	W25Q64_SectorErase(0x000000);
 	W25Q64_PageProgram(0x000000, ArrayWrite2, 4);
 	W25Q64_ReadData(0x000000, ArrayRead, 4);
-	OLED_ShowString(2, 1, "W2:");
-	OLED_ShowString(3, 1, "R2:");
+	OLED_ShowString_Easy(2, 1, "W2:");
+	OLED_ShowString_Easy(3, 1, "R2:");
 	Show_W(ArrayWrite2); // AA BB CC DD
 	Show_R();            // AA BB CC DD
 	Delay_s(1);
@@ -147,8 +147,8 @@ int main(void)
 	// 不擦除写入
 	W25Q64_PageProgram(0x000000, ArrayWrite3, 4);
 	W25Q64_ReadData(0x000000, ArrayRead, 4);
-	OLED_ShowString(2, 1, "W3:");
-	OLED_ShowString(3, 1, "R3:");
+	OLED_ShowString_Easy(2, 1, "W3:");
+	OLED_ShowString_Easy(3, 1, "R3:");
 	Show_W(ArrayWrite3); // 55 66 77 88
 	Show_R();            // 00 22 44 88 = AA BB CC DD & 55 66 77 88
 	Delay_s(1);
@@ -156,8 +156,8 @@ int main(void)
 	// 擦除不写入
 	W25Q64_SectorErase(0x000000);
 	W25Q64_ReadData(0x000000, ArrayRead, 4);
-	OLED_ShowString(2, 1, "W3:");
-	OLED_ShowString(3, 1, "R4:");
+	OLED_ShowString_Easy(2, 1, "W3:");
+	OLED_ShowString_Easy(3, 1, "R4:");
 	Show_W(ArrayWrite3); // 55 66 77 88
 	Show_R();            // FF FF FF FF
 	Delay_s(1);
@@ -166,12 +166,12 @@ int main(void)
 	W25Q64_SectorErase(0x000000);
 	W25Q64_PageProgram(0x0000FF, ArrayWrite3, 4);
 	W25Q64_ReadData(0x0000FF, ArrayRead, 4);
-	OLED_ShowString(2, 1, "W3:");
-	OLED_ShowString(3, 1, "R5:");
+	OLED_ShowString_Easy(2, 1, "W3:");
+	OLED_ShowString_Easy(3, 1, "R5:");
 	Show_W(ArrayWrite3); // 55 66 77 88
 	Show_R();            // 55 FF FF FF = 写没有跨页，读跨页
 	Delay_s(1);
-	OLED_ShowString(3, 1, "R6:");
+	OLED_ShowString_Easy(3, 1, "R6:");
 	W25Q64_ReadData(0x000000, ArrayRead, 4);
 	Show_R();            // 66 77 88 FF = 写覆盖页首
 	Delay_s(1);
@@ -180,28 +180,27 @@ int main(void)
 	Buzzer_Init();
 #endif
 #if TEST_DHT11
-	Delay_s(1);
-	OLED_ShowString(1, 1, "Humi:"); // 温度 Temperature
-	OLED_ShowString(2, 1, "Temp:");	// 湿度 Relative Humidity
-	OLED_ShowString(1, 8, ".");
-	OLED_ShowString(2, 8, ".");
-	OLED_ShowChinese(1, 11, 1);		// %
-	OLED_ShowChinese(2, 11, 0);		// ℃
+	OLED_ShowString_Easy(1, 1, "Humi:"); 	// 温度 Temperature
+	OLED_ShowString_Easy(2, 1, "Temp:");	// 湿度 Relative Humidity
+	OLED_ShowString_Easy(1, 8, ".");
+	OLED_ShowString_Easy(2, 8, ".");
+	OLED_ShowChinese_Easy(1, 11 / 2 + 1, "％");		// 中文是16x16的，所以要减半，并向上取整
+	OLED_ShowChinese_Easy(2, 11 / 2 + 1, "℃");	   // 中文是16x16的，所以要减半，并向上取整
 #endif
 #if TEST_TCRT5000
 	MyAD_Init();
-	OLED_ShowString(1, 1, "AD4:");
+	OLED_ShowString_Easy(1, 1, "AD4:");
 	uint16_t* pADValue;
 #endif
 #if TEST_TIM
 	Timer_Init();
-	OLED_ShowString(3, 1, "TIM2:");
+	OLED_ShowString_Easy(3, 1, "TIM2:");
 #endif
 #if TEST_KEY
 	Key_Init();
 	Timer_Init();
 	Encoder_Init();
-	OLED_ShowString(1, 1, "Init");
+	OLED_ShowString_Easy(1, 1, "Init");
 	Key_CBRegister_P(KEY_ENCODER_PRESS, Key_CB_Press);
 	Key_CBRegister_R(KEY_ENCODER_PRESS, Key_CB_Release);
 	Key_CBRegister_LP(KEY_ENCODER_PRESS, Key_CB_LongPress);
@@ -215,8 +214,8 @@ int main(void)
 	{
 
 #if TEST_ENCODER
-		OLED_ShowSignedNum(1, 5, Encoder_GetCount(), 5);
-		OLED_ShowNum(2, 10, (uint32_t)Encoder_Pressed(), 1);
+		OLED_ShowSignedNum_Easy(1, 5, Encoder_GetCount(), 5);
+		OLED_ShowNum_Easy(2, 10, (uint32_t)Encoder_Pressed(), 1);
 #endif
 #if TEST_TB6612
 		TB6612_Motor_Breathe();
@@ -226,12 +225,12 @@ int main(void)
 #endif
 #if TEST_MPU6050
 		MPU6050_GetData(&AccX, &AccY, &AccZ, &GyroX, &GyroY, &GyroZ);
-		OLED_ShowSignedNum(2, 3, AccX, 4);
-		OLED_ShowSignedNum(3, 3, AccY, 4);
-		OLED_ShowSignedNum(4, 3, AccZ, 4);
-		OLED_ShowSignedNum(2, 11, GyroX, 4);
-		OLED_ShowSignedNum(3, 11, GyroY, 4);
-		OLED_ShowSignedNum(4, 11, GyroZ, 4);
+		OLED_ShowSignedNum_Easy(2, 3, AccX, 4);
+		OLED_ShowSignedNum_Easy(3, 3, AccY, 4);
+		OLED_ShowSignedNum_Easy(4, 3, AccZ, 4);
+		OLED_ShowSignedNum_Easy(2, 11, GyroX, 4);
+		OLED_ShowSignedNum_Easy(3, 11, GyroY, 4);
+		OLED_ShowSignedNum_Easy(4, 11, GyroZ, 4);
 		Delay_ms(100);
 #endif
 #if TEST_BUZZER
@@ -241,17 +240,17 @@ int main(void)
 		DHT11_Data_t DHT11_Data;
 		DHT11_Recive_Data(&DHT11_Data); //接收温度和湿度的数据
 
-		OLED_ShowNum(1, 6, (uint32_t)DHT11_Data.Humi, 2);
-		OLED_ShowNum(1, 9, (uint32_t)DHT11_Data.Humi_Dec, 2);
+		OLED_ShowNum_Easy(1, 6, (uint32_t)DHT11_Data.Humi, 2);
+		OLED_ShowNum_Easy(1, 9, (uint32_t)DHT11_Data.Humi_Dec, 2);
 
-		OLED_ShowNum(2, 6, (uint32_t)DHT11_Data.Temp, 2);
-		OLED_ShowNum(2, 9, (uint32_t)DHT11_Data.Temp_Dec, 2);
+		OLED_ShowNum_Easy(2, 6, (uint32_t)DHT11_Data.Temp, 2);
+		OLED_ShowNum_Easy(2, 9, (uint32_t)DHT11_Data.Temp_Dec, 2);
 
 		Delay_s(1);
 #endif
 #if TEST_TCRT5000
 		pADValue = MyAD_GetValue();
-		OLED_ShowNum(1, 5, pADValue[AD_Comp_TCRT5000], 4);
+		OLED_ShowNum_Easy(1, 5, pADValue[AD_Comp_TCRT5000], 4);
 		Delay_ms(500);
 #endif
 #if TEST_TIM

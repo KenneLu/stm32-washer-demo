@@ -4,7 +4,6 @@
 #define __AD_H
 
 #define TCRT5000_Channel ADC_Channel_4
-#define TCRT5000_Rank 1
 
 typedef enum {
     AD_Comp_TCRT5000,
