@@ -11,28 +11,28 @@ typedef enum
 
 typedef enum
 {
-    STEP_WAIT,              // µÈ´ı°´ÏÂ
-    STEP_PRESS,             // µ¥»÷°´ÏÂ
-    STEP_LONG_PRESS,        // ³¤°´°´ÏÂ
-    STEP_CONTINUOUS_PRESS,  // ³ÖĞø³¤°´
-} SCAN_STEP; // °´¼ü¼ì²â¹ı³Ì
+    STEP_WAIT,              // ç­‰å¾…æŒ‰ä¸‹
+    STEP_PRESS,             // å•å‡»æŒ‰ä¸‹
+    STEP_LONG_PRESS,        // é•¿æŒ‰æŒ‰ä¸‹
+    STEP_CONTINUOUS_PRESS,  // æŒç»­é•¿æŒ‰
+} SCAN_STEP; // æŒ‰é”®æ£€æµ‹è¿‡ç¨‹
 
 typedef struct
 {
     SCAN_STEP ScanStep;
-    uint16_t ShakeTime;        // Ïû¶¶
-    uint16_t LongPressTimer;   // ³¤°´
-    uint16_t ContPressTimer;   // Á¬Ğø³¤°´
-} KEY_SCAN; // °´¼üÉ¨ÃèÏà¹Ø
+    uint16_t ShakeTime;        // æ¶ˆæŠ–
+    uint16_t LongPressTimer;   // é•¿æŒ‰
+    uint16_t ContPressTimer;   // è¿ç»­é•¿æŒ‰
+} KEY_SCAN; // æŒ‰é”®æ‰«æç›¸å…³
 
 typedef enum
 {
-    KEY_IDLE,                    // ¿ÕÏĞ
-    KEY_PRESS,                   // µ¥»÷°´ÏÂ
-    KEY_RELEASE,                 // µ¥»÷ÊÍ·Å
-    KEY_LONG_PRESS,              // ³¤°´°´ÏÂ
-    KEY_LONG_PRESS_CONTINUOUS,   // ³¤°´³ÖĞø
-    KEY_LONG_PRESS_RELEASE,      // ³¤°´ÊÍ·Å
+    KEY_IDLE,                    // ç©ºé—²
+    KEY_PRESS,                   // å•å‡»æŒ‰ä¸‹
+    KEY_RELEASE,                 // å•å‡»é‡Šæ”¾
+    KEY_LONG_PRESS,              // é•¿æŒ‰æŒ‰ä¸‹
+    KEY_LONG_PRESS_CONTINUOUS,   // é•¿æŒ‰æŒç»­
+    KEY_LONG_PRESS_RELEASE,      // é•¿æŒ‰é‡Šæ”¾
 } KEY_STATUS;
 
 typedef struct
@@ -41,17 +41,17 @@ typedef struct
     uint32_t GPIO_RCC;
     uint16_t GPIO_PIN;
     GPIOMode_TypeDef GPIO_MODE;
-    uint8_t High_Active;        // ¸ßµçÆ½ÓĞĞ§
+    uint8_t High_Active;        // é«˜ç”µå¹³æœ‰æ•ˆ
 } KEY_GPIO;
 
 typedef void (*KeyCallBack) (void);
 typedef struct
 {
-    KeyCallBack Press;              // °´ÏÂ
-    KeyCallBack Release;            // ÊÍ·Å
-    KeyCallBack LongPress;          // ³¤°´
-    KeyCallBack LongPress_Cont;     // ³ÖĞø³¤°´
-    KeyCallBack LongPress_Release;  // ³¤°´ÊÍ·Å
+    KeyCallBack Press;              // æŒ‰ä¸‹
+    KeyCallBack Release;            // é‡Šæ”¾
+    KeyCallBack LongPress;          // é•¿æŒ‰
+    KeyCallBack LongPress_Cont;     // æŒç»­é•¿æŒ‰
+    KeyCallBack LongPress_Release;  // é•¿æŒ‰é‡Šæ”¾
 } KEY_CALLBACK;
 
 typedef struct
@@ -68,13 +68,13 @@ extern MY_KEY KeyAttribute[KEYNUM];
 typedef void (*KeyEvent_CallBack_t) (KEY_ID Keys, KEY_STATUS Status);
 
 
-//°´¼üÏû¶¶Ê±¼ä
+//æŒ‰é”®æ¶ˆæŠ–æ—¶é—´
 #define KEY_SCANTIME 20 * SYS_MS    // 20ms
 
-//Á¬Ğø³¤°´Ê±¼ä
+//è¿ç»­é•¿æŒ‰æ—¶é—´
 #define KEY_PRESS_LONG_TIME 1 * SYS_S   // 1s
 
-//³ÖĞø³¤°´¼ä¸ôÊ±¼ä
+//æŒç»­é•¿æŒ‰é—´éš”æ—¶é—´
 #define KEY_PRESS_CONTINUE_TIME 150 * SYS_MS    // 150ms
 
 void Key_Init(void);
