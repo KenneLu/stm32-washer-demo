@@ -80,30 +80,6 @@ option_class Cur_Wash_Options[sizeof(Wash_Options)];
 uint8_t Wash_Options_Inited = 0;
 void Washer_Init(void)
 {
-	if (!Wash_Options_Inited)
-	{
-		char* p = Wash_Options[1].Name;
-		Wash_Options[1].Name = (char*)malloc(strlen(Wash_Options[1].Name) + 10 * sizeof(char));
-		strcpy(Wash_Options[1].Name, p);
-
-		p = Wash_Options[2].Name;
-		Wash_Options[2].Name = (char*)malloc(strlen(Wash_Options[2].Name) + 10 * sizeof(char));
-		strcpy(Wash_Options[2].Name, p);
-
-		p = Wash_Options[3].Name;
-		Wash_Options[3].Name = (char*)malloc(strlen(Wash_Options[3].Name) + 10 * sizeof(char));
-		strcpy(Wash_Options[3].Name, p);
-
-		p = Wash_Options[4].Name;
-		Wash_Options[4].Name = (char*)malloc(strlen(Wash_Options[4].Name) + 10 * sizeof(char));
-		strcpy(Wash_Options[4].Name, p);
-
-		p = Wash_Options[5].Name;
-		Wash_Options[5].Name = (char*)malloc(strlen(Wash_Options[5].Name) + 10 * sizeof(char));
-		strcpy(Wash_Options[5].Name, p);
-		Wash_Options_Inited = 1;
-	}
-
 	Fast.Wash_Count = *pWash_Count_L;
 	Fast.Wash_Time = *pWash_Time_L;
 	Fast.Swing_Dry_Time = *(pSwing_Dry_Time_L + 2);

@@ -18,7 +18,7 @@ extern float Roll_Speed;				//滚动动画速度;
 
 typedef struct
 {
-	char* Name;				//选项名字
+	char Name[32];			//选项名字
 	void (*func)(void);		//函数指针
 	uint8_t NameLen;		//由于中文占三个字节,用strlen计算名字宽度不再准确,故需额外储存名字宽度
 } option_class;
