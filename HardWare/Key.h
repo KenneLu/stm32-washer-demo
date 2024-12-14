@@ -72,7 +72,7 @@ typedef void (*KeyEvent_CallBack_t) (KEY_ID Keys, KEY_STATUS Status);
 #define KEY_SCANTIME 20 * SYS_MS    // 20ms
 
 //连续长按时间
-#define KEY_PRESS_LONG_TIME 1 * SYS_S   // 1s
+#define KEY_PRESS_LONG_TIME 800 * SYS_MS   // 0.5s
 
 //持续长按间隔时间
 #define KEY_PRESS_CONTINUE_TIME 150 * SYS_MS    // 150ms

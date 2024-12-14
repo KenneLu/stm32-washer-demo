@@ -13,6 +13,10 @@
   *菜单用到的按键函数独立出来,方便移植和修改,比如没有编码器可以用上下两个按键代替;
   */
 
+enum CursorStyle CurStyle = reverse;
+int8_t Speed_Factor = 8;																		//光标动画速度系数;
+float Roll_Speed = 2;																			//滚动动画速度系数;
+
 uint8_t Key_Enter = 0;	//确认键
 uint8_t Key_Back = 0;	//返回键
 
@@ -41,7 +45,7 @@ void Menu_Init(void)
   */
 void Menu_Run(option_class* option)
 {
-	int8_t Catch_i = 1;		//选中下标
+	int8_t Catch_i = 0;		//选中下标
 	int8_t Cursor_i = 0;	//光标下标
 	int8_t Show_i = 0; 		//显示起始下标
 	int8_t Max = 0;			//选项数量
@@ -167,31 +171,6 @@ int8_t Menu_Enter_Event(void)//菜单确认
 int8_t Menu_Back_Event(void)//菜单返回
 {
 	return Key_Back_Get();;				//返回键接到PB12;
-}
-
-enum CursorStyle CurStyle = reverse;
-int8_t Speed_Factor = 8;																		//光标动画速度系数;
-float Roll_Speed = 2;																			//滚动动画速度系数;
-
-/**
-  * 函    数：主菜单
-  * 参    数：无
-  * 返 回 值：无
-  * 说    明：按照格式添加选项
-
-  */
-void Main_Menu(void)
-{
-	option_class option_list[] = {
-		{"关机"},
-		{"Tools", Tools_Menu},
-		{"Games", Games_Menu},
-		{"Setting", Setting_Menu},			//设置
-		{"Information", Information},		//信息
-		{".."}								//结尾标志,方便自动计算数量
-	};
-
-	Menu_Run(option_list);
 }
 
 //计算选项名宽度;

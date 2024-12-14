@@ -36,4 +36,11 @@ void Games_Menu(void);
 void Setting_Menu(void);
 void Information(void);
 
+void Washer_Menu(void);
+void Fast_Wash_Menu(void);
+void Standard_Wash_Menu(void);
+void Hard_Wash_Menu(void);
+void Swing_Dry_Menu(void);
+void Heat_Dry_Menu(void);
+
 #endif

@@ -3,6 +3,27 @@
 #include "Game_Snake.h" 
 #include "Game_Of_Life.h" 
 
+/**
+  * 函    数：主菜单
+  * 参    数：无
+  * 返 回 值：无
+  * 说    明：按照格式添加选项
+
+  */
+void Main_Menu(void)
+{
+	option_class option_list[] = {
+		{"关机"},
+		{"Tools", Tools_Menu},
+		{"Games", Games_Menu},
+		{"Setting", Setting_Menu},			//设置
+		{"Information", Information},		//信息
+		{".."}								//结尾标志,方便自动计算数量
+	};
+
+	Menu_Run(option_list);
+}
+
 void Tools_Menu(void)
 {
 	option_class option_list[] = {

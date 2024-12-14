@@ -680,6 +680,11 @@
               <FileType>1</FileType>
               <FilePath>.\Menu\Menu_Setting.c</FilePath>
             </File>
+            <File>
+              <FileName>Menu_Washer.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\Menu\Menu_Washer.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
