@@ -43,7 +43,7 @@ void Menu_Init(void)
   * 返 回 值：无
   * 说    明：把选项列表显示出来,并根据按键事件执行相应操作
   */
-void Menu_Run(option_class* option)
+int8_t Menu_Run(option_class* option)
 {
 	int8_t Catch_i = 0;		//选中下标
 	int8_t Cursor_i = 0;	//光标下标
@@ -148,11 +148,21 @@ void Menu_Run(option_class* option)
 
 		if (Menu_Enter_Event())			//获取按键
 		{
-			/*如果功能不为空则执行功能,否则返回*/
-			if (option[Catch_i].func) { option[Catch_i].func(); }
-			else { return; }
+			// /*如果功能不为空则执行功能，否则返回。这种情况如果在函数中打开子菜单，则会导致死循环。适用原来的Main_Menu()系列*/
+			// if (option[Catch_i].func)
+			// {
+			// 	option[Catch_i].func();
+			// }
+			// else return Catch_i;
+
+			/*不论是否有功能科执行，都返回。这种情况如果函数里没有打开子菜单，则会导致过度返回一页。适用当前Washer_Menu()系列*/
+			if (option[Catch_i].func)
+			{
+				option[Catch_i].func();
+			}
+			return Catch_i;	// 返回子菜单选中下标
 		}
-		if (Menu_Back_Event()) { return; }	//获取按键
+		if (Menu_Back_Event()) { return -1; }	//获取按键
 	}
 }
 

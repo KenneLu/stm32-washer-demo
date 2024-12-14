@@ -18,13 +18,13 @@ extern float Roll_Speed;				//滚动动画速度;
 
 typedef struct
 {
-	char Name[32];			//选项名字
-	void (*func)(void);		//函数指针
+	char Name[24];			//选项名字，为了解决指针浅拷贝而采用数组，但是会导致内存占用过多，如果报错Error: L6406E: No space in execution regions with .ANY selector matching main.o(.bss).则继续减小这个数组的大小
+	int8_t(*func)(void);	//函数指针，可以最后选中的下标，适配设置选项值的功能。如果无需读取子菜单下标，也可以传递(void)(*func)(void)，只会报警告。
 	uint8_t NameLen;		//由于中文占三个字节,用strlen计算名字宽度不再准确,故需额外储存名字宽度
 } option_class;
 
 void Menu_Init(void);
-void Menu_Run(option_class* option);
+int8_t Menu_Run(option_class* option);
 int8_t Menu_Roll_Event(void);
 int8_t Menu_Enter_Event(void);
 int8_t Menu_Back_Event(void);
@@ -36,11 +36,11 @@ void Games_Menu(void);
 void Setting_Menu(void);
 void Information(void);
 
-void Washer_Menu(void);
-void Fast_Wash_Menu(void);
-void Standard_Wash_Menu(void);
-void Hard_Wash_Menu(void);
-void Swing_Dry_Menu(void);
-void Heat_Dry_Menu(void);
+int8_t Washer_Menu(void);
+int8_t Fast_Wash_Menu(void);
+int8_t Standard_Wash_Menu(void);
+int8_t Hard_Wash_Menu(void);
+int8_t Swing_Dry_Menu(void);
+int8_t Heat_Dry_Menu(void);
 
 #endif
