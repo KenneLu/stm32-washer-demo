@@ -24,7 +24,7 @@ typedef struct
 } option_class;
 
 void Menu_Init(void);
-int8_t Menu_Run(option_class* option);
+int8_t Menu_Run(option_class* Option, int8_t Choose);
 int8_t Menu_Roll_Event(void);
 int8_t Menu_Enter_Event(void);
 int8_t Menu_Back_Event(void);

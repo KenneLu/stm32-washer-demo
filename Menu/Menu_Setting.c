@@ -46,7 +46,7 @@ void Set_animation_speed(void)
 
 void Setting_Menu(void)
 {
-	Menu_Run(option_list);
+	Menu_Run(option_list, 0);
 }
 option_class option_list[] = {
 	{"退出"},

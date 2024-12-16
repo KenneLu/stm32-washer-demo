@@ -43,20 +43,20 @@ void Menu_Init(void)
   * 返 回 值：无
   * 说    明：把选项列表显示出来,并根据按键事件执行相应操作
   */
-int8_t Menu_Run(option_class* option)
+int8_t Menu_Run(option_class* Option, int8_t Choose)
 {
-	int8_t Catch_i = 0;		//选中下标
-	int8_t Cursor_i = 0;	//光标下标
+	int8_t Catch_i = Choose;	//选中下标
+	int8_t Cursor_i = Choose;	//光标下标
 	int8_t Show_i = 0; 		//显示起始下标
 	int8_t Max = 0;			//选项数量
 	int8_t Roll_Event = 0;	//编码器事件
 
-	while (option[++Max].Name[0] != '.');// {Max++;}	//获取条目数量,如果文件名开头为'.'则为结尾;
+	while (Option[++Max].Name[0] != '.');// {Max++;}	//获取条目数量,如果文件名开头为'.'则为结尾;
 	Max--;											//不打印".."
 
 	for (int8_t i = 0; i <= Max; i++)				//计算选项名宽度;
 	{
-		option[i].NameLen = Get_NameLen(option[i].Name);
+		Option[i].NameLen = Get_NameLen(Option[i].Name);
 	}
 
 	static float Cursor_len_d0 = 0, Cursor_len_d1 = 0, Cursor_i_d0 = 0, Cursor_i_d1 = 0; 			//光标位置和长度的起点终点
@@ -96,14 +96,14 @@ int8_t Menu_Run(option_class* option)
 			if (Show_d) { Show_d /= Roll_Speed; }		//滚动变化量: 2 快速, 1.26 较平滑;
 
 			/*如果菜单向下移动,Show_d = -16往0移动期间由于显示字符串函数不支持Y坐标为负数,跳过了打印,所以首行是空的,所以在首行打印Show_i - ((Show_d)/WORD_H)的选项名字,达到覆盖效果;((Show_d)/WORD_H)代替0,兼容Show_d <= -16的情况(菜单开始动画)*/
-			//if(Show_d < 0) {OLED_ShowString(2, 0, option[Show_i - ((Show_d)/WORD_H)].Name, OLED_8X16);}
+			//if(Show_d < 0) {OLED_ShowString(2, 0, Option[Show_i - ((Show_d)/WORD_H)].Name, OLED_8X16);}
 			/*如果菜单向上移动,Show_d = 16往0移动期间首行是空的,所以在首行打印Show_i - 1的选项名字,达到覆盖效果;*/
-			//if(Show_d > 0) {OLED_ShowString(2, 0, option[Show_i - 1].Name, OLED_8X16);}
+			//if(Show_d > 0) {OLED_ShowString(2, 0, Option[Show_i - 1].Name, OLED_8X16);}
 		}
 		for (int8_t i = 0; i < 5; i++)				//遍历显示选项名
 		{
 			if (Show_i + i > Max) { break; }
-			OLED_ShowString(2, (i * WORD_H) + Show_d, option[Show_i + i].Name, OLED_8X16);
+			OLED_ShowString(2, (i * WORD_H) + Show_d, Option[Show_i + i].Name, OLED_8X16);
 		}
 
 		/**********************************************************/
@@ -112,7 +112,7 @@ int8_t Menu_Run(option_class* option)
 		if (1)	//加光标动画
 		{
 			Cursor_i_d1 = Cursor_i * WORD_H;						//轮询光标目标位置
-			Cursor_len_d1 = option[Catch_i].NameLen * 8 + 4;		//轮询光标目标宽度
+			Cursor_len_d1 = Option[Catch_i].NameLen * 8 + 4;		//轮询光标目标宽度
 
 			/*计算此次循环光标位置*///如果当前位置不是目标位置,当前位置向目标位置移动;
 			if ((Cursor_i_d1 - Cursor_i_d0) > 1) { Cursor_i_d0 += (Cursor_i_d1 - Cursor_i_d0) / Speed_Factor + 1; }
@@ -149,16 +149,16 @@ int8_t Menu_Run(option_class* option)
 		if (Menu_Enter_Event())			//获取按键
 		{
 			// /*如果功能不为空则执行功能，否则返回。这种情况如果在函数中打开子菜单，则会导致死循环。适用原来的Main_Menu()系列*/
-			// if (option[Catch_i].func)
+			// if (Option[Catch_i].func)
 			// {
-			// 	option[Catch_i].func();
+			// 	Option[Catch_i].func();
 			// }
 			// else return Catch_i;
 
 			/*不论是否有功能科执行，都返回。这种情况如果函数里没有打开子菜单，则会导致过度返回一页。适用当前Washer_Menu()系列*/
-			if (option[Catch_i].func)
+			if (Option[Catch_i].func)
 			{
-				option[Catch_i].func();
+				Option[Catch_i].func();
 			}
 			return Catch_i;	// 返回子菜单选中下标
 		}

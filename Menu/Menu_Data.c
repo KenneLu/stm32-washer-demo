@@ -21,7 +21,7 @@ void Main_Menu(void)
 		{".."}								//结尾标志,方便自动计算数量
 	};
 
-	Menu_Run(option_list);
+	Menu_Run(option_list, 0);
 }
 
 void Tools_Menu(void)
@@ -39,7 +39,7 @@ void Tools_Menu(void)
 		{".."}
 	};
 
-	Menu_Run(option_list);
+	Menu_Run(option_list, 0);
 }
 
 void Games_Menu(void)
@@ -51,7 +51,7 @@ void Games_Menu(void)
 		{".."}
 	};
 
-	Menu_Run(option_list);
+	Menu_Run(option_list, 0);
 }
 
 void Information(void)
