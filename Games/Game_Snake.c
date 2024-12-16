@@ -13,6 +13,9 @@ Tile Map[8][16];
 uint8_t Game_Speed = 200;		//游戏速度(延时)
 uint8_t Game_Credits = 0;	//游戏积分
 
+uint8_t Key_Enter_Get(void); // 临时这样解决一下 warning，后续再优化
+uint8_t Key_Back_Get(void); // 临时这样解决一下 warning，后续再优化
+
 void Game_Snake_Show_Tile_8x8(uint8_t Y, uint8_t X, Tile Tile)
 {
 	for (int8_t i = 0; i < 8; i++)
@@ -168,7 +171,7 @@ void Game_Snake_Play(Game_Snake_Class* Snake)		//开始游戏
 	}
 }
 
-int8_t Game_Snake_Init(void)
+int8_t Game_Snake_Init(void* Param)
 {
 	Game_Credits = 0;
 	Game_Speed = 200;

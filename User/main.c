@@ -274,7 +274,7 @@ int main(void)
 		Main_Menu();
 #endif
 #if TEST_MENU_WASHER
-		Menu_Washer();
+		Menu_Washer(0);
 #endif
 
 	}

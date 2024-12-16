@@ -28,6 +28,6 @@ typedef struct{
 	WSAD Heading;		//前进方向
 }Game_Snake_Class;
 
-int8_t Game_Snake_Init(void);
+int8_t Game_Snake_Init(void* Param);
 
 #endif

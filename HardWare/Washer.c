@@ -2,6 +2,7 @@
 #include "Key.h"
 #include "Delay.h"
 #include "OLED.h"
+#include "Washer.h"
 
 typedef enum
 {
@@ -16,24 +17,27 @@ WASHER_STATUS g_Status_Next = WS_CHECK;
 WASHER_STATUS g_Status_Cur = WS_CHECK;
 WASHER_STATUS g_Status_Last = WS_CHECK;
 
+const Washer* g_Washer;
+
 uint8_t g_Loop_Cnt;
-uint8_t g_Water_Volume;
-uint8_t g_Wash_Time;
-uint8_t g_Spin_Dry_Time;
-uint8_t g_Wash_Cnt;
 uint8_t g_Wash_Cnt_Cur;
 
-WASHER_STATUS Washer_Init()
+int8_t Menu_Enter_Event(void); // 临时这样解决一下 warning，后续再优化
+int8_t Menu_Back_Event(void); // 临时这样解决一下 warning，后续再优化
+
+int8_t Washer_Init(const Washer* pWasher)
 {
 	OLED_Clear();
 	g_Status_Next = WS_CHECK;
 	g_Status_Last = WS_CHECK;
 	g_Loop_Cnt = 0;
-	g_Water_Volume = 2; //1~8
-	g_Wash_Time = 2; //1~8
-	g_Spin_Dry_Time = 2; //1~8
-	g_Wash_Cnt = 3; //暂定为清洗次数:1~3
 	g_Wash_Cnt_Cur = 0;
+	if (pWasher)
+	{
+		g_Washer = pWasher;
+		return 1;
+	}
+	return 0;
 }
 
 void Washer_Check()
@@ -42,7 +46,7 @@ void Washer_Check()
 	OLED_ShowString_Easy(3, 1, "NOW count:[");
 	OLED_ShowNum_Easy(3, 12, g_Wash_Cnt_Cur, 1);
 	OLED_ShowString_Easy(3, 13, "/");
-	OLED_ShowNum_Easy(3, 14, g_Wash_Cnt, 1);
+	OLED_ShowNum_Easy(3, 14, g_Washer->Wash_Cnt, 1);
 	OLED_ShowString_Easy(3, 15, "]");
 	g_Loop_Cnt++;
 	if (3 == g_Loop_Cnt) //自检结束
@@ -77,7 +81,7 @@ void Washer_Add_Water()
 	else
 	{
 		g_Loop_Cnt++;
-		if (g_Water_Volume == (g_Loop_Cnt / 10)) //加水结束
+		if (g_Washer->Water_Volume == (g_Loop_Cnt / 10)) //加水结束
 		{
 			g_Loop_Cnt = 0;
 			g_Status_Next = WS_WASH;
@@ -100,7 +104,7 @@ void Washer_Wash()
 	else
 	{
 		g_Loop_Cnt++;
-		if (g_Wash_Time == (g_Loop_Cnt / 10)) //清洗结束
+		if (g_Washer->Wash_Time == (g_Loop_Cnt / 10)) //清洗结束
 		{
 			g_Loop_Cnt = 0;
 			g_Status_Next = WS_DRAIN_WATER;
@@ -123,7 +127,7 @@ void Washer_Drain_Water()
 	else
 	{
 		g_Loop_Cnt++;
-		if (g_Water_Volume == (g_Loop_Cnt / 10)) //排水结束
+		if (g_Washer->Water_Volume == (g_Loop_Cnt / 10)) //排水结束
 		{
 			g_Loop_Cnt = 0;
 			OLED_ShowString_Easy(1, 1, "               ");
@@ -146,7 +150,7 @@ void Washer_Spin_Dry()
 	else
 	{
 		g_Loop_Cnt++;
-		if (g_Spin_Dry_Time == (g_Loop_Cnt / 10)) //甩干结束
+		if (g_Washer->Spin_Dry_Time == (g_Loop_Cnt / 10)) //甩干结束
 		{
 			g_Loop_Cnt = 0;
 			g_Status_Next = WS_IDLE;
@@ -159,10 +163,10 @@ void Washer_Spin_Dry()
 			OLED_ShowString_Easy(3, 1, "NOW count:[");
 			OLED_ShowNum_Easy(3, 12, g_Wash_Cnt_Cur, 1);
 			OLED_ShowString_Easy(3, 13, "/");
-			OLED_ShowNum_Easy(3, 14, g_Wash_Cnt, 1);
+			OLED_ShowNum_Easy(3, 14, g_Washer->Wash_Cnt, 1);
 			OLED_ShowString_Easy(3, 15, "]");
 
-			if (g_Wash_Cnt == g_Wash_Cnt_Cur)
+			if (g_Washer->Wash_Cnt == g_Wash_Cnt_Cur)
 			{
 				g_Status_Next = WS_IDLE;
 			}
@@ -201,9 +205,10 @@ void Washer_Pause()
 	}
 }
 
-int8_t Washer_Run(void)
+int8_t Washer_Run(void* Param)
 {
-	Washer_Init();
+	if (!Washer_Init((Washer*)Param)) return -1;
+
 	while (1)
 	{
 		switch (g_Status_Next)

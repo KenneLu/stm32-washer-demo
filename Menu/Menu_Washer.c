@@ -6,33 +6,13 @@
 #include <stdlib.h>
 #include "Washer.h"
 
-typedef enum
-{
-	FAST,
-	STANDERD,
-	HARD,
-	SWING,
-	HEAT
-} Wash_Mode;
 
-typedef struct
-{
-	Wash_Mode Mode;			//洗衣模式
-	uint8_t Wash_Count;		//漂洗次数（次）
-	uint8_t Wash_Time;		//洗涤时间（分）
-	uint8_t Spin_Dry_Time;	//脱水时间（分）
-	uint8_t Water_Volume;	//水量(升)
-	uint8_t Water_Temp;		//水温（℃）
-	uint8_t Heat_Temp;		//烘干温度（℃）
-	uint8_t Total_Time;		//洗衣时间总和（小时-分）
-} Washer;
-
-int8_t Menu_Wash_Count_Setting(void);
-int8_t Menu_Wash_Time_Setting(void);
-int8_t Menu_Spin_Dry_Time_Setting(void);
-int8_t Menu_Water_Volume_Setting(void);
-int8_t Menu_Water_Temp_Setting(void);
-int8_t Menu_Heat_Temp_Setting(void);
+int8_t Menu_Wash_Cnt_Setting(void* Param);
+int8_t Menu_Wash_Time_Setting(void* Param);
+int8_t Menu_Spin_Dry_Time_Setting(void* Param);
+int8_t Menu_Water_Volume_Setting(void* Param);
+int8_t Menu_Water_Temp_Setting(void* Param);
+int8_t Menu_Heat_Temp_Setting(void* Param);
 
 char* Uchar2Str(unsigned char Num);
 void Insert_SubString(char* Str, char* SubStr, int Index);
@@ -42,10 +22,10 @@ uint8_t GetIndex(uint8_t* List, uint8_t Val, uint8_t ListSize);
 Wash_Mode CurMode;
 
 //Washer
-Washer Fast, Standard, Hard, Spin_Dry, Heat_Dry;
+Washer Fast, Standard, Hard, Spin_Dry, Heat_Dry, CurWasher;
 
 //List
-uint8_t List_Wash_Count[] = { 2, 3, 4, 5 }; //次
+uint8_t List_Wash_Cnt[] = { 2, 3, 4, 5 }; //次
 uint8_t List_Wash_Time[] = { 5, 10, 15, 20 };	//分
 uint8_t List_Spin_Dry_Time[] = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };	//分
 uint8_t List_Water_Volume[] = { 3, 4, 5, 6, 7, 8, 9, 10 };	//升
@@ -53,7 +33,7 @@ uint8_t List_Water_Temp[] = { 0, 20, 30, 40, 50 };	//℃，0度就是常温
 uint8_t List_Heat_Temp[] = { 40, 45, 50, 60, 70 };	//℃
 
 //pointer
-uint8_t* pL_Wash_Count = List_Wash_Count;
+uint8_t* pL_Wash_Cnt = List_Wash_Cnt;
 uint8_t* pL_Wash_Time = List_Wash_Time;
 uint8_t* pL_Spin_Dry_Time = List_Spin_Dry_Time;
 uint8_t* pL_Water_Volume = List_Water_Volume;
@@ -61,14 +41,14 @@ uint8_t* pL_Water_Temp = List_Water_Temp;
 uint8_t* pL_Heat_Temp = List_Heat_Temp;
 
 //Options
-Option_Class Options_Wash_Count[sizeof(List_Wash_Count) + 1];
-Option_Class Options_Wash_Time[sizeof(List_Wash_Time) + 1];
-Option_Class Options_Spin_Dry_Time[sizeof(List_Spin_Dry_Time) + 1];
-Option_Class Options_Water_Volume[sizeof(List_Water_Volume) + 1];
-Option_Class Options_Water_Temp[sizeof(List_Water_Temp) + 1];
-Option_Class Options_Heat_Temp[sizeof(List_Heat_Temp) + 1];
-Option_Class Option_Main_Menu[] = {
-		{ "快速洗", Menu_Fast},
+Option_Class Opt_Wash_Cnt[sizeof(List_Wash_Cnt) + 1];
+Option_Class Opt_Wash_Time[sizeof(List_Wash_Time) + 1];
+Option_Class Opt_Spin_Dry_Time[sizeof(List_Spin_Dry_Time) + 1];
+Option_Class Opt_Water_Volume[sizeof(List_Water_Volume) + 1];
+Option_Class Opt_Water_Temp[sizeof(List_Water_Temp) + 1];
+Option_Class Opt_Heat_Temp[sizeof(List_Heat_Temp) + 1];
+Option_Class Opt_Main_Menu[] = {
+		{ "快速洗", Menu_Fast,},
 		{ "标准洗", Menu_Standard},
 		{ "强力洗", Menu_Hard},
 		{ "脱水", Menu_Spin_Dry},
@@ -76,95 +56,96 @@ Option_Class Option_Main_Menu[] = {
 		{ ".." }	//结尾标志,方便自动计算数量
 };
 
-Option_Class Options_Wash[] = {
-		{ "启动", Washer_Run},
-		{ "漂洗[次]", Menu_Wash_Count_Setting},
+Option_Class Opt_Wash[] = {
+		{ "启动", Washer_Run, &CurWasher},
+		{ "漂洗[次]", Menu_Wash_Cnt_Setting},
 		{ "洗涤[分]", Menu_Wash_Time_Setting},
 		{ "脱水[分]", Menu_Spin_Dry_Time_Setting},
 		{ "水量[升]", Menu_Water_Volume_Setting},
 		{ "水温[℃]", Menu_Water_Temp_Setting},
 		{ ".." }
 };
-Option_Class Options_Wash_Cur[sizeof(Options_Wash)];
+Option_Class Opt_Wash_Cur[sizeof(Opt_Wash)];
 
-Option_Class Options_Swing[] = {
-		{ "启动", },
+Option_Class Opt_Swing[] = {
+		{ "启动", Washer_Run, &CurWasher},
 		{ "脱水[分]", Menu_Spin_Dry_Time_Setting},
 		{ ".." }
 };
-Option_Class Options_Swing_Cur[sizeof(Options_Swing)];
+Option_Class Opt_Swing_Cur[sizeof(Opt_Swing)];
 
-Option_Class Options_Heat[] = {
-		{ "启动", },
+Option_Class Opt_Heat[] = {
+		{ "启动", Washer_Run, &CurWasher},
 		{ "烘干[℃]", Menu_Heat_Temp_Setting},
 		{ ".." }
 };
-Option_Class Options_Heat_Cur[sizeof(Options_Heat)];
+Option_Class Opt_Heat_Cur[sizeof(Opt_Heat)];
 
-uint8_t Wash_Options_Inited = 0;
+uint8_t Wash_Opt_Inited = 0;
+
 void Menu_Washer_Init(void)
 {
-	if (Wash_Options_Inited == 0)
+	if (Wash_Opt_Inited == 0)
 	{
 		//初始化选项
-		for (int i = 0; i < sizeof(List_Wash_Count); i++)
+		for (int i = 0; i < sizeof(List_Wash_Cnt); i++)
 		{
-			strcpy(Options_Wash_Count[i].Name, Uchar2Str(List_Wash_Count[i]));
+			strcpy(Opt_Wash_Cnt[i].Name, Uchar2Str(List_Wash_Cnt[i]));
 		}
 		for (int i = 0; i < sizeof(List_Wash_Time); i++)
 		{
-			strcpy(Options_Wash_Time[i].Name, Uchar2Str(List_Wash_Time[i]));
+			strcpy(Opt_Wash_Time[i].Name, Uchar2Str(List_Wash_Time[i]));
 		}
 		for (int i = 0; i < sizeof(List_Spin_Dry_Time); i++)
 		{
-			strcpy(Options_Spin_Dry_Time[i].Name, Uchar2Str(List_Spin_Dry_Time[i]));
+			strcpy(Opt_Spin_Dry_Time[i].Name, Uchar2Str(List_Spin_Dry_Time[i]));
 		}
 		for (int i = 0; i < sizeof(List_Water_Volume); i++)
 		{
-			strcpy(Options_Water_Volume[i].Name, Uchar2Str(List_Water_Volume[i]));
+			strcpy(Opt_Water_Volume[i].Name, Uchar2Str(List_Water_Volume[i]));
 		}
 		for (int i = 0; i < sizeof(List_Water_Temp); i++)
 		{
-			strcpy(Options_Water_Temp[i].Name, Uchar2Str(List_Water_Temp[i]));
+			strcpy(Opt_Water_Temp[i].Name, Uchar2Str(List_Water_Temp[i]));
 		}
 		for (int i = 0; i < sizeof(List_Heat_Temp); i++)
 		{
-			strcpy(Options_Heat_Temp[i].Name, Uchar2Str(List_Heat_Temp[i]));
+			strcpy(Opt_Heat_Temp[i].Name, Uchar2Str(List_Heat_Temp[i]));
 		}
-		strcpy(Options_Wash_Count[sizeof(List_Wash_Count)].Name, ".."); // 结尾标志,方便自动计算数量
-		strcpy(Options_Wash_Time[sizeof(List_Wash_Time)].Name, ".."); // 结尾标志,方便自动计算数量
-		strcpy(Options_Spin_Dry_Time[sizeof(List_Spin_Dry_Time)].Name, ".."); // 结尾标志,方便自动计算数量
-		strcpy(Options_Water_Volume[sizeof(List_Water_Volume)].Name, ".."); // 结尾标志,方便自动计算数量
-		strcpy(Options_Water_Temp[sizeof(List_Water_Temp)].Name, ".."); // 结尾标志,方便自动计算数量
-		strcpy(Options_Heat_Temp[sizeof(List_Heat_Temp)].Name, ".."); // 结尾标志,方便自动计算数量
+		strcpy(Opt_Wash_Cnt[sizeof(List_Wash_Cnt)].Name, ".."); // 结尾标志,方便自动计算数量
+		strcpy(Opt_Wash_Time[sizeof(List_Wash_Time)].Name, ".."); // 结尾标志,方便自动计算数量
+		strcpy(Opt_Spin_Dry_Time[sizeof(List_Spin_Dry_Time)].Name, ".."); // 结尾标志,方便自动计算数量
+		strcpy(Opt_Water_Volume[sizeof(List_Water_Volume)].Name, ".."); // 结尾标志,方便自动计算数量
+		strcpy(Opt_Water_Temp[sizeof(List_Water_Temp)].Name, ".."); // 结尾标志,方便自动计算数量
+		strcpy(Opt_Heat_Temp[sizeof(List_Heat_Temp)].Name, ".."); // 结尾标志,方便自动计算数量
 
-		Wash_Options_Inited = 1;
+		Wash_Opt_Inited = 1;
 	}
 
 	//初始化Washer
 	Fast.Mode = FAST;
-	Fast.Wash_Count = *pL_Wash_Count;
+	Fast.Wash_Cnt = *pL_Wash_Cnt;
 	Fast.Wash_Time = *pL_Wash_Time;
 	Fast.Spin_Dry_Time = *(pL_Spin_Dry_Time + 2);
 	Fast.Water_Volume = *pL_Water_Volume;
 	Fast.Water_Temp = *(pL_Water_Temp + 1);
-	Fast.Total_Time = *pL_Wash_Count * (Fast.Wash_Time + Fast.Spin_Dry_Time + Fast.Spin_Dry_Time);
+	Fast.Total_Time = *pL_Wash_Cnt * (Fast.Wash_Time + Fast.Spin_Dry_Time + Fast.Spin_Dry_Time);
 
 	Standard.Mode = STANDERD;
-	Standard.Wash_Count = *(pL_Wash_Count + 1);
+	Standard.Wash_Cnt = *(pL_Wash_Cnt + 1);
 	Standard.Wash_Time = *(pL_Wash_Time + 1);
 	Standard.Spin_Dry_Time = *(pL_Spin_Dry_Time + 4);
 	Standard.Water_Volume = *(pL_Water_Volume + 2);
 	Standard.Water_Temp = *(pL_Water_Temp + 1);
-	Standard.Total_Time = *pL_Wash_Count * (Standard.Wash_Time + Standard.Spin_Dry_Time + Standard.Spin_Dry_Time);
+	Standard.Total_Time = *pL_Wash_Cnt * (Standard.Wash_Time + Standard.Spin_Dry_Time + Standard.Spin_Dry_Time);
 
 	Hard.Mode = HARD;
-	Hard.Wash_Count = *(pL_Wash_Count + 2);
+	Hard.Wash_Cnt = *(pL_Wash_Cnt + 2);
 	Hard.Wash_Time = *(pL_Wash_Time + 2);
 	Hard.Spin_Dry_Time = *(pL_Spin_Dry_Time + 8);
 	Hard.Water_Volume = *(pL_Water_Volume + 5);
 	Hard.Water_Temp = *(pL_Water_Temp + 1);
-	Hard.Total_Time = *pL_Wash_Count * (Hard.Wash_Time + Hard.Spin_Dry_Time + Hard.Spin_Dry_Time);
+	Hard.Total_Time = *pL_Wash_Cnt * (Hard.Wash_Time + Hard.Spin_Dry_Time + Hard.Spin_Dry_Time);
 
 	Spin_Dry.Mode = SWING;
 	Spin_Dry.Spin_Dry_Time = *(pL_Spin_Dry_Time + 2);
@@ -175,10 +156,10 @@ void Menu_Washer_Init(void)
 }
 
 //洗衣机的主菜单
-int8_t Menu_Washer(void)
+int8_t Menu_Washer(void* Param)
 {
 	Menu_Washer_Init();
-	return  Menu_Run(Option_Main_Menu, 0);
+	return  Menu_Run(Opt_Main_Menu, 0);
 }
 
 
@@ -189,114 +170,116 @@ void Menu_Wash_Reset(Washer Washer)
 {
 	if (Washer.Mode == SWING)
 	{
-		memcpy(Options_Swing_Cur, Options_Swing, sizeof(Options_Swing) * sizeof(Option_Class));
-		Insert_SubString(Options_Swing_Cur[1].Name, Uchar2Str(Washer.Spin_Dry_Time), 7);
+		memcpy(Opt_Swing_Cur, Opt_Swing, sizeof(Opt_Swing) * sizeof(Option_Class));
+		Insert_SubString(Opt_Swing_Cur[1].Name, Uchar2Str(Washer.Spin_Dry_Time), 7);
 	}
 	else if (Washer.Mode == HEAT)
 	{
-		memcpy(Options_Heat_Cur, Options_Heat, sizeof(Options_Heat) * sizeof(Option_Class));
-		Insert_SubString(Options_Heat_Cur[1].Name, Uchar2Str(Washer.Heat_Temp), 7);
+		memcpy(Opt_Heat_Cur, Opt_Heat, sizeof(Opt_Heat) * sizeof(Option_Class));
+		Insert_SubString(Opt_Heat_Cur[1].Name, Uchar2Str(Washer.Heat_Temp), 7);
 	}
 	else
 	{
-		memcpy(Options_Wash_Cur, Options_Wash, sizeof(Options_Wash) * sizeof(Option_Class));
-		Insert_SubString(Options_Wash_Cur[1].Name, Uchar2Str(Washer.Wash_Count), 7);
-		Insert_SubString(Options_Wash_Cur[2].Name, Uchar2Str(Washer.Wash_Time), 7);
-		Insert_SubString(Options_Wash_Cur[3].Name, Uchar2Str(Washer.Spin_Dry_Time), 7);
-		Insert_SubString(Options_Wash_Cur[4].Name, Uchar2Str(Washer.Water_Volume), 7);
-		Insert_SubString(Options_Wash_Cur[5].Name, Uchar2Str(Washer.Water_Temp), 7);
+		memcpy(Opt_Wash_Cur, Opt_Wash, sizeof(Opt_Wash) * sizeof(Option_Class));
+		Insert_SubString(Opt_Wash_Cur[1].Name, Uchar2Str(Washer.Wash_Cnt), 7);
+		Insert_SubString(Opt_Wash_Cur[2].Name, Uchar2Str(Washer.Wash_Time), 7);
+		Insert_SubString(Opt_Wash_Cur[3].Name, Uchar2Str(Washer.Spin_Dry_Time), 7);
+		Insert_SubString(Opt_Wash_Cur[4].Name, Uchar2Str(Washer.Water_Volume), 7);
+		Insert_SubString(Opt_Wash_Cur[5].Name, Uchar2Str(Washer.Water_Temp), 7);
+
+		CurWasher = Washer;
 	}
 }
 
-int8_t Menu_Fast(void)
+int8_t Menu_Fast(void* Param)
 {
 	CurMode = FAST;
 	Menu_Wash_Reset(Fast);
-	return  Menu_Run(Options_Wash_Cur, 0);
+	return  Menu_Run(Opt_Wash_Cur, 0);
 }
 
-int8_t Menu_Standard(void)
+int8_t Menu_Standard(void* Param)
 {
 	CurMode = STANDERD;
 	Menu_Wash_Reset(Standard);
-	return  Menu_Run(Options_Wash_Cur, 0);
+	return  Menu_Run(Opt_Wash_Cur, 0);
 }
 
-int8_t Menu_Hard(void)
+int8_t Menu_Hard(void* Param)
 {
 	CurMode = HARD;
 	Menu_Wash_Reset(Hard);
-	return  Menu_Run(Options_Wash_Cur, 0);
+	return  Menu_Run(Opt_Wash_Cur, 0);
 }
 
-int8_t Menu_Spin_Dry(void)
+int8_t Menu_Spin_Dry(void* Param)
 {
 	CurMode = SWING;
 	Menu_Wash_Reset(Spin_Dry);
-	return  Menu_Run(Options_Swing_Cur, 0);
+	return  Menu_Run(Opt_Swing_Cur, 0);
 }
 
-int8_t Menu_Heat_Dry(void)
+int8_t Menu_Heat_Dry(void* Param)
 {
 	CurMode = HEAT;
 	Menu_Wash_Reset(Heat_Dry);
-	return  Menu_Run(Options_Heat_Cur, 0);
+	return  Menu_Run(Opt_Heat_Cur, 0);
 }
 
 
 //-------------------------------------------------------------------
 
 
-int8_t Menu_Wash_Count_Setting(void)
+int8_t Menu_Wash_Cnt_Setting(void* Param)
 {
 	int8_t Child_Catch_i;
 	uint8_t New_Val;
 	switch (CurMode)
 	{
 	case FAST:
-		Child_Catch_i = Menu_Run(Options_Wash_Count, GetIndex(List_Wash_Count, Fast.Wash_Count, sizeof(List_Wash_Count)));
-		New_Val = List_Wash_Count[Child_Catch_i];
-		Fast.Wash_Count = New_Val;
+		Child_Catch_i = Menu_Run(Opt_Wash_Cnt, GetIndex(List_Wash_Cnt, Fast.Wash_Cnt, sizeof(List_Wash_Cnt)));
+		New_Val = List_Wash_Cnt[Child_Catch_i];
+		Fast.Wash_Cnt = New_Val;
 		Menu_Wash_Reset(Fast);
 		break;
 	case STANDERD:
-		Child_Catch_i = Menu_Run(Options_Wash_Count, GetIndex(List_Wash_Count, Standard.Wash_Count, sizeof(List_Wash_Count)));
-		New_Val = List_Wash_Count[Child_Catch_i];
-		Standard.Wash_Count = New_Val;
+		Child_Catch_i = Menu_Run(Opt_Wash_Cnt, GetIndex(List_Wash_Cnt, Standard.Wash_Cnt, sizeof(List_Wash_Cnt)));
+		New_Val = List_Wash_Cnt[Child_Catch_i];
+		Standard.Wash_Cnt = New_Val;
 		Menu_Wash_Reset(Standard);
 		break;
 	case HARD:
-		Child_Catch_i = Menu_Run(Options_Wash_Count, GetIndex(List_Wash_Count, Hard.Wash_Count, sizeof(List_Wash_Count)));
-		New_Val = List_Wash_Count[Child_Catch_i];
-		Hard.Wash_Count = New_Val;
+		Child_Catch_i = Menu_Run(Opt_Wash_Cnt, GetIndex(List_Wash_Cnt, Hard.Wash_Cnt, sizeof(List_Wash_Cnt)));
+		New_Val = List_Wash_Cnt[Child_Catch_i];
+		Hard.Wash_Cnt = New_Val;
 		Menu_Wash_Reset(Hard);
 		break;
 	default:
 		break;
 	}
-	return  Menu_Run(Options_Wash_Cur, 1);
+	return  Menu_Run(Opt_Wash_Cur, 1);
 }
 
-int8_t Menu_Wash_Time_Setting(void)
+int8_t Menu_Wash_Time_Setting(void* Param)
 {
 	int8_t Child_Catch_i;
 	uint8_t New_Val;
 	switch (CurMode)
 	{
 	case FAST:
-		Child_Catch_i = Menu_Run(Options_Wash_Time, GetIndex(List_Wash_Time, Fast.Wash_Time, sizeof(List_Wash_Time)));
+		Child_Catch_i = Menu_Run(Opt_Wash_Time, GetIndex(List_Wash_Time, Fast.Wash_Time, sizeof(List_Wash_Time)));
 		New_Val = List_Wash_Time[Child_Catch_i];
 		Fast.Wash_Time = New_Val;
 		Menu_Wash_Reset(Fast);
 		break;
 	case STANDERD:
-		Child_Catch_i = Menu_Run(Options_Wash_Time, GetIndex(List_Wash_Time, Standard.Wash_Time, sizeof(List_Wash_Time)));
+		Child_Catch_i = Menu_Run(Opt_Wash_Time, GetIndex(List_Wash_Time, Standard.Wash_Time, sizeof(List_Wash_Time)));
 		New_Val = List_Wash_Time[Child_Catch_i];
 		Standard.Wash_Time = New_Val;
 		Menu_Wash_Reset(Standard);
 		break;
 	case HARD:
-		Child_Catch_i = Menu_Run(Options_Wash_Time, GetIndex(List_Wash_Time, Hard.Wash_Time, sizeof(List_Wash_Time)));
+		Child_Catch_i = Menu_Run(Opt_Wash_Time, GetIndex(List_Wash_Time, Hard.Wash_Time, sizeof(List_Wash_Time)));
 		New_Val = List_Wash_Time[Child_Catch_i];
 		Hard.Wash_Time = New_Val;
 		Menu_Wash_Reset(Hard);
@@ -304,35 +287,35 @@ int8_t Menu_Wash_Time_Setting(void)
 	default:
 		break;
 	}
-	return  Menu_Run(Options_Wash_Cur, 2);
+	return  Menu_Run(Opt_Wash_Cur, 2);
 }
 
-int8_t Menu_Spin_Dry_Time_Setting(void)
+int8_t Menu_Spin_Dry_Time_Setting(void* Param)
 {
 	int8_t Child_Catch_i;
 	uint8_t New_Val;
 	switch (CurMode)
 	{
 	case FAST:
-		Child_Catch_i = Menu_Run(Options_Spin_Dry_Time, GetIndex(List_Spin_Dry_Time, Fast.Spin_Dry_Time, sizeof(List_Spin_Dry_Time)));
+		Child_Catch_i = Menu_Run(Opt_Spin_Dry_Time, GetIndex(List_Spin_Dry_Time, Fast.Spin_Dry_Time, sizeof(List_Spin_Dry_Time)));
 		New_Val = List_Spin_Dry_Time[Child_Catch_i];
 		Fast.Spin_Dry_Time = New_Val;
 		Menu_Wash_Reset(Fast);
 		break;
 	case STANDERD:
-		Child_Catch_i = Menu_Run(Options_Spin_Dry_Time, GetIndex(List_Spin_Dry_Time, Standard.Spin_Dry_Time, sizeof(List_Spin_Dry_Time)));
+		Child_Catch_i = Menu_Run(Opt_Spin_Dry_Time, GetIndex(List_Spin_Dry_Time, Standard.Spin_Dry_Time, sizeof(List_Spin_Dry_Time)));
 		New_Val = List_Spin_Dry_Time[Child_Catch_i];
 		Standard.Spin_Dry_Time = New_Val;
 		Menu_Wash_Reset(Standard);
 		break;
 	case HARD:
-		Child_Catch_i = Menu_Run(Options_Spin_Dry_Time, GetIndex(List_Spin_Dry_Time, Hard.Spin_Dry_Time, sizeof(List_Spin_Dry_Time)));
+		Child_Catch_i = Menu_Run(Opt_Spin_Dry_Time, GetIndex(List_Spin_Dry_Time, Hard.Spin_Dry_Time, sizeof(List_Spin_Dry_Time)));
 		New_Val = List_Spin_Dry_Time[Child_Catch_i];
 		Hard.Spin_Dry_Time = New_Val;
 		Menu_Wash_Reset(Hard);
 		break;
 	case SWING:
-		Child_Catch_i = Menu_Run(Options_Spin_Dry_Time, GetIndex(List_Spin_Dry_Time, Spin_Dry.Spin_Dry_Time, sizeof(List_Spin_Dry_Time)));
+		Child_Catch_i = Menu_Run(Opt_Spin_Dry_Time, GetIndex(List_Spin_Dry_Time, Spin_Dry.Spin_Dry_Time, sizeof(List_Spin_Dry_Time)));
 		New_Val = List_Spin_Dry_Time[Child_Catch_i];
 		Spin_Dry.Spin_Dry_Time = New_Val;
 		Menu_Wash_Reset(Spin_Dry);
@@ -340,31 +323,31 @@ int8_t Menu_Spin_Dry_Time_Setting(void)
 	default:
 		break;
 	}
-	if (CurMode == SWING) return  Menu_Run(Options_Swing_Cur, 1);
-	else return  Menu_Run(Options_Wash_Cur, 3);
+	if (CurMode == SWING) return  Menu_Run(Opt_Swing_Cur, 1);
+	else return  Menu_Run(Opt_Wash_Cur, 3);
 
 }
 
-int8_t Menu_Water_Volume_Setting(void)
+int8_t Menu_Water_Volume_Setting(void* Param)
 {
 	int8_t Child_Catch_i;
 	uint8_t New_Val;
 	switch (CurMode)
 	{
 	case FAST:
-		Child_Catch_i = Menu_Run(Options_Water_Volume, GetIndex(List_Water_Volume, Fast.Water_Volume, sizeof(List_Water_Volume)));
+		Child_Catch_i = Menu_Run(Opt_Water_Volume, GetIndex(List_Water_Volume, Fast.Water_Volume, sizeof(List_Water_Volume)));
 		New_Val = List_Water_Volume[Child_Catch_i];
 		Fast.Water_Volume = New_Val;
 		Menu_Wash_Reset(Fast);
 		break;
 	case STANDERD:
-		Child_Catch_i = Menu_Run(Options_Water_Volume, GetIndex(List_Water_Volume, Standard.Water_Volume, sizeof(List_Water_Volume)));
+		Child_Catch_i = Menu_Run(Opt_Water_Volume, GetIndex(List_Water_Volume, Standard.Water_Volume, sizeof(List_Water_Volume)));
 		New_Val = List_Water_Volume[Child_Catch_i];
 		Standard.Water_Volume = New_Val;
 		Menu_Wash_Reset(Standard);
 		break;
 	case HARD:
-		Child_Catch_i = Menu_Run(Options_Water_Volume, GetIndex(List_Water_Volume, Hard.Water_Volume, sizeof(List_Water_Volume)));
+		Child_Catch_i = Menu_Run(Opt_Water_Volume, GetIndex(List_Water_Volume, Hard.Water_Volume, sizeof(List_Water_Volume)));
 		New_Val = List_Water_Volume[Child_Catch_i];
 		Hard.Water_Volume = New_Val;
 		Menu_Wash_Reset(Hard);
@@ -372,29 +355,29 @@ int8_t Menu_Water_Volume_Setting(void)
 	default:
 		break;
 	}
-	return  Menu_Run(Options_Wash_Cur, 4);
+	return  Menu_Run(Opt_Wash_Cur, 4);
 }
 
-int8_t Menu_Water_Temp_Setting(void)
+int8_t Menu_Water_Temp_Setting(void* Param)
 {
 	int8_t Child_Catch_i;
 	uint8_t New_Val;
 	switch (CurMode)
 	{
 	case FAST:
-		Child_Catch_i = Menu_Run(Options_Water_Temp, GetIndex(List_Water_Temp, Fast.Water_Temp, sizeof(List_Water_Temp)));
+		Child_Catch_i = Menu_Run(Opt_Water_Temp, GetIndex(List_Water_Temp, Fast.Water_Temp, sizeof(List_Water_Temp)));
 		New_Val = List_Water_Temp[Child_Catch_i];
 		Fast.Water_Temp = New_Val;
 		Menu_Wash_Reset(Fast);
 		break;
 	case STANDERD:
-		Child_Catch_i = Menu_Run(Options_Water_Temp, GetIndex(List_Water_Temp, Standard.Water_Temp, sizeof(List_Water_Temp)));
+		Child_Catch_i = Menu_Run(Opt_Water_Temp, GetIndex(List_Water_Temp, Standard.Water_Temp, sizeof(List_Water_Temp)));
 		New_Val = List_Water_Temp[Child_Catch_i];
 		Standard.Water_Temp = New_Val;
 		Menu_Wash_Reset(Standard);
 		break;
 	case HARD:
-		Child_Catch_i = Menu_Run(Options_Water_Temp, GetIndex(List_Water_Temp, Hard.Water_Temp, sizeof(List_Water_Temp)));
+		Child_Catch_i = Menu_Run(Opt_Water_Temp, GetIndex(List_Water_Temp, Hard.Water_Temp, sizeof(List_Water_Temp)));
 		New_Val = List_Water_Temp[Child_Catch_i];
 		Hard.Water_Temp = New_Val;
 		Menu_Wash_Reset(Hard);
@@ -402,17 +385,17 @@ int8_t Menu_Water_Temp_Setting(void)
 	default:
 		break;
 	}
-	return  Menu_Run(Options_Wash_Cur, 5);
+	return  Menu_Run(Opt_Wash_Cur, 5);
 }
 
-int8_t Menu_Heat_Temp_Setting(void)
+int8_t Menu_Heat_Temp_Setting(void* Param)
 {
 	int8_t Child_Catch_i;
 	uint8_t New_Val;
 	switch (CurMode)
 	{
 	case HEAT:
-		Child_Catch_i = Menu_Run(Options_Heat_Temp, GetIndex(List_Heat_Temp, Heat_Dry.Heat_Temp, sizeof(List_Heat_Temp)));
+		Child_Catch_i = Menu_Run(Opt_Heat_Temp, GetIndex(List_Heat_Temp, Heat_Dry.Heat_Temp, sizeof(List_Heat_Temp)));
 		New_Val = List_Heat_Temp[Child_Catch_i];
 		Heat_Dry.Heat_Temp = New_Val;
 		Menu_Wash_Reset(Heat_Dry);
@@ -420,7 +403,7 @@ int8_t Menu_Heat_Temp_Setting(void)
 	default:
 		break;
 	}
-	return  Menu_Run(Options_Heat_Cur, 1);
+	return  Menu_Run(Opt_Heat_Cur, 1);
 }
 
 

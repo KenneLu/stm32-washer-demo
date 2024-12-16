@@ -10,7 +10,7 @@
   * 说    明：按照格式添加选项
 
   */
-int8_t Main_Menu(void)
+int8_t Main_Menu(void* Param)
 {
 	Option_Class option_list[] = {
 		{"关机"},
@@ -24,7 +24,7 @@ int8_t Main_Menu(void)
 	return Menu_Run(option_list, 0);
 }
 
-int8_t Tools_Menu(void)
+int8_t Tools_Menu(void* Param)
 {
 	Option_Class option_list[] = {
 		{"退出"},
@@ -42,7 +42,7 @@ int8_t Tools_Menu(void)
 	return Menu_Run(option_list, 0);
 }
 
-int8_t Games_Menu(void)
+int8_t Games_Menu(void* Param)
 {
 	Option_Class option_list[] = {
 		{"<<<"},
@@ -54,7 +54,7 @@ int8_t Games_Menu(void)
 	return Menu_Run(option_list, 0);
 }
 
-int8_t Information_Menu(void)
+int8_t Information_Menu(void* Param)
 {
 	int16_t Angle = 350;
 	while (1)

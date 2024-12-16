@@ -1,8 +1,8 @@
 #include "Menu.h" 
 #include <string.h>
 
-int8_t Set_CursorStyle(void);
-int8_t Set_animation_speed(void);
+int8_t Set_CursorStyle(void* Param);
+int8_t Set_animation_speed(void* Param);
 
 
 Option_Class option_list[] = {
@@ -12,7 +12,7 @@ Option_Class option_list[] = {
 	{".."}
 };
 
-int8_t Set_CursorStyle(void)
+int8_t Set_CursorStyle(void* Param)
 {
 	if (CurStyle == reverse)
 	{
@@ -32,7 +32,7 @@ int8_t Set_CursorStyle(void)
 	return -1;
 }
 
-int8_t Set_animation_speed(void)
+int8_t Set_animation_speed(void* Param)
 {
 	if (Speed_Factor == 8)
 	{
@@ -55,7 +55,7 @@ int8_t Set_animation_speed(void)
 	return -1;
 }
 
-int8_t Setting_Menu(void)
+int8_t Setting_Menu(void* Param)
 {
 	return Menu_Run(option_list, 0);
 }

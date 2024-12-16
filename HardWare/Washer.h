@@ -16,6 +16,27 @@
 	STATUS(WS_PAUSE)        /*暂停状态*/               \
 	STATUS(WS_NUM)          /*状态总数(无效状态)*/ 
 
-int8_t Washer_Run(void);
+typedef enum
+{
+	FAST,
+	STANDERD,
+	HARD,
+	SWING,
+	HEAT
+} Wash_Mode;
+
+typedef struct
+{
+	Wash_Mode Mode;			//洗衣模式
+	uint8_t Wash_Cnt;		//漂洗次数（次）
+	uint8_t Wash_Time;		//洗涤时间（分）
+	uint8_t Spin_Dry_Time;	//脱水时间（分）
+	uint8_t Water_Volume;	//水量(升)
+	uint8_t Water_Temp;		//水温（℃）
+	uint8_t Heat_Temp;		//烘干温度（℃）
+	uint8_t Total_Time;		//洗衣时间总和（小时-分）
+} Washer;
+
+int8_t Washer_Run(void* Param);
 
 #endif

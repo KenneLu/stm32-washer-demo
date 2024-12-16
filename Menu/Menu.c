@@ -152,16 +152,16 @@ int8_t Menu_Run(Option_Class* Option, int8_t Choose)
 		if (Menu_Enter_Event())			//获取按键
 		{
 			// /*如果功能不为空则执行功能，否则返回。这种情况如果在函数中打开子菜单，则会导致死循环。适用原来的Main_Menu()系列*/
-			// if (Option[Catch_i].func)
+			// if (Option[Catch_i].Func)
 			// {
-			// 	Option[Catch_i].func();
+			// 	Option[Catch_i].Func();
 			// }
 			// else return Catch_i;
 
 			/*不论是否有功能科执行，都返回。这种情况如果函数里没有打开子菜单，则会导致过度返回一页。适用当前Washer_Menu()系列*/
-			if (Option[Catch_i].func)
+			if (Option[Catch_i].Func)
 			{
-				Option[Catch_i].func();
+				Option[Catch_i].Func(Option[Catch_i].pFuncParam);
 			}
 			return Catch_i;	// 返回子菜单选中下标
 		}
