@@ -83,7 +83,7 @@ void Game_Of_Life_Seed(int16_t seed)		//游戏初始化种子
 	Update_Display();
 }
 
-void Game_Of_Life_Play(void)		//游戏开始
+int8_t Game_Of_Life_Play(void)		//游戏开始
 {
 	uint8_t x1 = 8, x2 = 16, y1 = 32, y2 = 32;
 	int8_t shift = -1;
@@ -118,7 +118,7 @@ void Game_Of_Life_Play(void)		//游戏开始
 		//Delay_ms(100);
 
 		if (Menu_Enter_Event()) { shift = -shift; }
-		if (Menu_Back_Event()) { return; }
+		if (Menu_Back_Event()) { return -1; }
 	}
 }
 

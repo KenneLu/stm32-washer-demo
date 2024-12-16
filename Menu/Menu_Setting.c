@@ -1,9 +1,18 @@
 #include "Menu.h" 
 #include <string.h>
 
-option_class option_list[];
+int8_t Set_CursorStyle(void);
+int8_t Set_animation_speed(void);
 
-void Set_CursorStyle(void)
+
+Option_Class option_list[] = {
+	{"退出"},
+	{"光标风格[反相]", Set_CursorStyle},
+	{"动画速度[快]", Set_animation_speed},
+	{".."}
+};
+
+int8_t Set_CursorStyle(void)
 {
 	if (CurStyle == reverse)
 	{
@@ -20,9 +29,10 @@ void Set_CursorStyle(void)
 		CurStyle = reverse;
 		strcpy(option_list[1].Name, "光标风格[反相]");
 	}
+	return -1;
 }
 
-void Set_animation_speed(void)
+int8_t Set_animation_speed(void)
 {
 	if (Speed_Factor == 8)
 	{
@@ -42,15 +52,10 @@ void Set_animation_speed(void)
 		Roll_Speed = 2;
 		strcpy(option_list[2].Name, "动画速度[快]");
 	}
+	return -1;
 }
 
-void Setting_Menu(void)
+int8_t Setting_Menu(void)
 {
-	Menu_Run(option_list, 0);
+	return Menu_Run(option_list, 0);
 }
-option_class option_list[] = {
-	{"退出"},
-	{"光标风格[反相]", Set_CursorStyle},
-	{"动画速度[快]", Set_animation_speed},
-	{".."}
-};

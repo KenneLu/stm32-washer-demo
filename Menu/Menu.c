@@ -43,7 +43,7 @@ void Menu_Init(void)
   * 返 回 值：无
   * 说    明：把选项列表显示出来,并根据按键事件执行相应操作
   */
-int8_t Menu_Run(option_class* Option, int8_t Choose)
+int8_t Menu_Run(Option_Class* Option, int8_t Choose)
 {
 	int8_t Catch_i = Choose;	//选中下标
 	int8_t Cursor_i = Choose;	//光标下标

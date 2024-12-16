@@ -168,7 +168,7 @@ void Game_Snake_Play(Game_Snake_Class* Snake)		//开始游戏
 	}
 }
 
-void Game_Snake_Init(void)
+int8_t Game_Snake_Init(void)
 {
 	Game_Credits = 0;
 	Game_Speed = 200;
@@ -190,5 +190,5 @@ void Game_Snake_Init(void)
 	Game_Snake_Play(&Snake_1);
 
 	Encoder_Get_Div4();
-	return;
+	return -1;
 }

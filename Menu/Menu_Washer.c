@@ -66,13 +66,13 @@ uint8_t* pL_Water_Temp = List_Water_Temp;
 uint8_t* pL_Heat_Temp = List_Heat_Temp;
 
 //Options
-option_class Options_Wash_Count[sizeof(List_Wash_Count) + 1];
-option_class Options_Wash_Time[sizeof(List_Wash_Time) + 1];
-option_class Options_Swing_Dry_Time[sizeof(List_Swing_Dry_Time) + 1];
-option_class Options_Water_Volume[sizeof(List_Water_Volume) + 1];
-option_class Options_Water_Temp[sizeof(List_Water_Temp) + 1];
-option_class Options_Heat_Temp[sizeof(List_Heat_Temp) + 1];
-option_class Option_Main_Menu[] = {
+Option_Class Options_Wash_Count[sizeof(List_Wash_Count) + 1];
+Option_Class Options_Wash_Time[sizeof(List_Wash_Time) + 1];
+Option_Class Options_Swing_Dry_Time[sizeof(List_Swing_Dry_Time) + 1];
+Option_Class Options_Water_Volume[sizeof(List_Water_Volume) + 1];
+Option_Class Options_Water_Temp[sizeof(List_Water_Temp) + 1];
+Option_Class Options_Heat_Temp[sizeof(List_Heat_Temp) + 1];
+Option_Class Option_Main_Menu[] = {
 		{ "快速洗", Fast_Menu},
 		{ "标准洗", Standard_Wash_Menu},
 		{ "强力洗", Hard_Wash_Menu},
@@ -81,7 +81,7 @@ option_class Option_Main_Menu[] = {
 		{ ".." }	//结尾标志,方便自动计算数量
 };
 
-option_class Options_Wash[] = {
+Option_Class Options_Wash[] = {
 		{ "启动", },
 		{ "漂洗[次]", Wash_Count_Setting},
 		{ "洗涤[分]", Wash_Time_Setting},
@@ -90,21 +90,21 @@ option_class Options_Wash[] = {
 		{ "水温[℃]", Water_Temp_Setting},
 		{ ".." }
 };
-option_class Options_Wash_Cur[sizeof(Options_Wash)];
+Option_Class Options_Wash_Cur[sizeof(Options_Wash)];
 
-option_class Options_Swing[] = {
+Option_Class Options_Swing[] = {
 		{ "启动", },
 		{ "脱水[分]", Swing_Dry_Time_Setting},
 		{ ".." }
 };
-option_class Options_Swing_Cur[sizeof(Options_Swing)];
+Option_Class Options_Swing_Cur[sizeof(Options_Swing)];
 
-option_class Options_Heat[] = {
+Option_Class Options_Heat[] = {
 		{ "启动", },
 		{ "烘干[℃]", Heat_Temp_Setting},
 		{ ".." }
 };
-option_class Options_Heat_Cur[sizeof(Options_Heat)];
+Option_Class Options_Heat_Cur[sizeof(Options_Heat)];
 
 uint8_t Wash_Options_Inited = 0;
 void Washer_Init(void)
@@ -194,17 +194,17 @@ void Wash_Menu_Reset(Washer Washer)
 {
 	if (Washer.Mode == SWING)
 	{
-		memcpy(Options_Swing_Cur, Options_Swing, sizeof(Options_Swing) * sizeof(option_class));
+		memcpy(Options_Swing_Cur, Options_Swing, sizeof(Options_Swing) * sizeof(Option_Class));
 		Insert_SubString(Options_Swing_Cur[1].Name, Uchar2Str(Washer.Swing_Dry_Time), 7);
 	}
 	else if (Washer.Mode == HEAT)
 	{
-		memcpy(Options_Heat_Cur, Options_Heat, sizeof(Options_Heat) * sizeof(option_class));
+		memcpy(Options_Heat_Cur, Options_Heat, sizeof(Options_Heat) * sizeof(Option_Class));
 		Insert_SubString(Options_Heat_Cur[1].Name, Uchar2Str(Washer.Heat_Temp), 7);
 	}
 	else
 	{
-		memcpy(Options_Wash_Cur, Options_Wash, sizeof(Options_Wash) * sizeof(option_class));
+		memcpy(Options_Wash_Cur, Options_Wash, sizeof(Options_Wash) * sizeof(Option_Class));
 		Insert_SubString(Options_Wash_Cur[1].Name, Uchar2Str(Washer.Wash_Count), 7);
 		Insert_SubString(Options_Wash_Cur[2].Name, Uchar2Str(Washer.Wash_Time), 7);
 		Insert_SubString(Options_Wash_Cur[3].Name, Uchar2Str(Washer.Swing_Dry_Time), 7);
