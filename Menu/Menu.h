@@ -36,11 +36,11 @@ int8_t Games_Menu(void);
 int8_t Setting_Menu(void);
 int8_t Information_Menu(void);
 
-int8_t Washer_Menu(void);
-int8_t Fast_Menu(void);
-int8_t Standard_Menu(void);
-int8_t Hard_Menu(void);
-int8_t Spin_Dry_Menu(void);
-int8_t Heat_Dry_Menu(void);
+int8_t Menu_Washer(void);
+int8_t Menu_Fast(void);
+int8_t Menu_Standard(void);
+int8_t Menu_Hard(void);
+int8_t Menu_Spin_Dry(void);
+int8_t Menu_Heat_Dry(void);
 
 #endif

@@ -1,4 +1,5 @@
 #include "Timer.h"
+#include "stm32F10x.h"
 
 #ifndef _KEY_H_
 #define _KEY_H_
