@@ -63,22 +63,25 @@ int8_t Menu_Run(Option_Class* Option, int8_t Choose)
 
 	int8_t Show_d = 0, Show_i_temp = Max;				//显示动画相关;
 
+	int Init_Flag = 1;	// 首次运行更新一下，以显示指定位置
 	while (1)
 	{
 		OLED_Clear();
 
 		Roll_Event = Menu_Roll_Event();				//获取滚动事件
-		if (Roll_Event)								//如果有按键事件;
+		if (Init_Flag || Roll_Event)				//如果有按键事件;
 		{
 			Cursor_i += Roll_Event;					//更新下标
 			Catch_i += Roll_Event;
 
-			if (Catch_i < 0) { Catch_i = 0; }			//限制选中下标
+			if (Catch_i < 0) { Catch_i = 0; }		//限制选中下标
 			if (Catch_i > Max) { Catch_i = Max; }
 
 			if (Cursor_i < 0) { Cursor_i = 0; }		//限制光标位置
 			if (Cursor_i > 3) { Cursor_i = 3; }
 			if (Cursor_i > Max) { Cursor_i = Max; }
+
+			Init_Flag = 0;
 		}
 
 		/**********************************************************/
@@ -141,7 +144,7 @@ int8_t Menu_Run(Option_Class* Option, int8_t Choose)
 			OLED_DrawRectangle(0, Cursor_i_d0, Cursor_len_d0, WORD_H, 0);		//矩形光标
 		}
 
-		OLED_ShowNum(116, 56, Catch_i, 2, OLED_6X8);							//右下角显示选中下标;
+		OLED_ShowNum(116, 56, Catch_i + 1, 2, OLED_6X8);						//右下角显示选中下标;
 		OLED_Update();
 		//int delay = 1000000; while(delay--);
 	/**********************************************************/

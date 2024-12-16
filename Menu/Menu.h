@@ -37,10 +37,10 @@ int8_t Setting_Menu(void);
 int8_t Information_Menu(void);
 
 int8_t Washer_Menu(void);
-int8_t Fast_Wash_Menu(void);
-int8_t Standard_Wash_Menu(void);
-int8_t Hard_Wash_Menu(void);
-int8_t Swing_Dry_Menu(void);
+int8_t Fast_Menu(void);
+int8_t Standard_Menu(void);
+int8_t Hard_Menu(void);
+int8_t Spin_Dry_Menu(void);
 int8_t Heat_Dry_Menu(void);
 
 #endif
