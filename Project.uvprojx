@@ -810,6 +810,16 @@
               <FileType>5</FileType>
               <FilePath>.\HardWare\W25Q64_Ins.h</FilePath>
             </File>
+            <File>
+              <FileName>Washer.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\HardWare\Washer.c</FilePath>
+            </File>
+            <File>
+              <FileName>Washer.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\HardWare\Washer.h</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>

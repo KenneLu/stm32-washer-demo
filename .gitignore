@@ -3,7 +3,6 @@ DebugConfig/
 Listings/
 Objects/
 *.uvguix.Lenovo
-*.uvoptx
 *.scvd
 
 # VS Code & Embedded IDE plugin
