@@ -16,12 +16,12 @@ extern enum CursorStyle CurStyle;
 extern int8_t Speed_Factor;				//光标动画速度;
 extern float Roll_Speed;				//滚动动画速度;
 
+// typedef struct __attribute__((packed)) // 这种写法可以减少结构体的内存对齐，以减少对 RAM 的使用
 typedef struct
 {
-	char Name[20];			//选项名字，为了解决指针浅拷贝而采用数组，但是会导致内存占用过多，如果报错Error: L6406E: No space in execution regions with .ANY selector matching main.o(.bss).则继续减小这个数组的大小
+	char* Name;				//选项名字
 	int8_t(*Func)(void*);	//函数指针，可以最后选中的下标，适配设置选项值的功能。如果无需读取子菜单下标，也可以传递(void)(*Func)(void)，只会报警告。
 	void* pFuncParam;		//函数参数，可以传递任意类型的数据，适配设置选项值的功能。
-	uint8_t NameLen;		//由于中文占三个字节,用strlen计算名字宽度不再准确,故需额外储存名字宽度
 } Option_Class;
 
 void Menu_Init(void);
@@ -37,11 +37,9 @@ int8_t Games_Menu(void* Param);
 int8_t Setting_Menu(void* Param);
 int8_t Information_Menu(void* Param);
 
-int8_t Menu_Washer(void* Param);
-int8_t Menu_Fast(void* Param);
-int8_t Menu_Standard(void* Param);
-int8_t Menu_Hard(void* Param);
-int8_t Menu_Spin_Dry(void* Param);
-int8_t Menu_Heat_Dry(void* Param);
+void Menu_Washer(void);
+int8_t Menu_Washer_Mode_Select(void* Param);
+int8_t Menu_Washer_Mode_Detail(void* Param);
+int8_t Menu_Washer_Mode_Setting(void* Param);
 
 #endif

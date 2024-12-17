@@ -54,10 +54,11 @@ int8_t Menu_Run(Option_Class* Option, int8_t Choose)
 	while (Option[++Max].Name[0] != '.');// {Max++;}	//获取条目数量,如果文件名开头为'.'则为结尾;
 	Max--;											//不打印".."
 
-	for (int8_t i = 0; i <= Max; i++)				//计算选项名宽度;
-	{
-		Option[i].NameLen = Get_NameLen(Option[i].Name);
-	}
+	//占内存，且其他地方暂时用不到，所以注释掉
+	// for (int8_t i = 0; i <= Max; i++)				//计算选项名宽度;
+	// {
+	// 	Option[i].NameLen = Get_NameLen(Option[i].Name);
+	// }
 
 	static float Cursor_len_d0 = 0, Cursor_len_d1 = 0, Cursor_i_d0 = 0, Cursor_i_d1 = 0; 			//光标位置和长度的起点终点
 
@@ -115,7 +116,7 @@ int8_t Menu_Run(Option_Class* Option, int8_t Choose)
 		if (1)	//加光标动画
 		{
 			Cursor_i_d1 = Cursor_i * WORD_H;						//轮询光标目标位置
-			Cursor_len_d1 = Option[Catch_i].NameLen * 8 + 4;		//轮询光标目标宽度
+			Cursor_len_d1 = Get_NameLen(Option[Cursor_i].Name) * 8 + 4;		//轮询光标目标宽度
 
 			/*计算此次循环光标位置*///如果当前位置不是目标位置,当前位置向目标位置移动;
 			if ((Cursor_i_d1 - Cursor_i_d0) > 1) { Cursor_i_d0 += (Cursor_i_d1 - Cursor_i_d0) / Speed_Factor + 1; }
