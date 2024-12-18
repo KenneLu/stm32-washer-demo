@@ -7,6 +7,7 @@
 typedef enum
 {
     KEY_ENCODER_PRESS,
+    KEY_WASHER_POWER,
     KEYNUM,
 } KEY_ID;
 

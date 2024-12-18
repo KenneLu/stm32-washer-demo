@@ -19,11 +19,14 @@ float Roll_Speed = 2;																			//滚动动画速度系数;
 
 uint8_t Key_Enter = 0;	//确认键
 uint8_t Key_Back = 0;	//返回键
+uint8_t Key_Power = 0;	//电源键
 
 uint8_t Key_Enter_Get(void);
 uint8_t Key_Back_Get(void);
+uint8_t Key_Power_Get(void);
 void Change_Enter_Key(void);
 void Change_Back_Key(void);
+void Change_Power_Key(void);
 
 /**
   * 函    数：菜单初始化
@@ -35,6 +38,7 @@ void Menu_Init(void)
 {
 	Key_CBRegister_R(KEY_ENCODER_PRESS, Change_Enter_Key);
 	Key_CBRegister_LP(KEY_ENCODER_PRESS, Change_Back_Key);
+	Key_CBRegister_R(KEY_WASHER_POWER, Change_Power_Key);
 }
 
 /**
@@ -179,12 +183,17 @@ int8_t Menu_Roll_Event(void)//菜单滚动
 
 int8_t Menu_Enter_Event(void)//菜单确认
 {
-	return Key_Enter_Get();				//确认键接到PB14;
+	return Key_Enter_Get();
 }
 
 int8_t Menu_Back_Event(void)//菜单返回
 {
-	return Key_Back_Get();;				//返回键接到PB12;
+	return Key_Back_Get();
+}
+
+int8_t Menu_Power_Event(void)//菜单电源
+{
+	return Key_Power_Get();
 }
 
 //计算选项名宽度;
@@ -219,6 +228,16 @@ uint8_t Key_Back_Get(void)
 	return 0;
 }
 
+uint8_t Key_Power_Get(void)
+{
+	if (Key_Power)
+	{
+		Key_Power = 0;
+		return 1;
+	}
+	return 0;
+}
+
 void Change_Enter_Key(void)
 {
 	Key_Enter = 1;
@@ -228,3 +247,9 @@ void Change_Back_Key(void)
 {
 	Key_Back = 1;
 }
+
+void Change_Power_Key(void)
+{
+	Key_Power = 1;
+}
+

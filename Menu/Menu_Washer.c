@@ -14,7 +14,7 @@ void Insert_SubString(char** Str, char* SubStr, int Index);
 uint8_t GetIndex(uint8_t* List, uint8_t Val, uint8_t ListSize);
 
 //Washer
-Washer Fast, Standard, Hard, Spin_Dry, Heat_Dry, Washer_Cur;
+Washer Fast_Wash, Standard_Wash, Hard_Wash, Spin_Dry, Heat_Dry, Washer_Cur;
 
 //List
 uint8_t List_Setting_Wash_Cnt[] = { 2, 3, 4, 5 }; //次
@@ -33,35 +33,35 @@ Option_Class Opt_Setting_Water_Temp[sizeof(List_Setting_Water_Temp) + 1];
 Option_Class Opt_Setting_Heat_Temp[sizeof(List_Setting_Heat_Temp) + 1];
 
 Option_Class Opt_Mode_Select[] = {
-		{ "快速洗", Menu_Washer_Mode_Detail, &Fast},
-		{ "标准洗", Menu_Washer_Mode_Detail, &Standard},
-		{ "强力洗", Menu_Washer_Mode_Detail, &Hard},
+		{ "快速洗", Menu_Washer_Mode_Detail, &Fast_Wash},
+		{ "标准洗", Menu_Washer_Mode_Detail, &Standard_Wash},
+		{ "强力洗", Menu_Washer_Mode_Detail, &Hard_Wash},
 		{ "脱水", Menu_Washer_Mode_Detail, &Spin_Dry},
 		{ "烘干", Menu_Washer_Mode_Detail, &Heat_Dry},
 		{ ".." }	//结尾标志,方便自动计算数量
 };
 
 Option_Class Opt_Detail_Wash[] = {
-		{ "启动", Washer_Run, &Washer_Cur},
-		{ "漂洗[次]", Menu_Washer_Mode_Setting, &Opt_Setting_Wash_Cnt},
-		{ "洗涤[分]", Menu_Washer_Mode_Setting, &Opt_Setting_Wash_Time},
-		{ "脱水[分]", Menu_Washer_Mode_Setting, &Opt_Setting_Spin_Dry_Time},
-		{ "水量[升]", Menu_Washer_Mode_Setting, &Opt_Setting_Water_Volume},
-		{ "水温[℃]", Menu_Washer_Mode_Setting, &Opt_Setting_Water_Temp},
+		{ "开始运行", Washer_Run, &Washer_Cur},
+		{ "设置次数[次]", Menu_Washer_Mode_Setting, &Opt_Setting_Wash_Cnt},
+		{ "设置时长[分]", Menu_Washer_Mode_Setting, &Opt_Setting_Wash_Time},
+		{ "设置脱水[分]", Menu_Washer_Mode_Setting, &Opt_Setting_Spin_Dry_Time},
+		{ "设置水量[升]", Menu_Washer_Mode_Setting, &Opt_Setting_Water_Volume},
+		{ "设置水温[℃]", Menu_Washer_Mode_Setting, &Opt_Setting_Water_Temp},
 		{ ".." }
 };
 Option_Class Opt_Detail_Wash_Cur[sizeof(Opt_Detail_Wash)];
 
 Option_Class Opt_Detail_Spin[] = {
-		{ "启动", Washer_Run, &Washer_Cur},
-		{ "脱水[分]", Menu_Washer_Mode_Setting, &Opt_Setting_Spin_Dry_Time},
+		{ "开始运行", Washer_Run, &Washer_Cur},
+		{ "脱水时长[分]", Menu_Washer_Mode_Setting, &Opt_Setting_Spin_Dry_Time},
 		{ ".." }
 };
 Option_Class Opt_Detail_Spin_Cur[sizeof(Opt_Detail_Spin)];
 
 Option_Class Opt_Detail_Heat[] = {
-		{ "启动", Washer_Run, &Washer_Cur},
-		{ "烘干[℃]", Menu_Washer_Mode_Setting, &Opt_Setting_Heat_Temp},
+		{ "开始运行", Washer_Run, &Washer_Cur},
+		{ "烘干温度[℃]", Menu_Washer_Mode_Setting, &Opt_Setting_Heat_Temp},
 		{ ".." }
 };
 Option_Class Opt_Detail_Heat_Cur[sizeof(Opt_Detail_Heat)];
@@ -72,7 +72,7 @@ void Menu_Washer_Init(void)
 {
 	if (Wash_Opt_Inited == 0)
 	{
-		//初始化选项
+		//初始化设置
 		int i;
 		for (i = 0; i < sizeof(List_Setting_Wash_Cnt); i++)
 		{
@@ -111,7 +111,7 @@ void Menu_Washer_Init(void)
 		StrNum_2_Str(&Opt_Setting_Heat_Temp[i].Name, "..", 2); // 结尾标志,方便自动计算数量
 
 
-
+		//初始化详细
 		for (i = 0; i < sizeof(Opt_Detail_Wash) / sizeof(Option_Class); i++)
 		{
 			Opt_Detail_Wash_Cur[i].Name = malloc(strlen(Opt_Detail_Wash[i].Name) * sizeof(char));
@@ -142,35 +142,35 @@ void Menu_Washer_Init(void)
 	}
 
 	//初始化Washer
-	Fast.Mode = FAST;
-	Fast.Wash_Cnt = List_Setting_Wash_Cnt[0];
-	Fast.Wash_Time = List_Setting_Wash_Time[0];
-	Fast.Spin_Dry_Time = List_Setting_Spin_Dry_Time[2];
-	Fast.Water_Volume = List_Setting_Water_Volume[0];
-	Fast.Water_Temp = List_Setting_Water_Temp[1];
-	Fast.Total_Time = List_Setting_Wash_Cnt[0] * (Fast.Wash_Time + Fast.Spin_Dry_Time + Fast.Spin_Dry_Time);
+	Fast_Wash.Mode = M_FAST_WASH;
+	Fast_Wash.Wash_Cnt = List_Setting_Wash_Cnt[0];
+	Fast_Wash.Wash_Time = List_Setting_Wash_Time[0];
+	Fast_Wash.Spin_Dry_Time = List_Setting_Spin_Dry_Time[2];
+	Fast_Wash.Water_Volume = List_Setting_Water_Volume[0];
+	Fast_Wash.Water_Temp = List_Setting_Water_Temp[1];
+	Fast_Wash.Total_Time = List_Setting_Wash_Cnt[0] * (Fast_Wash.Wash_Time + Fast_Wash.Spin_Dry_Time + Fast_Wash.Spin_Dry_Time);
 
-	Standard.Mode = STANDERD;
-	Standard.Wash_Cnt = List_Setting_Wash_Cnt[1];
-	Standard.Wash_Time = List_Setting_Wash_Time[1];
-	Standard.Spin_Dry_Time = List_Setting_Spin_Dry_Time[4];
-	Standard.Water_Volume = List_Setting_Water_Volume[2];
-	Standard.Water_Temp = List_Setting_Water_Temp[1];
-	Standard.Total_Time = List_Setting_Wash_Cnt[0] * (Standard.Wash_Time + Standard.Spin_Dry_Time + Standard.Spin_Dry_Time);
+	Standard_Wash.Mode = M_STANDERD_WASH;
+	Standard_Wash.Wash_Cnt = List_Setting_Wash_Cnt[1];
+	Standard_Wash.Wash_Time = List_Setting_Wash_Time[1];
+	Standard_Wash.Spin_Dry_Time = List_Setting_Spin_Dry_Time[4];
+	Standard_Wash.Water_Volume = List_Setting_Water_Volume[2];
+	Standard_Wash.Water_Temp = List_Setting_Water_Temp[1];
+	Standard_Wash.Total_Time = List_Setting_Wash_Cnt[0] * (Standard_Wash.Wash_Time + Standard_Wash.Spin_Dry_Time + Standard_Wash.Spin_Dry_Time);
 
-	Hard.Mode = HARD;
-	Hard.Wash_Cnt = List_Setting_Wash_Cnt[2];
-	Hard.Wash_Time = List_Setting_Wash_Time[2];
-	Hard.Spin_Dry_Time = List_Setting_Spin_Dry_Time[8];
-	Hard.Water_Volume = List_Setting_Water_Volume[5];
-	Hard.Water_Temp = List_Setting_Water_Temp[1];
-	Hard.Total_Time = List_Setting_Wash_Cnt[0] * (Hard.Wash_Time + Hard.Spin_Dry_Time + Hard.Spin_Dry_Time);
+	Hard_Wash.Mode = M_HARD_WASH;
+	Hard_Wash.Wash_Cnt = List_Setting_Wash_Cnt[2];
+	Hard_Wash.Wash_Time = List_Setting_Wash_Time[2];
+	Hard_Wash.Spin_Dry_Time = List_Setting_Spin_Dry_Time[8];
+	Hard_Wash.Water_Volume = List_Setting_Water_Volume[5];
+	Hard_Wash.Water_Temp = List_Setting_Water_Temp[1];
+	Hard_Wash.Total_Time = List_Setting_Wash_Cnt[0] * (Hard_Wash.Wash_Time + Hard_Wash.Spin_Dry_Time + Hard_Wash.Spin_Dry_Time);
 
-	Spin_Dry.Mode = SWING;
+	Spin_Dry.Mode = M_SPIN_DRY;
 	Spin_Dry.Spin_Dry_Time = List_Setting_Spin_Dry_Time[2];
 	Spin_Dry.Total_Time = Spin_Dry.Spin_Dry_Time;
 
-	Heat_Dry.Mode = HEAT;
+	Heat_Dry.Mode = M_HEAT_DRY;
 	Heat_Dry.Heat_Temp = List_Setting_Heat_Temp[1];
 }
 
@@ -192,21 +192,21 @@ int8_t Menu_Washer_Mode_Select(void* Param)
 
 void Menu_Washer_Disaply_Refresh(Washer Washer)
 {
-	if (Washer.Mode == SWING)
+	if (Washer.Mode == M_SPIN_DRY)
 	{
 		for (int i = 0; i < sizeof(Opt_Detail_Spin) / sizeof(Option_Class); i++)
 		{
 			strcpy(Opt_Detail_Spin_Cur[i].Name, Opt_Detail_Spin[i].Name);
 		}
-		Insert_SubString(&Opt_Detail_Spin_Cur[1].Name, Uchar2Str(Washer.Spin_Dry_Time), 7);
+		Insert_SubString(&Opt_Detail_Spin_Cur[1].Name, Uchar2Str(Washer.Spin_Dry_Time), 13); //13 = 中文个数*3 + 英文个数*1
 	}
-	else if (Washer.Mode == HEAT)
+	else if (Washer.Mode == M_HEAT_DRY)
 	{
 		for (int i = 0; i < sizeof(Opt_Detail_Heat) / sizeof(Option_Class); i++)
 		{
 			strcpy(Opt_Detail_Heat_Cur[i].Name, Opt_Detail_Heat[i].Name);
 		}
-		Insert_SubString(&Opt_Detail_Heat_Cur[1].Name, Uchar2Str(Washer.Heat_Temp), 7);
+		Insert_SubString(&Opt_Detail_Heat_Cur[1].Name, Uchar2Str(Washer.Heat_Temp), 13);
 	}
 	else
 	{
@@ -214,11 +214,11 @@ void Menu_Washer_Disaply_Refresh(Washer Washer)
 		{
 			strcpy(Opt_Detail_Wash_Cur[i].Name, Opt_Detail_Wash[i].Name);
 		}
-		Insert_SubString(&Opt_Detail_Wash_Cur[1].Name, Uchar2Str(Washer.Wash_Cnt), 7);
-		Insert_SubString(&Opt_Detail_Wash_Cur[2].Name, Uchar2Str(Washer.Wash_Time), 7);
-		Insert_SubString(&Opt_Detail_Wash_Cur[3].Name, Uchar2Str(Washer.Spin_Dry_Time), 7);
-		Insert_SubString(&Opt_Detail_Wash_Cur[4].Name, Uchar2Str(Washer.Water_Volume), 7);
-		Insert_SubString(&Opt_Detail_Wash_Cur[5].Name, Uchar2Str(Washer.Water_Temp), 7);
+		Insert_SubString(&Opt_Detail_Wash_Cur[1].Name, Uchar2Str(Washer.Wash_Cnt), 13);
+		Insert_SubString(&Opt_Detail_Wash_Cur[2].Name, Uchar2Str(Washer.Wash_Time), 13);
+		Insert_SubString(&Opt_Detail_Wash_Cur[3].Name, Uchar2Str(Washer.Spin_Dry_Time), 13);
+		Insert_SubString(&Opt_Detail_Wash_Cur[4].Name, Uchar2Str(Washer.Water_Volume), 13);
+		Insert_SubString(&Opt_Detail_Wash_Cur[5].Name, Uchar2Str(Washer.Water_Temp), 13);
 
 		Washer_Cur = Washer;
 	}
@@ -233,23 +233,23 @@ int8_t Menu_Washer_Mode_Detail(void* Param)
 	int8_t Child_Catch_i = 0;
 	while (1)
 	{
-		if (pWasher->Mode == FAST)
+		if (pWasher->Mode == M_FAST_WASH)
 		{
 			Child_Catch_i = Menu_Run(Opt_Detail_Wash_Cur, Child_Catch_i);
 		}
-		else if (pWasher->Mode == STANDERD)
+		else if (pWasher->Mode == M_STANDERD_WASH)
 		{
 			Child_Catch_i = Menu_Run(Opt_Detail_Wash_Cur, Child_Catch_i);
 		}
-		else if (pWasher->Mode == HARD)
+		else if (pWasher->Mode == M_HARD_WASH)
 		{
 			Child_Catch_i = Menu_Run(Opt_Detail_Wash_Cur, Child_Catch_i);
 		}
-		else if (pWasher->Mode == SWING)
+		else if (pWasher->Mode == M_SPIN_DRY)
 		{
 			Child_Catch_i = Menu_Run(Opt_Detail_Spin_Cur, Child_Catch_i);
 		}
-		else if (pWasher->Mode == HEAT)
+		else if (pWasher->Mode == M_HEAT_DRY)
 		{
 			Child_Catch_i = Menu_Run(Opt_Detail_Heat_Cur, Child_Catch_i);
 		}

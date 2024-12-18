@@ -7,22 +7,26 @@
 #define ENUM_STRING(ITEM) #ITEM,
 
 #define WASHER_STATUS_ENUM(STATUS)                     \
-	STATUS(WS_CHECK)        /*安全自检*/               \
-	STATUS(WS_IDLE)         /*空闲(等待模式设置)状态*/ \
-	STATUS(WS_ADD_WATER)    /*加水状态*/               \
-	STATUS(WS_WASH)         /*清洗状态*/               \
-	STATUS(WS_DRAIN_WATER)  /*排水状态*/               \
-	STATUS(WS_SPIN_DRY)     /*甩干状态*/               \
-	STATUS(WS_PAUSE)        /*暂停状态*/               \
-	STATUS(WS_NUM)          /*状态总数(无效状态)*/ 
+	STATUS(S_INIT)         /*初始化状态*/             \
+	STATUS(S_PAUSE)        /*暂停状态*/               \
+	STATUS(S_ERROR)        /*异常状态*/               \
+	STATUS(S_HEAT_WATER)    /*烧水状态*/               \
+	STATUS(S_ADD_WATER)     /*加水状态*/               \
+	STATUS(S_WASH)          /*清洗状态*/               \
+	STATUS(S_DRAIN_WATER)   /*排水状态*/               \
+	STATUS(S_SPIN_DRY)      /*甩干状态*/               \
+	STATUS(S_HEAT_DRY)      /*烘干状态*/               \
+	STATUS(S_FINISH)       /*完成状态*/               \
+	STATUS(S_QUIT)       	/*退出运行*/   		       \
+	STATUS(S_NUM)          /*状态总数(无效状态)*/ 
 
 typedef enum
 {
-	FAST,
-	STANDERD,
-	HARD,
-	SWING,
-	HEAT
+	M_FAST_WASH,
+	M_STANDERD_WASH,
+	M_HARD_WASH,
+	M_SPIN_DRY,
+	M_HEAT_DRY
 } Wash_Mode;
 
 typedef struct

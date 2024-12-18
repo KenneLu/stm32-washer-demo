@@ -13,6 +13,18 @@ MY_KEY KEYS[KEYNUM] =
         .GPIO_MODE = GPIO_Mode_IPU,
         .High_Active = 0
         }
+    },
+
+    {
+    .ID = KEY_WASHER_POWER,
+    .Status = KEY_IDLE,
+    .GPIO = {
+        .GPIO_x = GPIOA,
+        .GPIO_RCC = RCC_APB2Periph_GPIOA,
+        .GPIO_PIN = GPIO_Pin_0,
+        .GPIO_MODE = GPIO_Mode_IPU,
+        .High_Active = 0
+        }
     }
 };
 
