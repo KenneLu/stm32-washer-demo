@@ -42,16 +42,21 @@ void TB6612_Motor_Breathe(void)
 
 void TB6612_Motor_SetSpeed(int8_t Speed)
 {
-    if (Speed >= 0) // 正转
+    static int8_t Speed_Cur = 0;
+    if (Speed_Cur != Speed)
     {
-        GPIO_SetBits(TB6612_GOIO_x, TB6612_GOIO_PIN_AIN1);      // 置高电平
-        GPIO_ResetBits(TB6612_GOIO_x, TB6612_GOIO_PIN_AIN2);    // 置低电平，设置方向为正转
-        PWM_SetCompare_x(TBB6612_TIM_x, TBB6612_OC_x, Speed2PWM(Speed)); // PWM设置为速度值
-    }
-    else    // 反转
-    {
-        GPIO_ResetBits(TB6612_GOIO_x, TB6612_GOIO_PIN_AIN1);	// 置低电平
-        GPIO_SetBits(TB6612_GOIO_x, TB6612_GOIO_PIN_AIN2);	    // 置高电平，设置方向为反转
-        PWM_SetCompare_x(TBB6612_TIM_x, TBB6612_OC_x, Speed2PWM(-Speed));    //PWM设置为负的速度值，因为此时速度值为负数，而PWM只能给正数
+        Speed_Cur = Speed;
+        if (Speed >= 0) // 正转
+        {
+            GPIO_SetBits(TB6612_GOIO_x, TB6612_GOIO_PIN_AIN1);      // 置高电平
+            GPIO_ResetBits(TB6612_GOIO_x, TB6612_GOIO_PIN_AIN2);    // 置低电平，设置方向为正转
+            PWM_SetCompare_x(TBB6612_TIM_x, TBB6612_OC_x, Speed2PWM(Speed)); // PWM设置为速度值
+        }
+        else    // 反转
+        {
+            GPIO_ResetBits(TB6612_GOIO_x, TB6612_GOIO_PIN_AIN1);	// 置低电平
+            GPIO_SetBits(TB6612_GOIO_x, TB6612_GOIO_PIN_AIN2);	    // 置高电平，设置方向为反转
+            PWM_SetCompare_x(TBB6612_TIM_x, TBB6612_OC_x, Speed2PWM(-Speed));    //PWM设置为负的速度值，因为此时速度值为负数，而PWM只能给正数
+        }
     }
 }
