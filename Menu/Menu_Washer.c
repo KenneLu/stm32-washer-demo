@@ -17,8 +17,8 @@ uint8_t GetIndex(uint8_t* List, uint8_t Val, uint8_t ListSize);
 Washer Fast_Wash, Standard_Wash, Hard_Wash, Spin_Dry, Heat_Dry, Washer_Cur;
 
 //List
-uint8_t List_Setting_Wash_Cnt[] = { 2, 3, 4, 5 }; //次
-uint8_t List_Setting_Wash_Time[] = { 5, 10, 15, 20 };	//分
+uint8_t List_Setting_Wash_Cnt[] = { 1, 2, 3, 4, 5 }; //次
+uint8_t List_Setting_Wash_Time[] = { 3, 5, 10, 15, 20 };	//分
 uint8_t List_Setting_Spin_Dry_Time[] = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };	//分
 uint8_t List_Setting_Water_Volume[] = { 3, 4, 5, 6, 7, 8, 9, 10 };	//升
 uint8_t List_Setting_Water_Temp[] = { 0, 20, 30, 40, 50 };	//℃，0度就是常温
@@ -36,7 +36,7 @@ Option_Class Opt_Mode_Select[] = {
 		{ "快速洗", Menu_Washer_Mode_Detail, &Fast_Wash},
 		{ "标准洗", Menu_Washer_Mode_Detail, &Standard_Wash},
 		{ "强力洗", Menu_Washer_Mode_Detail, &Hard_Wash},
-		{ "脱水", Menu_Washer_Mode_Detail, &Spin_Dry},
+		{ "甩干", Menu_Washer_Mode_Detail, &Spin_Dry},
 		{ "烘干", Menu_Washer_Mode_Detail, &Heat_Dry},
 		{ ".." }	//结尾标志,方便自动计算数量
 };
@@ -143,27 +143,27 @@ void Menu_Washer_Init(void)
 
 	//初始化Washer
 	Fast_Wash.Mode = M_FAST_WASH;
-	Fast_Wash.Wash_Cnt = List_Setting_Wash_Cnt[0];
-	Fast_Wash.Wash_Time = List_Setting_Wash_Time[0];
+	Fast_Wash.Wash_Cnt = List_Setting_Wash_Cnt[1];
+	Fast_Wash.Wash_Time = List_Setting_Wash_Time[1];
 	Fast_Wash.Spin_Dry_Time = List_Setting_Spin_Dry_Time[2];
 	Fast_Wash.Water_Volume = List_Setting_Water_Volume[0];
-	Fast_Wash.Water_Temp = List_Setting_Water_Temp[1];
+	Fast_Wash.Water_Temp = List_Setting_Water_Temp[0];
 	Fast_Wash.Total_Time = List_Setting_Wash_Cnt[0] * (Fast_Wash.Wash_Time + Fast_Wash.Spin_Dry_Time + Fast_Wash.Spin_Dry_Time);
 
 	Standard_Wash.Mode = M_STANDERD_WASH;
-	Standard_Wash.Wash_Cnt = List_Setting_Wash_Cnt[1];
-	Standard_Wash.Wash_Time = List_Setting_Wash_Time[1];
+	Standard_Wash.Wash_Cnt = List_Setting_Wash_Cnt[2];
+	Standard_Wash.Wash_Time = List_Setting_Wash_Time[2];
 	Standard_Wash.Spin_Dry_Time = List_Setting_Spin_Dry_Time[4];
 	Standard_Wash.Water_Volume = List_Setting_Water_Volume[2];
-	Standard_Wash.Water_Temp = List_Setting_Water_Temp[1];
+	Standard_Wash.Water_Temp = List_Setting_Water_Temp[0];
 	Standard_Wash.Total_Time = List_Setting_Wash_Cnt[0] * (Standard_Wash.Wash_Time + Standard_Wash.Spin_Dry_Time + Standard_Wash.Spin_Dry_Time);
 
 	Hard_Wash.Mode = M_HARD_WASH;
-	Hard_Wash.Wash_Cnt = List_Setting_Wash_Cnt[2];
-	Hard_Wash.Wash_Time = List_Setting_Wash_Time[2];
+	Hard_Wash.Wash_Cnt = List_Setting_Wash_Cnt[3];
+	Hard_Wash.Wash_Time = List_Setting_Wash_Time[3];
 	Hard_Wash.Spin_Dry_Time = List_Setting_Spin_Dry_Time[8];
 	Hard_Wash.Water_Volume = List_Setting_Water_Volume[5];
-	Hard_Wash.Water_Temp = List_Setting_Water_Temp[1];
+	Hard_Wash.Water_Temp = List_Setting_Water_Temp[0];
 	Hard_Wash.Total_Time = List_Setting_Wash_Cnt[0] * (Hard_Wash.Wash_Time + Hard_Wash.Spin_Dry_Time + Hard_Wash.Spin_Dry_Time);
 
 	Spin_Dry.Mode = M_SPIN_DRY;

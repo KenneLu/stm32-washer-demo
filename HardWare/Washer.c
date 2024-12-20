@@ -95,7 +95,7 @@ void Washer_Init(const Washer* pWasher)
 		g_Status_Next = S_DRAIN_WATER;
 		break;
 	case M_HEAT_DRY:
-		g_Status_Next = S_DRAIN_WATER;
+		g_Status_Next = S_HEAT_DRY;
 		break;
 	default:
 		break;
@@ -470,7 +470,8 @@ void Washer_Spin_Dry()
 		{
 			g_Loop_Cnt = 0;
 			TB6612_Motor_SetSpeed(0);
-			g_Status_Next = S_HEAT_DRY;
+			g_Status_Next = S_WASH_CNT;
+
 			OLED_ShowString_Easy(2, 1, "spin dry[DONE]"); //甩干结束
 			Delay_ms(2000);
 		}
@@ -509,26 +510,38 @@ void Washer_Heat_Dry()
 
 	if (DHT11_Data.Humi < Dry_Relative_Humidity) //烘干结束
 	{
-		OLED_ShowString_Easy(1, 1, "heat dry[DONE]");
-
-		//完成一次清洗, 记录次数
-		g_Wash_Cnt_Cur++;
-		OLED_ShowString_Easy(4, 1, "Wash Count[ / ]");
-		OLED_ShowNum_Easy(4, 12, g_Wash_Cnt_Cur, 1);
-		OLED_ShowNum_Easy(4, 14, g_Washer->Wash_Cnt, 1);
-		Delay_ms(2000);
-
 		g_Loop_Cnt = 0;
-		if (g_Wash_Cnt_Cur >= g_Washer->Wash_Cnt)
-		{
-			g_Status_Next = S_FINISH;
-		}
-		else
-		{
-			g_Status_Next = S_HEAT_WATER;
-		}
+		g_Status_Next = S_FINISH;
+
+		OLED_ShowString_Easy(1, 1, "heat dry[DONE]");
+		Delay_ms(2000);
 	}
 
+}
+
+void Washer_Wash_Cnt()
+{
+	g_Loop_Cnt = 0;
+
+	Washer_OLED_Refresh();
+
+	//完成一次清洗, 记录次数
+	g_Wash_Cnt_Cur++;
+	OLED_ShowString_Easy(1, 1, "This round over.");
+	OLED_ShowString_Easy(4, 1, "Wash Count[ / ]");
+	OLED_ShowNum_Easy(4, 12, g_Wash_Cnt_Cur, 1);
+	OLED_ShowNum_Easy(4, 14, g_Washer->Wash_Cnt, 1);
+
+	if (g_Wash_Cnt_Cur >= g_Washer->Wash_Cnt)
+	{
+		g_Status_Next = S_FINISH;
+	}
+	else
+	{
+		OLED_ShowString_Easy(2, 1, "Start next wash.");
+		g_Status_Next = S_HEAT_WATER;
+	}
+	Delay_ms(2000);
 }
 
 void Washer_Finish()
@@ -556,9 +569,6 @@ int8_t Washer_Run(void* Param)
 	g_Status_Next = S_INIT;	// 首次进入，初始化状态机
 	while (1)
 	{
-		// // 安全监测
-		// if (g_Security_Monitor_On) Washer_Security_Monitor();
-
 		switch (g_Status_Next)
 		{
 		case S_INIT:
@@ -597,6 +607,10 @@ int8_t Washer_Run(void* Param)
 			Washer_Heat_Dry();
 			break;
 
+		case S_WASH_CNT:
+			Washer_Wash_Cnt();
+			break;
+
 		case S_FINISH:
 			Washer_Finish();
 			break;
@@ -630,7 +644,7 @@ int8_t Washer_Run(void* Param)
 			}
 
 			// 异常处理
-			if (g_Washer_Error != NO_ERROR && g_Status_Cur != S_ERROR)
+			if (g_Washer_Error != NO_ERROR && g_Status_Cur != S_ERROR && g_Status_Cur != S_WASH_CNT)
 			{
 				g_Status_Next = S_ERROR;
 				g_OLED_Need_Refresh = 1; // 状态切换，刷新OLED
@@ -643,7 +657,7 @@ int8_t Washer_Run(void* Param)
 		}
 
 		// 暂停捕获，ERROR 状态下不暂停
-		if (Menu_Enter_Event() && g_Status_Cur != S_ERROR)
+		if (Menu_Enter_Event() && g_Status_Cur != S_ERROR && g_Status_Cur != S_WASH_CNT)
 		{
 			g_Status_Next = S_PAUSE;
 			g_OLED_Need_Refresh = 1; // 状态切换，刷新OLED

@@ -16,6 +16,7 @@
 	STATUS(S_DRAIN_WATER)  /*排水状态*/               \
 	STATUS(S_SPIN_DRY)     /*甩干状态*/               \
 	STATUS(S_HEAT_DRY)     /*烘干状态*/               \
+	STATUS(S_WASH_CNT)     /*完成一轮洗衣*/   		  \
 	STATUS(S_FINISH)       /*完成状态*/               \
 	STATUS(S_QUIT)         /*退出运行*/   		      \
 	STATUS(S_NUM)          /*状态总数(无效状态)*/ 
