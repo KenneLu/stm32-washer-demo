@@ -6,6 +6,8 @@
 #include "DHT11.h"
 #include "TB6612.h"
 #include "MyAD.h"
+#include "ServoMotor.h"
+#include "MPU6050.h"
 
 
 #define WASHER_CNT_MIN (g_Loop_Cnt / 60) 	// g_Loop_Cnt与分钟的转换
@@ -27,7 +29,8 @@ static WASHER_STATUS g_Status_Cur = S_INIT;
 static WASHER_STATUS g_Status_Last = S_INIT;
 
 static const Washer* g_Washer;	// 指向当前的洗衣模式
-static Washer_Errors g_Washer_Error;	// 错误状态
+static Washer_Errors g_Washer_Error_Cur;	// 当前错误状态
+static Washer_Errors g_Washer_Error_Last;	// 上次错误状态
 
 static uint32_t g_Loop_Cnt = 0;	// 循环计数器
 static uint32_t g_Wash_Cnt_Cur = 0;	// 当前洗衣次数
@@ -38,6 +41,15 @@ int8_t Menu_Enter_Event(void); // 临时这样解决一下 warning，后续再�
 int8_t Menu_Back_Event(void); // 临时这样解决一下 warning，后续再优化
 int8_t Menu_Power_Event(void); // 临时这样解决一下 warning，后续再优化
 
+void Washer_Door_UnLock()
+{
+	Servo_Motor_SetAngle(0);
+}
+
+void Washer_Door_Lock()
+{
+	Servo_Motor_SetAngle(50);
+}
 
 void Washer_OLED_Refresh()
 {
@@ -56,7 +68,7 @@ void Washer_Init(const Washer* pWasher)
 	}
 
 	g_Washer = pWasher;
-	g_Washer_Error = NO_ERROR;
+	g_Washer_Error_Cur = NO_ERROR;
 	g_Status_Last = S_INIT;
 	g_Loop_Cnt = 0;
 	g_Wash_Cnt_Cur = 0;
@@ -77,6 +89,13 @@ void Washer_Init(const Washer* pWasher)
 
 	// 初始化ADC, 用于检测门是否打开
 	MyAD_Init();
+
+	// 初始化舵机，用于锁门
+	Servo_Motor_Init();
+	Washer_Door_Lock(); // 锁门
+
+	// 初始化MPU6050，用于姿态检测
+	MPU6050_Init();
 
 
 	// 根据模式选择状态机
@@ -105,6 +124,7 @@ void Washer_Init(const Washer* pWasher)
 void Washer_Stop()
 {
 	TB6612_Motor_SetSpeed(0);
+	Washer_Door_UnLock();
 }
 
 void Washer_Pause()
@@ -117,8 +137,9 @@ void Washer_Pause()
 		Washer_Stop();
 	}
 
-	if (Menu_Enter_Event())
+	if (Menu_Enter_Event())	// 继续
 	{
+		Washer_Door_Lock(); // 门锁上锁
 		Washer_OLED_Refresh();
 		switch (g_Status_Last)
 		{
@@ -153,8 +174,14 @@ void Washer_Error()
 		g_OLED_Need_Refresh = 0;
 		Washer_OLED_Refresh();
 		OLED_Printf_Easy(1, 1, "ERROR!!!");
-		switch (g_Washer_Error)
+		switch (g_Washer_Error_Cur)
 		{
+		case ERROR_TILT:
+			OLED_Printf_Easy(2, 1, "Washer Tilt!");
+			break;
+		case ERROR_SHAKE:
+			OLED_Printf_Easy(2, 1, "Washer Shake!");
+			break;
 		case ERROR_DOOR_OPEN:
 			OLED_Printf_Easy(2, 1, "Close The Door!");
 			break;
@@ -164,9 +191,13 @@ void Washer_Error()
 		Washer_Stop();
 	}
 
-	if (g_Washer_Error == NO_ERROR) //异常解除
+	if (g_Washer_Error_Cur == NO_ERROR) //异常解除
 	{
+		Delay_ms(500);
 		Washer_OLED_Refresh();
+		OLED_Printf_Easy(1, 1, "ERROR Fixed!");
+		Delay_ms(500);
+		Washer_Door_Lock(); // 门锁上锁
 		switch (g_Status_Last)
 		{
 		case S_INIT:
@@ -549,6 +580,7 @@ void Washer_Finish()
 	OLED_Clear();
 	OLED_ShowString_Easy(1, 1, "WASH FINISH!");
 	g_Security_Monitor_On = 0; // 关闭安全监测
+	Washer_Stop();
 
 	if (Menu_Enter_Event())
 	{
@@ -558,7 +590,7 @@ void Washer_Finish()
 
 void Washer_Security_Monitor()
 {
-	g_Washer_Error = NO_ERROR;
+	g_Washer_Error_Cur = NO_ERROR;
 
 
 	Delay_ms(500);
@@ -633,18 +665,39 @@ int8_t Washer_Run(void* Param)
 		// 安全异常监测
 		if (g_Security_Monitor_On)
 		{
-			g_Washer_Error = NO_ERROR;
+			g_Washer_Error_Cur = NO_ERROR;
 
 			// 检测门是否打开
 			static uint16_t* pADValue;
 			pADValue = MyAD_GetValue();
-			if (pADValue[AD_Comp_TCRT5000] > 300) // 大于1.5cm距离
+			if (pADValue[AD_Comp_TCRT5000] > 400) // 大于1.5cm距离
 			{
-				g_Washer_Error = ERROR_DOOR_OPEN;
+				g_Washer_Error_Cur = ERROR_DOOR_OPEN;
+			}
+
+			// 检测姿态是否倾斜
+			static int16_t AccX, AccY, AccZ, GyroX, GyroY, GyroZ;
+			static int16_t AccX_Abs, AccY_Abs;
+			static uint16_t Shake_Time = 0;
+			MPU6050_GetData(&AccX, &AccY, &AccZ, &GyroX, &GyroY, &GyroZ);
+			AccX_Abs = AccX > 0 ? AccX : -AccX;
+			AccY_Abs = AccY > 0 ? AccY : -AccY;
+			if (AccX_Abs > 50 || AccY_Abs > 50) // 瞬时加速度大于50
+			{
+				g_Washer_Error_Cur = ERROR_SHAKE;
+				Shake_Time++;
+				if (Shake_Time > 2)	// 持续时间大于500ms
+				{
+					g_Washer_Error_Cur = ERROR_TILT;
+				}
+			}
+			else
+			{
+				Shake_Time = 0;
 			}
 
 			// 异常处理
-			if (g_Washer_Error != NO_ERROR && g_Status_Cur != S_ERROR && g_Status_Cur != S_WASH_CNT)
+			if (g_Washer_Error_Cur != NO_ERROR && g_Status_Cur != S_ERROR && g_Status_Cur != S_WASH_CNT)
 			{
 				g_Status_Next = S_ERROR;
 				g_OLED_Need_Refresh = 1; // 状态切换，刷新OLED
@@ -653,6 +706,12 @@ int8_t Washer_Run(void* Param)
 					g_Status_Last = g_Status_Cur; // 保存异常前的状态机
 				}
 				g_Status_Cur = S_ERROR;
+			}
+
+			if (g_Washer_Error_Cur != NO_ERROR && g_Washer_Error_Cur != g_Washer_Error_Last)
+			{
+				g_OLED_Need_Refresh = 1; // ERROR 状态机里发生状态切换，刷新OLED
+				g_Washer_Error_Last = g_Washer_Error_Cur;
 			}
 		}
 
