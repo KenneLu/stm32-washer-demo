@@ -17,6 +17,7 @@
 #define TEST_TB6612 0
 #define TEST_SERVO_MOTOR 0
 #define TEST_MPU6050 0
+#define TEST_MPU6050_BUG 0
 #define TEST_W25Q64 0
 #define TEST_BUZZER 0
 #define TEST_DHT11 0
@@ -118,6 +119,18 @@ int main(void)
 	OLED_ShowString_Easy(2, 9, "GX");
 	OLED_ShowString_Easy(3, 9, "GY");
 	OLED_ShowString_Easy(4, 9, "GZ");
+#endif
+#if TEST_MPU6050_BUG
+	MPU6050_Init(); // 初始化MPU6050
+	TB6612_Init();	// 初始化电机驱动
+	Buzzer_Init();	// 初始化蜂鸣器
+
+	uint8_t ID = MPU6050_GetID();
+	OLED_ShowString_Easy(1, 1, "ID:");
+	OLED_ShowHexNum_Easy(1, 4, ID, 2);
+	int16_t AccX, AccY, AccZ, GyroX, GyroY, GyroZ;
+	OLED_ShowString_Easy(2, 1, "AX");
+	OLED_ShowString_Easy(3, 1, "AY");
 #endif
 #if TEST_W25Q64
 	//W25Q64初始化
@@ -249,6 +262,30 @@ int main(void)
 		OLED_ShowSignedNum_Easy(3, 11, GyroY, 4);
 		OLED_ShowSignedNum_Easy(4, 11, GyroZ, 4);
 		Delay_ms(100);
+#endif
+#if TEST_MPU6050_BUG
+		MPU6050_GetData(&AccX, &AccY, &AccZ, &GyroX, &GyroY, &GyroZ);
+		OLED_ShowSignedNum_Easy(2, 3, AccX, 4);
+		OLED_ShowSignedNum_Easy(3, 3, AccY, 4);
+		Delay_ms(100);
+
+		static int16_t AccX_Abs, AccY_Abs;
+		AccX_Abs = AccX > 0 ? AccX : -AccX;
+		AccY_Abs = AccY > 0 ? AccY : -AccY;
+		if (AccX_Abs > 50 || AccY_Abs > 50) // 瞬时加速度大于50
+		{
+			Buzzer_Revert();
+			TB6612_Motor_SetSpeed(0);
+			Delay_ms(2000);
+			Buzzer_Revert();
+		}
+		else
+		{
+			// 电机全速运转，导致电压不稳定
+			// 最终导致 MPU6050 的所有输出均为 -1823.
+			// 拔掉电机扇叶更容易复现
+			TB6612_Motor_SetSpeed(100);
+		}
 #endif
 #if TEST_BUZZER
 		Buzzer_Breathe();
