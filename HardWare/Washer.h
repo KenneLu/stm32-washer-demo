@@ -36,9 +36,6 @@
 	STATUS(S_SPIN_LEFT_SPEED_UP_20)     /*左传低速状态*/      \
 	STATUS(S_SPIN_LEFT_SPEED_UP_40)     /*左传低中速状态*/    \
 	STATUS(S_SPIN_LEFT_SPEED_UP_60)     /*左传中速状态*/      \
-	STATUS(S_SPIN_LEFT_SPEED_UP_80)     /*左传中高速状态*/    \
-	STATUS(S_SPIN_LEFT_SPEED_UP_100)    /*左传高速状态*/      \
-	STATUS(S_SPIN_LEFT_SPEED_DOWN_60)   /*左传中速状态*/      \
 	STATUS(S_SPIN_LEFT_SPEED_DOWN_40)   /*左传低中速状态*/    \
 	STATUS(S_SPIN_LEFT_SPEED_DOWN_20)   /*左传低速状态*/      \
 

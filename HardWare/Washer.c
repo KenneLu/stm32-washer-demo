@@ -190,6 +190,13 @@ void Washer_Stop()
 	Buzzer_On(0);
 	Washer_LED_On(0, LED_RED);
 	Washer_LED_On(0, LED_BLUE);
+	if (g_Status_Cur != S_ERROR && g_Status_Cur != S_PAUSE)
+	{
+		Washer_Data[9] = CUSTOMER_SHUTDOWN;
+		W25Q64_SectorErase(0x000000);
+		W25Q64_PageProgram(0x000000, Washer_Data, 9);
+	}
+
 	Delay_ms(100);
 }
 
@@ -537,36 +544,13 @@ void Washer_Spin_Dry()
 		break;
 	case S_SPIN_LEFT_SPEED_UP_60:
 		TB6612_Motor_SetSpeed(60);
-		if (WASHER_CNT_S >= 3)
-		{
-			g_Loop_Cnt = 0;
-			Spin_Dry_Status_Cur = S_SPIN_LEFT_SPEED_UP_80;
-		}
-		break;
-	case S_SPIN_LEFT_SPEED_UP_80:
-		TB6612_Motor_SetSpeed(80);
-		if (WASHER_CNT_S >= 5)
-		{
-			g_Loop_Cnt = 0;
-			Spin_Dry_Status_Cur = S_SPIN_LEFT_SPEED_UP_100;
-		}
-		break;
-	case S_SPIN_LEFT_SPEED_UP_100:
-		TB6612_Motor_SetSpeed(100);
 		OLED_ShowNum_Easy(1, 11, WASHER_CNT_MIN, 2);
 		if ((WASHER_CNT_MIN) >= g_Washer->Spin_Dry_Time)
 		{
 			g_Loop_Cnt = 0;
-			Spin_Dry_Status_Cur = S_SPIN_LEFT_SPEED_DOWN_60;
-		}
-		break;
-	case S_SPIN_LEFT_SPEED_DOWN_60:
-		TB6612_Motor_SetSpeed(60);
-		if (WASHER_CNT_100MS >= 5)
-		{
-			g_Loop_Cnt = 0;
 			Spin_Dry_Status_Cur = S_SPIN_LEFT_SPEED_DOWN_40;
 		}
+		break;
 	case S_SPIN_LEFT_SPEED_DOWN_40:
 		TB6612_Motor_SetSpeed(40);
 		if (WASHER_CNT_100MS >= 5)
@@ -806,35 +790,37 @@ int8_t Washer_Run(void* Param)
 
 		if (Menu_Power_Event())
 		{
-			Washer_Data[9] = CUSTOMER_SHUTDOWN;
-			W25Q64_SectorErase(0x000000);
-			W25Q64_PageProgram(0x000000, Washer_Data, 9);
 			Washer_Stop();
 			Menu_Power_Off();
 			return -1;
 		}
 
 		if (Menu_Back_Event()) {
-			Washer_Data[9] = CUSTOMER_SHUTDOWN;
-			W25Q64_SectorErase(0x000000);
-			W25Q64_PageProgram(0x000000, Washer_Data, 9);
 			Washer_Stop();
 			return -1;
 		}
 
-		Washer_Data[0] = g_Washer->Wash_Cnt;
-		Washer_Data[1] = g_Washer->Wash_Time;
-		Washer_Data[2] = g_Washer->Spin_Dry_Time;
-		Washer_Data[3] = g_Washer->Water_Volume;
-		Washer_Data[4] = g_Washer->Water_Temp;
-		Washer_Data[5] = g_Washer->Heat_Temp;
-		Washer_Data[6] = g_Status_Next;
-		Washer_Data[7] = g_Status_Cur;
-		Washer_Data[8] = g_Status_Last;
-		Washer_Data[9] = ACCIDENT_SHUTDOWN;
-		W25Q64_SectorErase(0x000000);
-		W25Q64_PageProgram(0x000000, Washer_Data, 10);
+		// 定时记录当前状态变化，防止意外断电
+		static uint16_t cnt = 0;
+		cnt++;
+		if (cnt >= 10)
+		{
+			Washer_Data[0] = g_Washer->Wash_Cnt;
+			Washer_Data[1] = g_Washer->Wash_Time;
+			Washer_Data[2] = g_Washer->Spin_Dry_Time;
+			Washer_Data[3] = g_Washer->Water_Volume;
+			Washer_Data[4] = g_Washer->Water_Temp;
+			Washer_Data[5] = g_Washer->Heat_Temp;
+			Washer_Data[6] = g_Status_Next;
+			Washer_Data[7] = g_Status_Cur;
+			Washer_Data[8] = g_Status_Last;
+			Washer_Data[9] = ACCIDENT_SHUTDOWN;
+			W25Q64_SectorErase(0x000000);
+			W25Q64_PageProgram(0x000000, Washer_Data, 10);
+			cnt = 0;
+		}
 
+		// 轮询周期为延时100ms
 		Delay_ms(100);
 	}
 }
