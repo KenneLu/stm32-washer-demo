@@ -48,6 +48,7 @@ void OLED_ShowImage(uint8_t X, uint8_t Y, uint8_t Width, uint8_t Height, const u
 void OLED_Printf(uint8_t X, uint8_t Y, uint8_t FontSize, char* format, ...);
 
 /*显示函数简化版*/
+void OLED_Clear_Easy(void);
 void OLED_ShowChar_Easy(uint8_t Line, uint8_t Column, char Chare);
 void OLED_ShowString_Easy(uint8_t Line, uint8_t Column, char* Stringe);
 void OLED_ShowNum_Easy(uint8_t Line, uint8_t Column, uint32_t Number, uint8_t Lengthe);

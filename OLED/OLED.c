@@ -875,6 +875,12 @@ void OLED_Printf(uint8_t X, uint8_t Y, uint8_t FontSize, char* format, ...)
 	OLED_ShowString(X, Y, String, FontSize);//OLED显示字符数组（字符串）
 }
 
+void OLED_Clear_Easy(void)
+{
+	OLED_Clear();
+	OLED_Update();
+}
+
 void OLED_ShowChar_Easy(uint8_t Line, uint8_t Column, char Chare)
 {
 	OLED_ShowChar(--Column * 8, --Line * 16, Chare, OLED_8X16);

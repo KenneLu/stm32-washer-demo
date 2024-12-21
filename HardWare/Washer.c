@@ -8,6 +8,7 @@
 #include "MyAD.h"
 #include "ServoMotor.h"
 #include "MPU6050.h"
+#include "Menu.h"
 
 
 #define WASHER_CNT_MIN (g_Loop_Cnt / 60) 	// g_Loop_Cnt与分钟的转换
@@ -125,6 +126,7 @@ void Washer_Stop()
 {
 	TB6612_Motor_SetSpeed(0);
 	Washer_Door_UnLock();
+	Delay_ms(50);
 }
 
 void Washer_Pause()
@@ -311,11 +313,11 @@ void Washer_Wash()
 		if (Wash_Loop_Cnt >= 6) //600ms
 		{
 			Wash_Loop_Cnt = 0;
-			Wash_Status_Cur = S_WASH_LEFT_SPEED_UP_20;
+			Wash_Status_Cur = S_WASH_LEFT_SPEED_UP_15;
 		}
 		break;
-	case S_WASH_LEFT_SPEED_UP_20:
-		TB6612_Motor_SetSpeed(20);
+	case S_WASH_LEFT_SPEED_UP_15:
+		TB6612_Motor_SetSpeed(15);
 		if (Wash_Loop_Cnt >= 6)
 		{
 			Wash_Loop_Cnt = 0;
@@ -327,11 +329,11 @@ void Washer_Wash()
 		if (Wash_Loop_Cnt >= 8)
 		{
 			Wash_Loop_Cnt = 0;
-			Wash_Status_Cur = S_WASH_LEFT_SPEED_DOWN_20;
+			Wash_Status_Cur = S_WASH_LEFT_SPEED_DOWN_15;
 		}
 		break;
-	case S_WASH_LEFT_SPEED_DOWN_20:
-		TB6612_Motor_SetSpeed(20);
+	case S_WASH_LEFT_SPEED_DOWN_15:
+		TB6612_Motor_SetSpeed(15);
 		if (Wash_Loop_Cnt >= 6)
 		{
 			Wash_Loop_Cnt = 0;
@@ -343,11 +345,11 @@ void Washer_Wash()
 		if (Wash_Loop_Cnt >= 6)
 		{
 			Wash_Loop_Cnt = 0;
-			Wash_Status_Cur = S_WASH_RIGHT_SPEED_UP_20;
+			Wash_Status_Cur = S_WASH_RIGHT_SPEED_UP_15;
 		}
 		break;
-	case S_WASH_RIGHT_SPEED_UP_20:
-		TB6612_Motor_SetSpeed(-20);
+	case S_WASH_RIGHT_SPEED_UP_15:
+		TB6612_Motor_SetSpeed(-15);
 		if (Wash_Loop_Cnt >= 6)
 		{
 			Wash_Loop_Cnt = 0;
@@ -359,11 +361,11 @@ void Washer_Wash()
 		if (Wash_Loop_Cnt >= 8)
 		{
 			Wash_Loop_Cnt = 0;
-			Wash_Status_Cur = S_WASH_RIGHT_SPEED_DOWN_20;
+			Wash_Status_Cur = S_WASH_RIGHT_SPEED_DOWN_15;
 		}
 		break;
-	case S_WASH_RIGHT_SPEED_DOWN_20:
-		TB6612_Motor_SetSpeed(-20);
+	case S_WASH_RIGHT_SPEED_DOWN_15:
+		TB6612_Motor_SetSpeed(-15);
 		if (Wash_Loop_Cnt >= 6)
 		{
 			Wash_Loop_Cnt = 0;
@@ -722,10 +724,17 @@ int8_t Washer_Run(void* Param)
 			g_OLED_Need_Refresh = 1; // 状态切换，刷新OLED
 		}
 
-		Delay_ms(100);
+		if (Menu_Power_Event())
+		{
+			Menu_Power_Off();
+			return -1;
+		}
+
 		if (Menu_Back_Event()) {
 			Washer_Stop();
 			return -1;
 		}
+
+		Delay_ms(100);
 	}
 }

@@ -23,13 +23,13 @@
 
 #define WASH_STATUS_ENUM(STATUS)                    	 \
 	STATUS(S_WASH_TURN_LEFT)        	/*即将左转状态*/    \
-	STATUS(S_WASH_LEFT_SPEED_UP_20)     /*左转低速状态*/    \
+	STATUS(S_WASH_LEFT_SPEED_UP_15)     /*左转低速状态*/    \
 	STATUS(S_WASH_LEFT_SPEED_UP_40)     /*左转中速状态*/    \
-	STATUS(S_WASH_LEFT_SPEED_DOWN_20)   /*左转降速状态*/    \
+	STATUS(S_WASH_LEFT_SPEED_DOWN_15)   /*左转降速状态*/    \
 	STATUS(S_WASH_TURN_RIGHT)        	/*即将右转状态*/    \
-	STATUS(S_WASH_RIGHT_SPEED_UP_20)    /*右转低速状态*/    \
+	STATUS(S_WASH_RIGHT_SPEED_UP_15)    /*右转低速状态*/    \
 	STATUS(S_WASH_RIGHT_SPEED_UP_40)    /*右转中速状态*/    \
-	STATUS(S_WASH_RIGHT_SPEED_DOWN_20)  /*右转降速状态*/    \
+	STATUS(S_WASH_RIGHT_SPEED_DOWN_15)  /*右转降速状态*/    \
 
 #define SPIN_DRY_STATUS_ENUM(STATUS)                       \
 	STATUS(S_SPIN_STOP)        			/*停机状态*/          \

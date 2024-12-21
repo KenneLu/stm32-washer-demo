@@ -12,7 +12,7 @@ typedef struct
 //GPIO
 #define DHT11_GPIO_RCC          RCC_APB2Periph_GPIOB
 #define DHT11_GOIO_x            GPIOB
-#define DHT11_GPIO_PIN_DATA     GPIO_Pin_7
+#define DHT11_GPIO_PIN_DATA     GPIO_Pin_6
 #define DHT11_GOIO_MODE_OUT     GPIO_Mode_Out_PP        //推挽输出
 #define DHT11_GOIO_MODE_IN      GPIO_Mode_IN_FLOATING   //浮空输入
 
