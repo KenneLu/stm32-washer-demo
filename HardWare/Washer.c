@@ -15,6 +15,8 @@
 
 uint8_t Washer_Data[10] = { 0 };
 
+#define DISPLAY_DELAY_MS 500
+
 #define WASHER_CNT_MIN (g_Loop_Cnt / 60) 	// g_Loop_Cnt与分钟的转换
 #define WASHER_CNT_S (g_Loop_Cnt / 10) 		// g_Loop_Cnt与分钟的转换
 #define WASHER_CNT_100MS (g_Loop_Cnt / 1)	// g_Loop_Cnt与分钟的转换
@@ -340,7 +342,7 @@ void Washer_Heat_Water()
 		g_Loop_Cnt = 0;
 		g_Status_Next = S_ADD_WATER;
 
-		Delay_ms(2000);
+		Delay_ms(DISPLAY_DELAY_MS);
 	}
 }
 
@@ -364,7 +366,7 @@ void Washer_Add_Water()
 		OLED_ShowNum_Easy(1, 11, (g_Loop_Cnt / 10), 2);
 		OLED_ShowString_Easy(2, 1, "add water[DONE]");
 		Washer_LED_On(0, LED_RED);
-		Delay_ms(2000);
+		Delay_ms(DISPLAY_DELAY_MS);
 
 		g_Loop_Cnt = 0;
 		g_Status_Next = S_WASH;
@@ -471,7 +473,7 @@ void Washer_Wash()
 		TB6612_Motor_SetSpeed(0);
 		g_Status_Next = S_DRAIN_WATER;
 
-		Delay_ms(2000);
+		Delay_ms(DISPLAY_DELAY_MS);
 	}
 }
 
@@ -494,7 +496,7 @@ void Washer_Drain_Water()
 		Washer_LED_On(0, LED_BLUE);
 		OLED_ShowNum_Easy(1, 11, (g_Loop_Cnt / 10), 2);
 		OLED_ShowString_Easy(2, 1, "draing[DONE]");
-		Delay_ms(2000);
+		Delay_ms(DISPLAY_DELAY_MS);
 
 		g_Loop_Cnt = 0;
 		g_Status_Next = S_SPIN_DRY;
@@ -567,7 +569,7 @@ void Washer_Spin_Dry()
 			g_Status_Next = S_WASH_CNT;
 
 			OLED_ShowString_Easy(2, 1, "spin dry[DONE]"); //甩干结束
-			Delay_ms(2000);
+			Delay_ms(DISPLAY_DELAY_MS);
 		}
 		break;
 	default:
@@ -611,7 +613,7 @@ void Washer_Heat_Dry()
 
 		Washer_LED_On(0, LED_RED);
 		OLED_ShowString_Easy(1, 1, "heat dry[DONE]");
-		Delay_ms(2000);
+		Delay_ms(DISPLAY_DELAY_MS);
 	}
 
 }
@@ -638,7 +640,7 @@ void Washer_Wash_Cnt()
 		OLED_ShowString_Easy(2, 1, "Start next wash.");
 		g_Status_Next = S_HEAT_WATER;
 	}
-	Delay_ms(2000);
+	Delay_ms(DISPLAY_DELAY_MS);
 }
 
 void Washer_Finish()
@@ -748,7 +750,7 @@ int8_t Washer_Run(void* Param)
 			MPU6050_GetData(&AccX, &AccY, &AccZ, &GyroX, &GyroY, &GyroZ);
 			AccX_Abs = AccX > 0 ? AccX : -AccX;
 			AccY_Abs = AccY > 0 ? AccY : -AccY;
-			if (AccX_Abs > 50 || AccY_Abs > 50) // 瞬时加速度大于50
+			if (AccX_Abs > 100 || AccY_Abs > 100) // 瞬时加速度大于150
 			{
 				g_Washer_Error_Cur = ERROR_SHAKE;
 				Shake_Time++;
