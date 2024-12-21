@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "Washer.h"
+#include "W25Q64.h"
 
 
 char* Uchar2Str(int Num);
@@ -176,6 +177,15 @@ void Menu_Washer_Init(void)
 
 void Menu_Washer(void)
 {
+	// 初始化W25Q64
+	W25Q64_Init();
+	uint8_t Washer_Data[10] = { 0 };
+	W25Q64_ReadData(0x000000, Washer_Data, 10);
+	if (Washer_Data[9] == ACCIDENT_SHUTDOWN)
+	{
+		Washer_Run(&Washer_Cur);
+	}
+
 	Menu_Washer_Mode_Select(0);
 }
 

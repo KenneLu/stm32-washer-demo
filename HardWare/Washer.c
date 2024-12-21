@@ -11,6 +11,9 @@
 #include "MPU6050.h"
 #include "Menu.h"
 #include "Buzzer.h"
+#include "W25Q64.h"
+
+uint8_t Washer_Data[10] = { 0 };
 
 #define WASHER_CNT_MIN (g_Loop_Cnt / 60) 	// g_Loop_Cnt与分钟的转换
 #define WASHER_CNT_S (g_Loop_Cnt / 10) 		// g_Loop_Cnt与分钟的转换
@@ -26,7 +29,6 @@ typedef enum {
 	LED_BLUE,
 } LED_TYPE;
 
-
 typedef enum { WASHER_STATUS_ENUM(ENUM_ITEM) } WASHER_STATUS;
 const char* Washer_Status[] = { WASHER_STATUS_ENUM(ENUM_STRING) };
 
@@ -40,7 +42,7 @@ static WASHER_STATUS g_Status_Next = S_INIT;
 static WASHER_STATUS g_Status_Cur = S_INIT;
 static WASHER_STATUS g_Status_Last = S_INIT;
 
-static const Washer* g_Washer;	// 指向当前的洗衣模式
+static Washer* g_Washer;	// 指向当前的洗衣模式
 static Washer_Errors g_Washer_Error_Cur;	// 当前错误状态
 static Washer_Errors g_Washer_Error_Last;	// 上次错误状态
 
@@ -85,7 +87,12 @@ void Washer_OLED_Refresh()
 	OLED_ShowNum_Easy(4, 14, g_Washer->Wash_Cnt, 1);
 }
 
-void Washer_Init(const Washer* pWasher)
+void Washer_Init_Basic(void)
+{
+
+}
+
+void Washer_Init(Washer* pWasher)
 {
 	if (!pWasher)
 	{
@@ -134,6 +141,25 @@ void Washer_Init(const Washer* pWasher)
 	// 初始化蜂鸣器
 	Buzzer_Init();
 
+	// 初始化W25Q64
+	W25Q64_Init();
+
+	W25Q64_ReadData(0x000000, Washer_Data, 10);
+	if (Washer_Data[9] == ACCIDENT_SHUTDOWN)
+	{
+		g_Washer->Wash_Cnt = Washer_Data[0];
+		g_Washer->Wash_Time = Washer_Data[1];
+		g_Washer->Spin_Dry_Time = Washer_Data[2];
+		g_Washer->Water_Volume = Washer_Data[3];
+		g_Washer->Water_Temp = Washer_Data[4];
+		g_Washer->Heat_Temp = Washer_Data[5];
+		g_Status_Next = (WASHER_STATUS)Washer_Data[6];
+		g_Status_Cur = (WASHER_STATUS)Washer_Data[7];
+		g_Status_Last = (WASHER_STATUS)Washer_Data[8];
+
+		return;
+	}
+
 	// 根据模式选择状态机
 	switch (pWasher->Mode)
 	{
@@ -164,7 +190,7 @@ void Washer_Stop()
 	Buzzer_On(0);
 	Washer_LED_On(0, LED_RED);
 	Washer_LED_On(0, LED_BLUE);
-	Delay_ms(50);
+	Delay_ms(100);
 }
 
 void Washer_Pause()
@@ -780,14 +806,34 @@ int8_t Washer_Run(void* Param)
 
 		if (Menu_Power_Event())
 		{
+			Washer_Data[9] = CUSTOMER_SHUTDOWN;
+			W25Q64_SectorErase(0x000000);
+			W25Q64_PageProgram(0x000000, Washer_Data, 9);
+			Washer_Stop();
 			Menu_Power_Off();
 			return -1;
 		}
 
 		if (Menu_Back_Event()) {
+			Washer_Data[9] = CUSTOMER_SHUTDOWN;
+			W25Q64_SectorErase(0x000000);
+			W25Q64_PageProgram(0x000000, Washer_Data, 9);
 			Washer_Stop();
 			return -1;
 		}
+
+		Washer_Data[0] = g_Washer->Wash_Cnt;
+		Washer_Data[1] = g_Washer->Wash_Time;
+		Washer_Data[2] = g_Washer->Spin_Dry_Time;
+		Washer_Data[3] = g_Washer->Water_Volume;
+		Washer_Data[4] = g_Washer->Water_Temp;
+		Washer_Data[5] = g_Washer->Heat_Temp;
+		Washer_Data[6] = g_Status_Next;
+		Washer_Data[7] = g_Status_Cur;
+		Washer_Data[8] = g_Status_Last;
+		Washer_Data[9] = ACCIDENT_SHUTDOWN;
+		W25Q64_SectorErase(0x000000);
+		W25Q64_PageProgram(0x000000, Washer_Data, 10);
 
 		Delay_ms(100);
 	}

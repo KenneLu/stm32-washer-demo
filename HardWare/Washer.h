@@ -72,6 +72,12 @@ typedef enum
 	ERROR_DOOR_OPEN,
 } Washer_Errors;
 
+typedef enum {
+	ACCIDENT_SHUTDOWN = 1,
+	CUSTOMER_SHUTDOWN = 2,
+} SHUTDOWN_TYPE;
+
+void Washer_Init(Washer* pWasher);
 int8_t Washer_Run(void* Param);
 
 #endif
