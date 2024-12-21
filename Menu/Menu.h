@@ -25,10 +25,13 @@ typedef struct
 } Option_Class;
 
 void Menu_Init(void);
+void Menu_Power_On(void);
+void Menu_Power_Off(void);
 int8_t Menu_Run(Option_Class* Option, int8_t Choose);
 int8_t Menu_Roll_Event(void);
 int8_t Menu_Enter_Event(void);
 int8_t Menu_Back_Event(void);
+int8_t Menu_Power_Event(void);
 uint8_t Get_NameLen(char* String);
 
 int8_t Main_Menu(void* Param);

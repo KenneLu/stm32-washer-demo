@@ -24,6 +24,7 @@
 #define TEST_TIM 0
 #define TEST_KEY 0
 #define TEST_MENU 0
+#define TEST_WAKE_UP 0
 #define TEST_MENU_WASHER 1
 
 #if TEST_W25Q64
@@ -222,6 +223,8 @@ int main(void)
 	Menu_Init();
 #endif
 
+
+
 	//-------Main Loop-------
 	while (1)
 	{
@@ -273,6 +276,19 @@ int main(void)
 #if TEST_MENU
 		Main_Menu();
 #endif
+#if TEST_WAKE_UP
+		OLED_ShowString_Easy(1, 1, "Wake");
+		Delay_ms(1000);
+		OLED_ShowString_Easy(1, 1, "Sleep");
+		Delay_ms(1000);
+		OLED_Clear();
+		OLED_Update();
+		Delay_ms(100);
+		// 开始待机
+		RCC_APB1PeriphClockCmd(RCC_APB1Periph_PWR, ENABLE);    //使能PWR外设时钟
+		PWR_WakeUpPinCmd(ENABLE);  //使能唤醒管脚功能,在WkUp的上升沿进行
+		PWR_EnterSTANDBYMode();
+#endif
 #if TEST_MENU_WASHER
 		Menu_Washer();
 #endif
@@ -280,6 +296,7 @@ int main(void)
 	}
 }
 
+// -------Interrupts-------
 
 #if TEST_TIM
 void TIM2_IRQHandler(void) //1ms

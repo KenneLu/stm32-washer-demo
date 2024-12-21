@@ -3,6 +3,7 @@
 #include "OLED.h"
 #include "Key.h"
 #include "Encoder.h"
+#include "Delay.h"
 
 /**
   *多级菜单框架v1.2
@@ -36,9 +37,47 @@ void Change_Power_Key(void);
   */
 void Menu_Init(void)
 {
+	Menu_Power_On();
 	Key_CBRegister_R(KEY_ENCODER_PRESS, Change_Enter_Key);
 	Key_CBRegister_LP(KEY_ENCODER_PRESS, Change_Back_Key);
 	Key_CBRegister_R(KEY_WASHER_POWER, Change_Power_Key);
+}
+
+void Menu_Power_On(void)
+{
+	OLED_Clear_Easy();
+	OLED_ShowString_Easy(1, 1, "Power On");
+	Delay_ms(200);
+	OLED_ShowString_Easy(1, 1, "Power On .");
+	Delay_ms(200);
+	OLED_ShowString_Easy(1, 1, "Power On ..");
+	Delay_ms(200);
+	OLED_ShowString_Easy(1, 1, "Power On ...");
+	Delay_ms(200);
+	OLED_ShowString_Easy(1, 1, "Power On ....");
+	Delay_ms(200);
+	OLED_Clear_Easy();
+}
+
+void Menu_Power_Off(void)
+{
+	OLED_Clear_Easy();
+	OLED_ShowString_Easy(1, 1, "Power Off");
+	Delay_ms(200);
+	OLED_ShowString_Easy(1, 1, "Power Off .");
+	Delay_ms(200);
+	OLED_ShowString_Easy(1, 1, "Power Off ..");
+	Delay_ms(200);
+	OLED_ShowString_Easy(1, 1, "Power Off ...");
+	Delay_ms(200);
+	OLED_ShowString_Easy(1, 1, "Power Off ....");
+	Delay_ms(200);
+	OLED_Clear_Easy();
+
+	// 开始待机
+	RCC_APB1PeriphClockCmd(RCC_APB1Periph_PWR, ENABLE);    //使能PWR外设时钟
+	PWR_WakeUpPinCmd(ENABLE);  //使能唤醒管脚功能,在WkUp的上升沿进行
+	PWR_EnterSTANDBYMode();
 }
 
 /**
@@ -170,7 +209,12 @@ int8_t Menu_Run(Option_Class* Option, int8_t Choose)
 			}
 			return Catch_i;	// 返回子菜单选中下标
 		}
-		if (Menu_Back_Event()) { return -1; }	//获取按键
+		if (Menu_Power_Event())
+		{
+			Menu_Power_Off();
+			return -1;
+		}
+		if (Menu_Back_Event()) { return -1; }
 	}
 }
 

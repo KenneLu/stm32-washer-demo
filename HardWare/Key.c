@@ -22,8 +22,8 @@ MY_KEY KEYS[KEYNUM] =
         .GPIO_x = GPIOA,
         .GPIO_RCC = RCC_APB2Periph_GPIOA,
         .GPIO_PIN = GPIO_Pin_0,
-        .GPIO_MODE = GPIO_Mode_IPU,
-        .High_Active = 0
+        .GPIO_MODE = GPIO_Mode_IPD,
+        .High_Active = 1
         }
     }
 };
