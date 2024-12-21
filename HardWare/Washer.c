@@ -1,3 +1,4 @@
+#include "stm32f10x.h"
 #include "Washer.h"
 #include "Key.h"
 #include "Delay.h"
@@ -9,11 +10,21 @@
 #include "ServoMotor.h"
 #include "MPU6050.h"
 #include "Menu.h"
-
+#include "Buzzer.h"
 
 #define WASHER_CNT_MIN (g_Loop_Cnt / 60) 	// g_Loop_Cnt与分钟的转换
 #define WASHER_CNT_S (g_Loop_Cnt / 10) 		// g_Loop_Cnt与分钟的转换
 #define WASHER_CNT_100MS (g_Loop_Cnt / 1)	// g_Loop_Cnt与分钟的转换
+
+#define LED_GPIO_RCC RCC_APB2Periph_GPIOA
+#define LED_GPIO_x GPIOA
+#define LED_GPIO_PIN_R GPIO_Pin_3
+#define LED_GPIO_PIN_B GPIO_Pin_10
+
+typedef enum {
+	LED_RED = 0,
+	LED_BLUE,
+} LED_TYPE;
 
 
 typedef enum { WASHER_STATUS_ENUM(ENUM_ITEM) } WASHER_STATUS;
@@ -41,6 +52,20 @@ static uint8_t g_OLED_Need_Refresh = 0;	// 刷新OLED标志位
 int8_t Menu_Enter_Event(void); // 临时这样解决一下 warning，后续再优化
 int8_t Menu_Back_Event(void); // 临时这样解决一下 warning，后续再优化
 int8_t Menu_Power_Event(void); // 临时这样解决一下 warning，后续再优化
+
+void Washer_LED_On(int8_t on, LED_TYPE type)
+{
+	if (on) GPIO_SetBits(GPIOA, type == LED_RED ? LED_GPIO_PIN_R : LED_GPIO_PIN_B);
+	else GPIO_ResetBits(GPIOA, type == LED_RED ? LED_GPIO_PIN_R : LED_GPIO_PIN_B);
+}
+
+void Washer_LED_Revert(LED_TYPE type)
+{
+	if (GPIO_ReadInputDataBit(LED_GPIO_x, type == LED_RED ? LED_GPIO_PIN_R : LED_GPIO_PIN_B))
+		GPIO_ResetBits(LED_GPIO_x, type == LED_RED ? LED_GPIO_PIN_R : LED_GPIO_PIN_B);
+	else
+		GPIO_SetBits(LED_GPIO_x, type == LED_RED ? LED_GPIO_PIN_R : LED_GPIO_PIN_B);
+}
 
 void Washer_Door_UnLock()
 {
@@ -98,6 +123,16 @@ void Washer_Init(const Washer* pWasher)
 	// 初始化MPU6050，用于姿态检测
 	MPU6050_Init();
 
+	// 初始化 LED
+	RCC_APB2PeriphClockCmd(LED_GPIO_RCC, ENABLE);
+	GPIO_InitTypeDef GPIO_InitStructure;
+	GPIO_InitStructure.GPIO_Pin = LED_GPIO_PIN_R | LED_GPIO_PIN_B;
+	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
+	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+	GPIO_Init(LED_GPIO_x, &GPIO_InitStructure);
+
+	// 初始化蜂鸣器
+	Buzzer_Init();
 
 	// 根据模式选择状态机
 	switch (pWasher->Mode)
@@ -126,6 +161,9 @@ void Washer_Stop()
 {
 	TB6612_Motor_SetSpeed(0);
 	Washer_Door_UnLock();
+	Buzzer_On(0);
+	Washer_LED_On(0, LED_RED);
+	Washer_LED_On(0, LED_BLUE);
 	Delay_ms(50);
 }
 
@@ -193,8 +231,13 @@ void Washer_Error()
 		Washer_Stop();
 	}
 
+	Washer_LED_Revert(LED_RED);
+	Buzzer_Revert();
 	if (g_Washer_Error_Cur == NO_ERROR) //异常解除
 	{
+		Washer_LED_On(0, LED_RED);
+		Buzzer_On(0);
+
 		Delay_ms(500);
 		Washer_OLED_Refresh();
 		OLED_Printf_Easy(1, 1, "ERROR Fixed!");
@@ -245,6 +288,8 @@ void Washer_Heat_Water()
 		OLED_ShowNum_Easy(3, 8, (uint32_t)g_Washer->Water_Temp, 2);
 		OLED_ShowString_Easy(3, 10, ".00");
 		OLED_ShowChinese_Easy(3, 13 / 2 + 1, "℃");	   // 中文是16x16的，所以要减半，并向上取整
+
+		Washer_LED_On(1, LED_RED);
 	}
 
 	DHT11_Data_t DHT11_Data;
@@ -256,6 +301,7 @@ void Washer_Heat_Water()
 
 	if (DHT11_Data.Temp >= g_Washer->Water_Temp) //烧水结束
 	{
+		Washer_LED_On(0, LED_RED);
 		OLED_ShowString_Easy(1, 1, "heat water[DONE]");
 
 		g_Loop_Cnt = 0;
@@ -273,6 +319,7 @@ void Washer_Add_Water()
 		Washer_OLED_Refresh();
 		OLED_ShowString_Easy(1, 1, "add water[  /  ]");
 		OLED_ShowNum_Easy(1, 14, g_Washer->Water_Volume, 2);
+		Washer_LED_On(1, LED_BLUE);
 	}
 
 	OLED_ShowNum_Easy(1, 11, (g_Loop_Cnt / 10), 2);
@@ -280,8 +327,10 @@ void Washer_Add_Water()
 	g_Loop_Cnt++;
 	if (WASHER_CNT_S >= g_Washer->Water_Volume) //加水结束（1s加一升）
 	{
+		Washer_LED_On(0, LED_BLUE);
 		OLED_ShowNum_Easy(1, 11, (g_Loop_Cnt / 10), 2);
 		OLED_ShowString_Easy(2, 1, "add water[DONE]");
+		Washer_LED_On(0, LED_RED);
 		Delay_ms(2000);
 
 		g_Loop_Cnt = 0;
@@ -404,10 +453,12 @@ void Washer_Drain_Water()
 	}
 
 	OLED_ShowNum_Easy(1, 11, (g_Loop_Cnt / 10), 2);
+	Washer_LED_Revert(LED_BLUE);
 
 	g_Loop_Cnt++;
 	if (WASHER_CNT_S >= g_Washer->Water_Volume) //排水结束（1s排一升）
 	{
+		Washer_LED_On(0, LED_BLUE);
 		OLED_ShowNum_Easy(1, 11, (g_Loop_Cnt / 10), 2);
 		OLED_ShowString_Easy(2, 1, "draing[DONE]");
 		Delay_ms(2000);
@@ -532,6 +583,8 @@ void Washer_Heat_Dry()
 		OLED_ShowNum_Easy(3, 8, Dry_Relative_Humidity, 2);
 		OLED_ShowString_Easy(3, 10, ".00");
 		OLED_ShowChinese_Easy(3, 13 / 2 + 1, "％");	   // 中文是16x16的，所以要减半，并向上取整
+
+		Washer_LED_On(1, LED_RED);
 	}
 
 	DHT11_Data_t DHT11_Data;
@@ -546,6 +599,7 @@ void Washer_Heat_Dry()
 		g_Loop_Cnt = 0;
 		g_Status_Next = S_FINISH;
 
+		Washer_LED_On(0, LED_RED);
 		OLED_ShowString_Easy(1, 1, "heat dry[DONE]");
 		Delay_ms(2000);
 	}
