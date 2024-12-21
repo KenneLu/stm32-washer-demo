@@ -56,6 +56,7 @@ static uint8_t g_OLED_Need_Refresh = 0;	// 刷新OLED标志位
 int8_t Menu_Enter_Event(void); // 临时这样解决一下 warning，后续再优化
 int8_t Menu_Back_Event(void); // 临时这样解决一下 warning，后续再优化
 int8_t Menu_Power_Event(void); // 临时这样解决一下 warning，后续再优化
+void Washer_Save(void); // 记录当前状态变化，防止意外断电
 
 void Washer_LED_On(int8_t on, LED_TYPE type)
 {
@@ -656,14 +657,6 @@ void Washer_Finish()
 	}
 }
 
-void Washer_Security_Monitor()
-{
-	g_Washer_Error_Cur = NO_ERROR;
-
-
-	Delay_ms(500);
-}
-
 int8_t Washer_Run(void* Param)
 {
 	g_Status_Next = S_INIT;	// 首次进入，初始化状态机
@@ -728,6 +721,8 @@ int8_t Washer_Run(void* Param)
 			g_Status_Last = g_Status_Cur;
 			g_Status_Cur = g_Status_Next;
 			g_OLED_Need_Refresh = 1; // 状态切换，刷新OLED
+
+			Washer_Save();
 		}
 
 		// 安全异常监测
@@ -746,18 +741,15 @@ int8_t Washer_Run(void* Param)
 			// 检测姿态是否倾斜
 			static int16_t AccX, AccY, AccZ, GyroX, GyroY, GyroZ;
 			static int16_t AccX_Abs, AccY_Abs;
-			static uint16_t Shake_Time = 0;
+			static uint8_t Shake_Time = 0;
 			MPU6050_GetData(&AccX, &AccY, &AccZ, &GyroX, &GyroY, &GyroZ);
 			AccX_Abs = AccX > 0 ? AccX : -AccX;
 			AccY_Abs = AccY > 0 ? AccY : -AccY;
-			if (AccX_Abs > 100 || AccY_Abs > 100) // 瞬时加速度大于150
+			if (AccX_Abs > 50 || AccY_Abs > 50) // 瞬时加速度大于50
 			{
-				g_Washer_Error_Cur = ERROR_SHAKE;
 				Shake_Time++;
-				if (Shake_Time > 2)	// 持续时间大于500ms
-				{
-					g_Washer_Error_Cur = ERROR_TILT;
-				}
+				if (Shake_Time == 2)	g_Washer_Error_Cur = ERROR_SHAKE; // 持续200ms
+				else if (Shake_Time > 2) g_Washer_Error_Cur = ERROR_TILT; // 持续时间大于200ms
 			}
 			else
 			{
@@ -774,6 +766,8 @@ int8_t Washer_Run(void* Param)
 					g_Status_Last = g_Status_Cur; // 保存异常前的状态机
 				}
 				g_Status_Cur = S_ERROR;
+
+				Washer_Save();
 			}
 
 			if (g_Washer_Error_Cur != NO_ERROR && g_Washer_Error_Cur != g_Washer_Error_Last)
@@ -788,6 +782,8 @@ int8_t Washer_Run(void* Param)
 		{
 			g_Status_Next = S_PAUSE;
 			g_OLED_Need_Refresh = 1; // 状态切换，刷新OLED
+
+			Washer_Save();
 		}
 
 		if (Menu_Power_Event())
@@ -802,27 +798,24 @@ int8_t Washer_Run(void* Param)
 			return -1;
 		}
 
-		// 定时记录当前状态变化，防止意外断电
-		static uint16_t cnt = 0;
-		cnt++;
-		if (cnt >= 10)
-		{
-			Washer_Data[0] = g_Washer->Wash_Cnt;
-			Washer_Data[1] = g_Washer->Wash_Time;
-			Washer_Data[2] = g_Washer->Spin_Dry_Time;
-			Washer_Data[3] = g_Washer->Water_Volume;
-			Washer_Data[4] = g_Washer->Water_Temp;
-			Washer_Data[5] = g_Washer->Heat_Temp;
-			Washer_Data[6] = g_Status_Next;
-			Washer_Data[7] = g_Status_Cur;
-			Washer_Data[8] = g_Status_Last;
-			Washer_Data[9] = ACCIDENT_SHUTDOWN;
-			W25Q64_SectorErase(0x000000);
-			W25Q64_PageProgram(0x000000, Washer_Data, 10);
-			cnt = 0;
-		}
-
 		// 轮询周期为延时100ms
 		Delay_ms(100);
 	}
+}
+
+void Washer_Save(void)
+{
+	// 记录当前状态变化，防止意外断电
+	Washer_Data[0] = g_Washer->Wash_Cnt;
+	Washer_Data[1] = g_Washer->Wash_Time;
+	Washer_Data[2] = g_Washer->Spin_Dry_Time;
+	Washer_Data[3] = g_Washer->Water_Volume;
+	Washer_Data[4] = g_Washer->Water_Temp;
+	Washer_Data[5] = g_Washer->Heat_Temp;
+	Washer_Data[6] = g_Status_Next;
+	Washer_Data[7] = g_Status_Cur;
+	Washer_Data[8] = g_Status_Last;
+	Washer_Data[9] = ACCIDENT_SHUTDOWN;
+	W25Q64_SectorErase(0x000000);
+	W25Q64_PageProgram(0x000000, Washer_Data, 10);
 }
