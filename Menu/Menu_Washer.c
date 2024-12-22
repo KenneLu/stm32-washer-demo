@@ -126,7 +126,7 @@ void Menu_Washer_Power_Off(void)
 	uint8_t Washer_Data[10] = { 0 };
 	Washer_Data[9] = CUSTOMER_SHUTDOWN;
 	W25Q64_SectorErase(0x000000);
-	W25Q64_PageProgram(0x000000, Washer_Data, 9);
+	W25Q64_PageProgram(0x000000, Washer_Data, 10);
 
 	// 开始待机
 	RCC_APB1PeriphClockCmd(RCC_APB1Periph_PWR, ENABLE);    //使能PWR外设时钟

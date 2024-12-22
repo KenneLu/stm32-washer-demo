@@ -197,7 +197,7 @@ void Washer_Stop(uint8_t Custom_Shout_Down)
 	{
 		Washer_Data[9] = CUSTOMER_SHUTDOWN;
 		W25Q64_SectorErase(0x000000);
-		W25Q64_PageProgram(0x000000, Washer_Data, 9);
+		W25Q64_PageProgram(0x000000, Washer_Data, 10);
 	}
 
 	Delay_ms(100);
@@ -646,10 +646,12 @@ void Washer_Wash_Cnt()
 
 void Washer_Finish()
 {
-	OLED_Clear();
-	OLED_ShowString_Easy(1, 1, "WASH FINISH!");
-	g_Security_Monitor_On = 0; // 关闭安全监测
-	Washer_Stop(1);
+	if (g_OLED_Need_Refresh)
+	{
+		OLED_Clear();
+		OLED_ShowString_Easy(1, 1, "WASH FINISH!");
+		g_Security_Monitor_On = 0; // 关闭安全监测
+	}
 
 	if (Menu_Enter_Event())
 	{
@@ -709,6 +711,7 @@ int8_t Washer_Run(void* Param)
 			break;
 
 		case S_QUIT:
+			Washer_Stop(1);
 			return -1; // 退出运行，返回模式选择
 
 		default:
