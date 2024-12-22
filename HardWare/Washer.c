@@ -186,14 +186,14 @@ void Washer_Init(Washer* pWasher)
 	}
 }
 
-void Washer_Stop()
+void Washer_Stop(uint8_t Custom_Shout_Down)
 {
 	TB6612_Motor_SetSpeed(0);
 	Washer_Door_UnLock();
 	Buzzer_On(0);
 	Washer_LED_On(0, LED_RED);
 	Washer_LED_On(0, LED_BLUE);
-	if (g_Status_Cur != S_ERROR && g_Status_Cur != S_PAUSE)
+	if (Custom_Shout_Down)
 	{
 		Washer_Data[9] = CUSTOMER_SHUTDOWN;
 		W25Q64_SectorErase(0x000000);
@@ -210,7 +210,7 @@ void Washer_Pause()
 		g_OLED_Need_Refresh = 0;
 		Washer_OLED_Refresh();
 		OLED_Printf_Easy(3, 1, "pause...");
-		Washer_Stop();
+		Washer_Stop(0);
 	}
 
 	if (Menu_Enter_Event())	// 继续
@@ -264,7 +264,7 @@ void Washer_Error()
 		default:
 			break;
 		}
-		Washer_Stop();
+		Washer_Stop(0);
 	}
 
 	Washer_LED_Revert(LED_RED);
@@ -649,7 +649,7 @@ void Washer_Finish()
 	OLED_Clear();
 	OLED_ShowString_Easy(1, 1, "WASH FINISH!");
 	g_Security_Monitor_On = 0; // 关闭安全监测
-	Washer_Stop();
+	Washer_Stop(1);
 
 	if (Menu_Enter_Event())
 	{
@@ -788,13 +788,13 @@ int8_t Washer_Run(void* Param)
 
 		if (Menu_Power_Event())
 		{
-			Washer_Stop();
+			Washer_Stop(1);
 			Menu_Power_Off();
 			return -1;
 		}
 
 		if (Menu_Back_Event()) {
-			Washer_Stop();
+			Washer_Stop(1);
 			return -1;
 		}
 
