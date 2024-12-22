@@ -789,7 +789,7 @@ int8_t Washer_Run(void* Param)
 		if (Menu_Power_Event())
 		{
 			Washer_Stop(1);
-			Menu_Power_Off();
+			Menu_Washer_Power_Off();
 			return -1;
 		}
 

@@ -1,4 +1,3 @@
-#include "stm32f10x.h"                  // Device header
 #include "Menu.h"
 #include "OLED.h"
 #include "Key.h"
@@ -14,6 +13,13 @@
   *菜单用到的按键函数独立出来,方便移植和修改,比如没有编码器可以用上下两个按键代替;
   */
 
+uint8_t Key_Enter_Get(void);
+uint8_t Key_Back_Get(void);
+uint8_t Key_Power_Get(void);
+void Change_Enter_Key(void);
+void Change_Back_Key(void);
+void Change_Power_Key(void);
+
 enum CursorStyle CurStyle = reverse;
 int8_t Speed_Factor = 8;																		//光标动画速度系数;
 float Roll_Speed = 2;																			//滚动动画速度系数;
@@ -22,13 +28,16 @@ uint8_t Key_Enter = 0;	//确认键
 uint8_t Key_Back = 0;	//返回键
 uint8_t Key_Power = 0;	//电源键
 
-uint8_t Key_Enter_Get(void);
-uint8_t Key_Back_Get(void);
-uint8_t Key_Power_Get(void);
-void Change_Enter_Key(void);
-void Change_Back_Key(void);
-void Change_Power_Key(void);
-
+MenuPowerOffCallBack Menu_Power_Off_CB = 0;
+uint8_t Menu_Power_Off_CBRegister(MenuPowerOffCallBack CB)
+{
+	if (Menu_Power_Off_CB == 0)
+	{
+		Menu_Power_Off_CB = CB;
+		return 1;
+	}
+	return 0;
+}
 /**
   * 函    数：菜单初始化
   * 参    数：无
@@ -37,47 +46,9 @@ void Change_Power_Key(void);
   */
 void Menu_Init(void)
 {
-	Menu_Power_On();
 	Key_CBRegister_R(KEY_ENCODER_PRESS, Change_Enter_Key);
 	Key_CBRegister_LP(KEY_ENCODER_PRESS, Change_Back_Key);
 	Key_CBRegister_R(KEY_WASHER_POWER, Change_Power_Key);
-}
-
-void Menu_Power_On(void)
-{
-	OLED_Clear_Easy();
-	OLED_ShowString_Easy(1, 1, "Power On");
-	Delay_ms(200);
-	OLED_ShowString_Easy(1, 1, "Power On .");
-	Delay_ms(200);
-	OLED_ShowString_Easy(1, 1, "Power On ..");
-	Delay_ms(200);
-	OLED_ShowString_Easy(1, 1, "Power On ...");
-	Delay_ms(200);
-	OLED_ShowString_Easy(1, 1, "Power On ....");
-	Delay_ms(200);
-	OLED_Clear_Easy();
-}
-
-void Menu_Power_Off(void)
-{
-	OLED_Clear_Easy();
-	OLED_ShowString_Easy(1, 1, "Power Off");
-	Delay_ms(200);
-	OLED_ShowString_Easy(1, 1, "Power Off .");
-	Delay_ms(200);
-	OLED_ShowString_Easy(1, 1, "Power Off ..");
-	Delay_ms(200);
-	OLED_ShowString_Easy(1, 1, "Power Off ...");
-	Delay_ms(200);
-	OLED_ShowString_Easy(1, 1, "Power Off ....");
-	Delay_ms(200);
-	OLED_Clear_Easy();
-
-	// 开始待机
-	RCC_APB1PeriphClockCmd(RCC_APB1Periph_PWR, ENABLE);    //使能PWR外设时钟
-	PWR_WakeUpPinCmd(ENABLE);  //使能唤醒管脚功能,在WkUp的上升沿进行
-	PWR_EnterSTANDBYMode();
 }
 
 /**
@@ -211,7 +182,10 @@ int8_t Menu_Run(Option_Class* Option, int8_t Choose)
 		}
 		if (Menu_Power_Event())
 		{
-			Menu_Power_Off();
+			if (Menu_Power_Off_CB)
+			{
+				Menu_Power_Off_CB();
+			}
 			return -1;
 		}
 		if (Menu_Back_Event()) { return -1; }

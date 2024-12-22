@@ -221,6 +221,7 @@ int main(void)
 	Timer_Init();
 	Encoder_Init();
 	Menu_Init();
+	Menu_Washer_Power_On();
 #endif
 
 
@@ -290,7 +291,7 @@ int main(void)
 		PWR_EnterSTANDBYMode();
 #endif
 #if TEST_MENU_WASHER
-		Menu_Washer();
+		Menu_Washer_Run();
 #endif
 
 	}

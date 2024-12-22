@@ -24,9 +24,10 @@ typedef struct
 	void* pFuncParam;		//函数参数，可以传递任意类型的数据，适配设置选项值的功能。
 } Option_Class;
 
+typedef void (*MenuPowerOffCallBack) (void);
+uint8_t Menu_Power_Off_CBRegister(MenuPowerOffCallBack CB);
+
 void Menu_Init(void);
-void Menu_Power_On(void);
-void Menu_Power_Off(void);
 int8_t Menu_Run(Option_Class* Option, int8_t Choose);
 int8_t Menu_Roll_Event(void);
 int8_t Menu_Enter_Event(void);
@@ -40,7 +41,9 @@ int8_t Games_Menu(void* Param);
 int8_t Setting_Menu(void* Param);
 int8_t Information_Menu(void* Param);
 
-void Menu_Washer(void);
+void Menu_Washer_Run(void);
+void Menu_Washer_Power_On(void);
+void Menu_Washer_Power_Off(void);
 int8_t Menu_Washer_Mode_Select(void* Param);
 int8_t Menu_Washer_Mode_Detail(void* Param);
 int8_t Menu_Washer_Mode_Setting(void* Param);

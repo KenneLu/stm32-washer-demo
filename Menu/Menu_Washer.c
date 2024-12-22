@@ -1,3 +1,4 @@
+#include "stm32f10x.h"                  // Device header
 #include "Menu.h"
 #include "OLED.h"
 #include "Encoder.h"
@@ -6,6 +7,7 @@
 #include <stdlib.h>
 #include "Washer.h"
 #include "W25Q64.h"
+#include "Delay.h"
 
 
 char* Uchar2Str(int Num);
@@ -68,6 +70,69 @@ Option_Class Opt_Detail_Heat[] = {
 Option_Class Opt_Detail_Heat_Cur[sizeof(Opt_Detail_Heat)];
 
 uint8_t Wash_Opt_Inited = 0;
+
+void Menu_Washer_Power_On(void)
+{
+	OLED_Clear_Easy();
+	OLED_ShowString_Easy(1, 1, "Power On");
+	Delay_ms(200);
+	OLED_ShowString_Easy(1, 1, "Power On .");
+	Delay_ms(200);
+	OLED_ShowString_Easy(1, 1, "Power On ..");
+	Delay_ms(200);
+	OLED_ShowString_Easy(1, 1, "Power On ...");
+	Delay_ms(200);
+	OLED_ShowString_Easy(1, 1, "Power On ....");
+	Delay_ms(200);
+	OLED_Clear_Easy();
+
+	// 初始化W25Q64
+	W25Q64_Init();
+
+	// 检查是客户主动关机，还是意外掉电
+	uint8_t Washer_Data[10] = { 0 };
+	W25Q64_ReadData(0x000000, Washer_Data, 10);
+	if (Washer_Data[9] == ACCIDENT_SHUTDOWN)
+	{
+		OLED_ShowString_Easy(1, 1, "Restore Last");
+		Delay_ms(200);
+		OLED_ShowString_Easy(1, 1, "Restore Last .");
+		Delay_ms(200);
+		OLED_ShowString_Easy(1, 1, "Restore Last ..");
+		Delay_ms(200);
+		OLED_ShowString_Easy(1, 1, "Restore Last ...");
+		Delay_ms(200);
+
+		Washer_Run(&Washer_Cur);
+	}
+}
+
+void Menu_Washer_Power_Off(void)
+{
+	OLED_Clear_Easy();
+	OLED_ShowString_Easy(1, 1, "Power Off");
+	Delay_ms(200);
+	OLED_ShowString_Easy(1, 1, "Power Off .");
+	Delay_ms(200);
+	OLED_ShowString_Easy(1, 1, "Power Off ..");
+	Delay_ms(200);
+	OLED_ShowString_Easy(1, 1, "Power Off ...");
+	Delay_ms(200);
+	OLED_ShowString_Easy(1, 1, "Power Off ....");
+	Delay_ms(200);
+	OLED_Clear_Easy();
+
+	// 客户主动关机
+	uint8_t Washer_Data[10] = { 0 };
+	Washer_Data[9] = CUSTOMER_SHUTDOWN;
+	W25Q64_SectorErase(0x000000);
+	W25Q64_PageProgram(0x000000, Washer_Data, 9);
+
+	// 开始待机
+	RCC_APB1PeriphClockCmd(RCC_APB1Periph_PWR, ENABLE);    //使能PWR外设时钟
+	PWR_WakeUpPinCmd(ENABLE);  //使能唤醒管脚功能,在WkUp的上升沿进行
+	PWR_EnterSTANDBYMode();
+}
 
 void Menu_Washer_Init(void)
 {
@@ -175,17 +240,10 @@ void Menu_Washer_Init(void)
 	Heat_Dry.Heat_Temp = List_Setting_Heat_Temp[1];
 }
 
-void Menu_Washer(void)
+void Menu_Washer_Run(void)
 {
-	// 初始化W25Q64
-	W25Q64_Init();
-	uint8_t Washer_Data[10] = { 0 };
-	W25Q64_ReadData(0x000000, Washer_Data, 10);
-	if (Washer_Data[9] == ACCIDENT_SHUTDOWN)
-	{
-		Washer_Run(&Washer_Cur);
-	}
-
+	Menu_Power_Event(); // 忽略复位的那一次按键事件
+	Menu_Power_Off_CBRegister(Menu_Washer_Power_Off);
 	Menu_Washer_Mode_Select(0);
 }
 
