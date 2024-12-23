@@ -13,6 +13,8 @@
 - 通过**陀螺仪加速度计**获取姿态，判断洗衣机是否发生震动和倾斜。
 - 通过**EEPROM**存储当前运行状态，意外断电恢复后，复原上次工作状态。
 
+![](https://github.com/KenneLu/stm32-washer-demo/blob/main/README.assets/Img1.jpg)
+
 ![](\README.assets\Img2.jpg)
 
 
@@ -21,10 +23,14 @@
 
 - 下图外设均为模块，**请忽略模块的电路细节**，主要参考与STM32的接口连线。
 
-   ![](\README.assets\Img1.jpg)
+![](https://github.com/KenneLu/stm32-washer-demo/blob/main/README.assets/Img2.jpg)
+
+![](\README.assets\Img1.jpg)
 
 
 
 ## 状态机
+
+![](https://github.com/KenneLu/stm32-washer-demo/blob/main/README.assets/Img3.jpg)
 
 ![](\README.assets\Img3.jpg)
