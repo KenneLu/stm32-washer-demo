@@ -34,3 +34,16 @@
 ![](https://github.com/KenneLu/stm32-washer-demo/blob/main/README.assets/Img3.jpg)
 
 ![](\README.assets\Img3.jpg)
+
+
+
+## 参考资料
+
+- **硬件驱动：@江协科技 —《STM32入门教程-2023版》**
+
+- **按键检测：@无际单片机编程 —《单片机物联网模块化编程》**
+
+- **多级菜单：@加油哦大灰狼 —《多级菜单快速移植框架》**    
+
+- **状态机：    @码农爱学习 —《STM32状态机编程实例》**    
+
