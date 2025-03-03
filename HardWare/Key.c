@@ -41,11 +41,11 @@ typedef enum
 typedef struct
 {
     KEY_ID ID;
-    GPIO_TypeDef* GPIO_x;
-    uint32_t GPIO_RCC;
-    uint16_t GPIO_PIN;
-    GPIOMode_TypeDef GPIO_MODE;
-    uint8_t High_Active;        // 高电平有效
+    GPIO_TypeDef* PORT;
+    uint16_t PIN;
+    GPIOMode_TypeDef MODE;
+    uint32_t _RCC;
+    uint8_t Is_High_Active;        // 高电平有效
 } KEY_HARDWARE;
 
 typedef struct
@@ -80,20 +80,20 @@ static KEY_HARDWARE g_Key_GPIOS[KEY_NUM] = {
     //按键1：编码器
     {
         .ID = KEY_ENCODER,
-        .GPIO_x = GPIOA,
-        .GPIO_RCC = RCC_APB2Periph_GPIOA,
-        .GPIO_PIN = GPIO_Pin_5,
-        .GPIO_MODE = GPIO_Mode_IPU,
-        .High_Active = 0
+        .PORT = GPIOA,
+        .PIN = GPIO_Pin_5,
+        .MODE = GPIO_Mode_IPU,
+        ._RCC = RCC_APB2Periph_GPIOA,
+        .Is_High_Active = 0
     },
     //按键2：电源
     {
         .ID = KEY_POWER,
-        .GPIO_x = GPIOA,
-        .GPIO_RCC = RCC_APB2Periph_GPIOA,
-        .GPIO_PIN = GPIO_Pin_0,
-        .GPIO_MODE = GPIO_Mode_IPD,
-        .High_Active = 1
+        .PORT = GPIOA,
+        .PIN = GPIO_Pin_0,
+        .MODE = GPIO_Mode_IPD,
+        ._RCC = RCC_APB2Periph_GPIOA,
+        .Is_High_Active = 1
     },
 };
 static KEY_Data g_Key_Datas[KEY_NUM];
@@ -144,12 +144,12 @@ void Key_Init(void)
         g_Key_Devs[i].Priv_Data = (void*)&g_Key_Datas[i];
 
         // Hardware Init
-        RCC_APB2PeriphClockCmd(g_Key_Datas[i].GPIO.GPIO_RCC, ENABLE);
+        RCC_APB2PeriphClockCmd(g_Key_Datas[i].GPIO._RCC, ENABLE);
         GPIO_InitTypeDef GPIO_InitStructure;
-        GPIO_InitStructure.GPIO_Pin = g_Key_Datas[i].GPIO.GPIO_PIN;
+        GPIO_InitStructure.GPIO_Pin = g_Key_Datas[i].GPIO.PIN;
         GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
-        GPIO_InitStructure.GPIO_Mode = g_Key_Datas[i].GPIO.GPIO_MODE;
-        GPIO_Init(g_Key_Datas[i].GPIO.GPIO_x, &GPIO_InitStructure);
+        GPIO_InitStructure.GPIO_Mode = g_Key_Datas[i].GPIO.MODE;
+        GPIO_Init(g_Key_Datas[i].GPIO.PORT, &GPIO_InitStructure);
     }
 }
 
@@ -211,13 +211,13 @@ uint8_t Key_CBRegister_LP_R(KEY_Device* pDev, KeyCallBack CB)
 uint8_t Is_Key_Pressed(KEY_Device* pDev)
 {
     KEY_Data* data = (KEY_Data*)pDev->Priv_Data;
-    if (data->GPIO.High_Active)
+    if (data->GPIO.Is_High_Active)
     {
-        return (GPIO_ReadInputDataBit(data->GPIO.GPIO_x, data->GPIO.GPIO_PIN));
+        return (GPIO_ReadInputDataBit(data->GPIO.PORT, data->GPIO.PIN));
     }
     else
     {
-        return (!GPIO_ReadInputDataBit(data->GPIO.GPIO_x, data->GPIO.GPIO_PIN));
+        return (!GPIO_ReadInputDataBit(data->GPIO.PORT, data->GPIO.PIN));
     }
 }
 

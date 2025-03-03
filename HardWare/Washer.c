@@ -13,6 +13,8 @@
 #include "Buzzer.h"
 #include "W25Q64.h"
 
+BUZZER_Device* g_pDev_Buzzer;
+
 uint8_t Washer_Data[10] = { 0 };
 
 #define DISPLAY_DELAY_MS 500
@@ -143,6 +145,7 @@ void Washer_Init(Washer* pWasher)
 
 	// 初始化蜂鸣器
 	Buzzer_Init();
+	g_pDev_Buzzer = GetBuzzerDevice(BUZZER);
 
 	// 初始化W25Q64
 	W25Q64_Init();
@@ -190,7 +193,7 @@ void Washer_Stop(uint8_t Custom_Shout_Down)
 {
 	TB6612_Motor_SetSpeed(0);
 	Washer_Door_UnLock();
-	Buzzer_On(0);
+	g_pDev_Buzzer->Buzzer_Off(g_pDev_Buzzer);
 	Washer_LED_On(0, LED_RED);
 	Washer_LED_On(0, LED_BLUE);
 	if (Custom_Shout_Down)
@@ -268,11 +271,11 @@ void Washer_Error()
 	}
 
 	Washer_LED_Revert(LED_RED);
-	Buzzer_Revert();
+	g_pDev_Buzzer->Buzzer_Revert(g_pDev_Buzzer);
 	if (g_Washer_Error_Cur == NO_ERROR) //异常解除
 	{
 		Washer_LED_On(0, LED_RED);
-		Buzzer_On(0);
+		g_pDev_Buzzer->Buzzer_Off(g_pDev_Buzzer);
 
 		Delay_ms(500);
 		Washer_OLED_Refresh();

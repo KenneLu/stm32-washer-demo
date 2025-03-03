@@ -1,14 +1,24 @@
 #ifndef __BUZZER_H
 #define __BUZZER_H
 
-//GPIO
-#define BUZZER_GPIO_RCC     RCC_APB2Periph_GPIOA
-#define BUZZER_GOIO_x       GPIOA
-#define BUZZER_GPIO_PIN_IO  GPIO_Pin_12
-#define BUZZER_GOIO_MODE    GPIO_Mode_Out_PP
+
+typedef enum
+{
+    BUZZER,
+    BUZZER_NUM,
+} BUZZER_ID;
+
+typedef struct BUZZER_Device {
+    void(*Buzzer_On)(struct BUZZER_Device* pDev);
+    void(*Buzzer_Off)(struct BUZZER_Device* pDev);
+    void(*Buzzer_Revert)(struct BUZZER_Device* pDev);
+    uint8_t(*Is_Buzzer_On)(struct BUZZER_Device* pDev);
+    void* Priv_Data;
+} BUZZER_Device;
+
+BUZZER_Device* GetBuzzerDevice(BUZZER_ID ID);
 
 void Buzzer_Init(void);
-void Buzzer_On(uint8_t On);
-void Buzzer_Revert(void);
+
 
 #endif
