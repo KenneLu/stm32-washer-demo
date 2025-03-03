@@ -28,6 +28,9 @@ uint8_t Key_Enter = 0;	//确认键
 uint8_t Key_Back = 0;	//返回键
 uint8_t Key_Power = 0;	//电源键
 
+KEY_Device* g_pKeyDev_Encoder = 0;
+KEY_Device* g_pKeyDev_Power = 0;
+
 MenuPowerOffCallBack Menu_Power_Off_CB = 0;
 uint8_t Menu_Power_Off_CBRegister(MenuPowerOffCallBack CB)
 {
@@ -46,9 +49,18 @@ uint8_t Menu_Power_Off_CBRegister(MenuPowerOffCallBack CB)
   */
 void Menu_Init(void)
 {
-	Key_CBRegister_R(KEY_ENCODER_PRESS, Change_Enter_Key);
-	Key_CBRegister_LP(KEY_ENCODER_PRESS, Change_Back_Key);
-	Key_CBRegister_R(KEY_WASHER_POWER, Change_Power_Key);
+	g_pKeyDev_Encoder = GetKeyDevice(KEY_ENCODER);
+	if (g_pKeyDev_Encoder)
+	{
+		g_pKeyDev_Encoder->Key_CBRegister_R(g_pKeyDev_Encoder, Change_Enter_Key);
+		g_pKeyDev_Encoder->Key_CBRegister_LP(g_pKeyDev_Encoder, Change_Back_Key);
+	}
+
+	g_pKeyDev_Power = GetKeyDevice(KEY_POWER);
+	if (g_pKeyDev_Power)
+	{
+		g_pKeyDev_Power->Key_CBRegister_R(g_pKeyDev_Power, Change_Power_Key);
+	}
 }
 
 /**

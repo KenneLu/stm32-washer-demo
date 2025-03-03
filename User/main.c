@@ -26,7 +26,8 @@
 #define TEST_KEY 0
 #define TEST_MENU 0
 #define TEST_WAKE_UP 0
-#define TEST_MENU_WASHER 1
+#define TEST_MENU_WASHER 0
+#define TEST_MENU_WASHER_V2 1
 
 #if TEST_W25Q64
 uint8_t MID;
@@ -236,6 +237,13 @@ int main(void)
 	Menu_Init();
 	Menu_Washer_Power_On();
 #endif
+#if TEST_MENU_WASHER_V2
+	Key_Init();
+	Timer_Init();
+	Encoder_Init();
+	Menu_Init();
+	Menu_Washer_Power_On();
+#endif
 
 
 
@@ -330,6 +338,9 @@ int main(void)
 #if TEST_MENU_WASHER
 		Menu_Washer_Run();
 #endif
+#if TEST_MENU_WASHER_V2
+		Menu_Washer_Run();
+#endif
 
 	}
 }
@@ -367,6 +378,16 @@ void TIM2_IRQHandler(void) //1ms
 }
 #endif
 #if TEST_MENU_WASHER
+void TIM2_IRQHandler(void) //1ms
+{
+	if (TIM_GetITStatus(TIM2, TIM_IT_Update) == SET)
+	{
+		Key_Scan();
+		TIM_ClearITPendingBit(TIM2, TIM_IT_Update);
+	}
+}
+#endif
+#if TEST_MENU_WASHER_V2
 void TIM2_IRQHandler(void) //1ms
 {
 	if (TIM_GetITStatus(TIM2, TIM_IT_Update) == SET)

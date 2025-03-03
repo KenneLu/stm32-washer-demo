@@ -1,10 +1,82 @@
 #include "stm32F10x.h"
 #include "Key.h"
+#include "string.h"
+#include "Timer.h"
 
-MY_KEY KEYS[KEYNUM] =
+//æŒ‰é”®æ¶ˆæŠ–æ—¶é—´
+#define KEY_SCANTIME                SYS_MS * 20     // 20ms
+
+//è¿ç»­é•¿æŒ‰æ—¶é—´
+#define KEY_PRESS_LONG_TIME         SYS_MS * 800    // 0.5s
+
+//æŒç»­é•¿æŒ‰é—´éš”æ—¶é—´
+#define KEY_PRESS_CONTINUE_TIME     SYS_MS * 150    // 150ms
+
+typedef enum
 {
-    {
-    .ID = KEY_ENCODER_PRESS,
+    STEP_WAIT,              // ç­‰å¾…æŒ‰ä¸‹
+    STEP_PRESS,             // å•å‡»æŒ‰ä¸‹
+    STEP_LONG_PRESS,        // é•¿æŒ‰æŒ‰ä¸‹
+    STEP_CONTINUOUS_PRESS,  // æŒç»­é•¿æŒ‰
+} SCAN_STEP; // æŒ‰é”®æ£€æµ‹è¿‡ç¨‹
+
+typedef struct
+{
+    SCAN_STEP ScanStep;
+    uint16_t ShakeTime;        // æ¶ˆæŠ–
+    uint16_t LongPressTime;   // é•¿æŒ‰
+    uint16_t ContPressTime;   // è¿ç»­é•¿æŒ‰
+} KEY_SCAN; // æŒ‰é”®æ‰«æç›¸å…³
+
+typedef enum
+{
+    KEY_IDLE,                    // ç©ºé—²
+    KEY_PRESS,                   // å•å‡»æŒ‰ä¸‹
+    KEY_RELEASE,                 // å•å‡»é‡Šæ”¾
+    KEY_LONG_PRESS,              // é•¿æŒ‰æŒ‰ä¸‹
+    KEY_LONG_PRESS_CONTINUOUS,   // é•¿æŒ‰æŒç»­
+    KEY_LONG_PRESS_RELEASE,      // é•¿æŒ‰é‡Šæ”¾
+} KEY_STATUS;
+
+typedef struct
+{
+    GPIO_TypeDef* GPIO_x;
+    uint32_t GPIO_RCC;
+    uint16_t GPIO_PIN;
+    GPIOMode_TypeDef GPIO_MODE;
+    uint8_t High_Active;        // é«˜ç”µå¹³æœ‰æ•ˆ
+} KEY_GPIO;
+
+typedef struct
+{
+    KeyCallBack Press;              // æŒ‰ä¸‹
+    KeyCallBack Release;            // é‡Šæ”¾
+    KeyCallBack LongPress;          // é•¿æŒ‰
+    KeyCallBack LongPress_Cont;     // æŒç»­é•¿æŒ‰
+    KeyCallBack LongPress_Release;  // é•¿æŒ‰é‡Šæ”¾
+} KEY_CALLBACK;
+
+uint8_t Key_CBRegister_P(KEY_Device* pDev, KeyCallBack CB);
+uint8_t Key_CBRegister_R(KEY_Device* pDev, KeyCallBack CB);
+uint8_t Key_CBRegister_LP(KEY_Device* pDev, KeyCallBack CB);
+uint8_t Key_CBRegister_LP_Cont(KEY_Device* pDev, KeyCallBack CB);
+uint8_t Key_CBRegister_LP_R(KEY_Device* pDev, KeyCallBack CB);
+uint8_t Is_Key_Pressed(KEY_Device* pDev);
+
+typedef struct {
+    KEY_ID ID;
+    KEY_STATUS Status;
+    KEY_CALLBACK Callback;
+    KEY_GPIO GPIO;
+    KEY_SCAN Scan;
+} KEY_Data;
+
+
+//--------------------------------------------------
+
+//æŒ‰é”®1ï¼šç¼–ç å™¨
+static KEY_Data g_KeyData_Encoder = {
+    .ID = KEY_ENCODER,
     .Status = KEY_IDLE,
     .GPIO = {
         .GPIO_x = GPIOA,
@@ -13,10 +85,20 @@ MY_KEY KEYS[KEYNUM] =
         .GPIO_MODE = GPIO_Mode_IPU,
         .High_Active = 0
         }
-    },
+};
+static KEY_Device g_KeyDev_Encoder = {
+    Key_CBRegister_P,
+    Key_CBRegister_R,
+    Key_CBRegister_LP,
+    Key_CBRegister_LP_Cont,
+    Key_CBRegister_LP_R,
+    Is_Key_Pressed,
+    &g_KeyData_Encoder,
+};
 
-    {
-    .ID = KEY_WASHER_POWER,
+//æŒ‰é”®2ï¼šç”µæº
+static KEY_Data g_KeyData_Power = {
+    .ID = KEY_POWER,
     .Status = KEY_IDLE,
     .GPIO = {
         .GPIO_x = GPIOA,
@@ -25,86 +107,129 @@ MY_KEY KEYS[KEYNUM] =
         .GPIO_MODE = GPIO_Mode_IPD,
         .High_Active = 1
         }
-    }
+};
+static KEY_Device g_KeyDev_Power = {
+    Key_CBRegister_P,
+    Key_CBRegister_R,
+    Key_CBRegister_LP,
+    Key_CBRegister_LP_Cont,
+    Key_CBRegister_LP_R,
+    Is_Key_Pressed,
+    &g_KeyData_Power,
 };
 
+static KEY_Device* g_Key_Devs[] = { &g_KeyDev_Encoder, &g_KeyDev_Power };
+
+
+//--------------------------------------------------
+
+//è·å–æŒ‰é”®
+KEY_Device* GetKeyDevice(KEY_ID ID)
+{
+    for (int i = 0; i < sizeof(g_Key_Devs) / sizeof(g_Key_Devs[0]); i++)
+    {
+        KEY_Data* data = (KEY_Data*)g_Key_Devs[i]->Priv_Data;
+        KEY_ID Dev_ID = data->ID;
+        if (Dev_ID == ID)
+            return g_Key_Devs[i];
+    }
+
+    return NULL;
+}
 
 void Key_Init(void)
 {
     for (uint8_t i = 0; i < KEYNUM; i++)
     {
-        KEYS[i].Status = KEY_IDLE;
+        KEY_Data* data = (KEY_Data*)g_Key_Devs[i]->Priv_Data;
 
-        KEYS[i].Callback.Press = 0;
-        KEYS[i].Callback.Release = 0;
-        KEYS[i].Callback.LongPress = 0;
-        KEYS[i].Callback.LongPress_Cont = 0;
-        KEYS[i].Callback.LongPress_Release = 0;
+        data[i].Status = KEY_IDLE;
 
-        KEYS[i].Scan.ScanStep = STEP_WAIT;
-        KEYS[i].Scan.ShakeTime = KEY_SCANTIME;
-        KEYS[i].Scan.LongPressTimer = KEY_PRESS_LONG_TIME;
-        KEYS[i].Scan.ContPressTimer = KEY_PRESS_CONTINUE_TIME;
+        data->Callback.Press = 0;
+        data->Callback.Release = 0;
+        data->Callback.LongPress = 0;
+        data->Callback.LongPress_Cont = 0;
+        data->Callback.LongPress_Release = 0;
 
-        RCC_APB2PeriphClockCmd(KEYS[i].GPIO.GPIO_RCC, ENABLE);
+        data->Scan.ScanStep = STEP_WAIT;
+        data->Scan.ShakeTime = KEY_SCANTIME;
+        data->Scan.LongPressTime = KEY_PRESS_LONG_TIME;
+        data->Scan.ContPressTime = KEY_PRESS_CONTINUE_TIME;
+
+        RCC_APB2PeriphClockCmd(data->GPIO.GPIO_RCC, ENABLE);
         GPIO_InitTypeDef GPIO_InitStructure;
-        GPIO_InitStructure.GPIO_Pin = KEYS[i].GPIO.GPIO_PIN;
+        GPIO_InitStructure.GPIO_Pin = data->GPIO.GPIO_PIN;
         GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
-        GPIO_InitStructure.GPIO_Mode = KEYS[i].GPIO.GPIO_MODE;
-        GPIO_Init(KEYS[i].GPIO.GPIO_x, &GPIO_InitStructure);
+        GPIO_InitStructure.GPIO_Mode = data->GPIO.GPIO_MODE;
+        GPIO_Init(data->GPIO.GPIO_x, &GPIO_InitStructure);
     }
 }
 
-void Key_CBRegister_P(KEY_ID KeyID, KeyCallBack CB)
+uint8_t Key_CBRegister_P(KEY_Device* pDev, KeyCallBack CB)
 {
-    if (KEYS[KeyID].Callback.Press == 0)
+    KEY_Data* data = (KEY_Data*)pDev->Priv_Data;
+    if (data->Callback.Press == 0)
     {
-        KEYS[KeyID].Callback.Press = CB;
+        data->Callback.Press = CB;
+        return 1;
     }
+    return 0;
 }
 
-void Key_CBRegister_R(KEY_ID KeyID, KeyCallBack CB)
+uint8_t Key_CBRegister_R(KEY_Device* pDev, KeyCallBack CB)
 {
-    if (KEYS[KeyID].Callback.Release == 0)
+    KEY_Data* data = (KEY_Data*)pDev->Priv_Data;
+    if (data->Callback.Release == 0)
     {
-        KEYS[KeyID].Callback.Release = CB;
+        data->Callback.Release = CB;
+        return 1;
     }
+    return 0;
 }
 
-void Key_CBRegister_LP(KEY_ID KeyID, KeyCallBack CB)
+uint8_t Key_CBRegister_LP(KEY_Device* pDev, KeyCallBack CB)
 {
-    if (KEYS[KeyID].Callback.LongPress == 0)
+    KEY_Data* data = (KEY_Data*)pDev->Priv_Data;
+    if (data->Callback.LongPress == 0)
     {
-        KEYS[KeyID].Callback.LongPress = CB;
+        data->Callback.LongPress = CB;
+        return 1;
     }
+    return 0;
 }
 
-void Key_CBRegister_LP_Cont(KEY_ID KeyID, KeyCallBack CB)
+uint8_t Key_CBRegister_LP_Cont(KEY_Device* pDev, KeyCallBack CB)
 {
-    if (KEYS[KeyID].Callback.LongPress_Cont == 0)
+    KEY_Data* data = (KEY_Data*)pDev->Priv_Data;
+    if (data->Callback.LongPress_Cont == 0)
     {
-        KEYS[KeyID].Callback.LongPress_Cont = CB;
+        data->Callback.LongPress_Cont = CB;
+        return 1;
     }
+    return 0;
 }
 
-void Key_CBRegister_LP_R(KEY_ID KeyID, KeyCallBack CB)
+uint8_t Key_CBRegister_LP_R(KEY_Device* pDev, KeyCallBack CB)
 {
-    if (KEYS[KeyID].Callback.LongPress_Release == 0)
+    KEY_Data* data = (KEY_Data*)pDev->Priv_Data;
+    if (data->Callback.LongPress_Release == 0)
     {
-        KEYS[KeyID].Callback.LongPress_Release = CB;
+        data->Callback.LongPress_Release = CB;
+        return 1;
     }
+    return 0;
 }
 
-uint8_t Key_Get_GPIO_Status(KEY_ID KeyID)
+uint8_t Is_Key_Pressed(KEY_Device* pDev)
 {
-    MY_KEY Key = KEYS[KeyID];
-    if (Key.GPIO.High_Active)
+    KEY_Data* data = (KEY_Data*)pDev->Priv_Data;
+    if (data->GPIO.High_Active)
     {
-        return (GPIO_ReadInputDataBit(Key.GPIO.GPIO_x, Key.GPIO.GPIO_PIN));
+        return (GPIO_ReadInputDataBit(data->GPIO.GPIO_x, data->GPIO.GPIO_PIN));
     }
     else
     {
-        return (!GPIO_ReadInputDataBit(Key.GPIO.GPIO_x, Key.GPIO.GPIO_PIN));
+        return (!GPIO_ReadInputDataBit(data->GPIO.GPIO_x, data->GPIO.GPIO_PIN));
     }
 }
 
@@ -112,89 +237,87 @@ void Key_Scan(void)
 {
     for (uint8_t i = 0; i < KEYNUM; i++)
     {
-        MY_KEY Key = KEYS[i];
-        uint8_t KeyPressed = Key_Get_GPIO_Status(Key.ID);
-        switch (Key.Scan.ScanStep)
+        KEY_Data** data = (KEY_Data**)&(g_Key_Devs[i]->Priv_Data);
+        uint8_t KeyPressed = Is_Key_Pressed(g_Key_Devs[i]);
+        switch ((*data)->Scan.ScanStep)
         {
-        case STEP_WAIT: //µÈ´ı½×¶Î
+        case STEP_WAIT: //ç­‰å¾…é˜¶æ®µ
             if (KeyPressed)
             {
-                Key.Scan.ScanStep = STEP_PRESS;
+                (*data)->Scan.ScanStep = STEP_PRESS;
             }
             break;
-        case STEP_PRESS: //µ¥»÷°´ÏÂ½×¶Î
+        case STEP_PRESS: //å•å‡»æŒ‰ä¸‹é˜¶æ®µ
             if (KeyPressed)
             {
-                if ((--Key.Scan.ShakeTime) == 0)
+                if ((--((*data)->Scan.ShakeTime)) == 0)
                 {
-                    Key.Scan.ShakeTime = KEY_SCANTIME;
-                    Key.Scan.ScanStep = STEP_LONG_PRESS;
-                    Key.Status = KEY_PRESS;  //°´¼üµ¥»÷°´ÏÂ
-                    if (Key.Callback.Press)
+                    (*data)->Scan.ShakeTime = KEY_SCANTIME;
+                    (*data)->Scan.ScanStep = STEP_LONG_PRESS;
+                    (*data)->Status = KEY_PRESS;  //æŒ‰é”®å•å‡»æŒ‰ä¸‹
+                    if ((*data)->Callback.Press)
                     {
-                        Key.Callback.Press();
+                        (*data)->Callback.Press();
                     }
                 }
             }
             else
             {
-                Key.Scan.ShakeTime = KEY_SCANTIME;
-                Key.Scan.ScanStep = STEP_WAIT;
+                (*data)->Scan.ShakeTime = KEY_SCANTIME;
+                (*data)->Scan.ScanStep = STEP_WAIT;
             }
             break;
-        case STEP_LONG_PRESS: //³¤°´°´ÏÂ½×¶Î
+        case STEP_LONG_PRESS: //é•¿æŒ‰æŒ‰ä¸‹é˜¶æ®µ
             if (KeyPressed)
             {
-                if ((--Key.Scan.LongPressTimer) == 0)
+                if ((--((*data)->Scan.LongPressTime)) == 0)
                 {
-                    Key.Scan.LongPressTimer = KEY_PRESS_LONG_TIME;
-                    Key.Scan.ScanStep = STEP_CONTINUOUS_PRESS;
-                    Key.Status = KEY_LONG_PRESS;  //°´¼üµ¥»÷°´ÏÂ
-                    if (Key.Callback.LongPress)
+                    (*data)->Scan.LongPressTime = KEY_PRESS_LONG_TIME;
+                    (*data)->Scan.ScanStep = STEP_CONTINUOUS_PRESS;
+                    (*data)->Status = KEY_LONG_PRESS;  //æŒ‰é”®å•å‡»æŒ‰ä¸‹
+                    if ((*data)->Callback.LongPress)
                     {
-                        Key.Callback.LongPress();
+                        (*data)->Callback.LongPress();
                     }
                 }
             }
             else
             {
-                Key.Scan.LongPressTimer = KEY_PRESS_LONG_TIME;
-                Key.Scan.ScanStep = STEP_WAIT;
-                Key.Status = KEY_RELEASE;  //°´¼üµ¥»÷ÊÍ·Å
-                if (Key.Callback.Release)
+                (*data)->Scan.LongPressTime = KEY_PRESS_LONG_TIME;
+                (*data)->Scan.ScanStep = STEP_WAIT;
+                (*data)->Status = KEY_RELEASE;  //æŒ‰é”®å•å‡»é‡Šæ”¾
+                if ((*data)->Callback.Release)
                 {
-                    Key.Callback.Release();
+                    (*data)->Callback.Release();
                 }
             }
             break;
-        case STEP_CONTINUOUS_PRESS: //³ÖĞø³¤°´½×¶Î
+        case STEP_CONTINUOUS_PRESS: //æŒç»­é•¿æŒ‰é˜¶æ®µ
             if (KeyPressed)
             {
-                if ((--Key.Scan.ContPressTimer) == 0)
+                if ((--((*data)->Scan.ContPressTime)) == 0)
                 {
-                    Key.Scan.ContPressTimer = KEY_PRESS_CONTINUE_TIME;
-                    Key.Status = KEY_LONG_PRESS_CONTINUOUS;  //°´¼ü³¤°´³ÖĞø
-                    if (Key.Callback.LongPress_Cont)
+                    (*data)->Scan.ContPressTime = KEY_PRESS_CONTINUE_TIME;
+                    (*data)->Status = KEY_LONG_PRESS_CONTINUOUS;  //æŒ‰é”®é•¿æŒ‰æŒç»­
+                    if ((*data)->Callback.LongPress_Cont)
                     {
-                        Key.Callback.LongPress_Cont();
+                        (*data)->Callback.LongPress_Cont();
                     }
                 }
             }
             else
             {
-                Key.Scan.ContPressTimer = KEY_PRESS_CONTINUE_TIME;
-                Key.Scan.ScanStep = STEP_WAIT;
-                Key.Status = KEY_LONG_PRESS_RELEASE;  //°´¼ü³¤°´ÊÍ·Å
-                if (Key.Callback.LongPress_Release)
+                (*data)->Scan.ContPressTime = KEY_PRESS_CONTINUE_TIME;
+                (*data)->Scan.ScanStep = STEP_WAIT;
+                (*data)->Status = KEY_LONG_PRESS_RELEASE;  //æŒ‰é”®é•¿æŒ‰é‡Šæ”¾
+                if ((*data)->Callback.LongPress_Release)
                 {
-                    Key.Callback.LongPress_Release();
+                    (*data)->Callback.LongPress_Release();
                 }
             }
             break;
         default:
             break;
         }
-
-        KEYS[i] = Key; //¸üĞÂ°´¼üÊı¾İ
     }
 }
