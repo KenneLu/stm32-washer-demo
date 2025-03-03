@@ -76,7 +76,7 @@ uint8_t Is_Key_Pressed(KEY_Device* pDev);
 //--------------------------------------------------
 
 
-static KEY_HARDWARE g_Key_GPIOS[KEYNUM] = {
+static KEY_HARDWARE g_Key_GPIOS[KEY_NUM] = {
     //按键1：编码器
     {
         .ID = KEY_ENCODER,
@@ -96,8 +96,8 @@ static KEY_HARDWARE g_Key_GPIOS[KEYNUM] = {
         .High_Active = 1
     },
 };
-static KEY_Data g_Key_Datas[KEYNUM];
-static KEY_Device g_Key_Devs[KEYNUM];
+static KEY_Data g_Key_Datas[KEY_NUM];
+static KEY_Device g_Key_Devs[KEY_NUM];
 
 
 //--------------------------------------------------
@@ -118,7 +118,7 @@ KEY_Device* GetKeyDevice(KEY_ID ID)
 
 void Key_Init(void)
 {
-    for (uint8_t i = 0; i < KEYNUM; i++)
+    for (uint8_t i = 0; i < KEY_NUM; i++)
     {
         // Data Init
         g_Key_Datas[i].ID = (KEY_ID)i;
@@ -223,7 +223,7 @@ uint8_t Is_Key_Pressed(KEY_Device* pDev)
 
 void Key_Scan(void)
 {
-    for (uint8_t i = 0; i < KEYNUM; i++)
+    for (uint8_t i = 0; i < KEY_NUM; i++)
     {
         KEY_Data** data = (KEY_Data**)&(g_Key_Devs[i].Priv_Data);
         uint8_t KeyPressed = Is_Key_Pressed(&g_Key_Devs[i]);

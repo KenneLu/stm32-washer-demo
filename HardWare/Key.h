@@ -8,7 +8,7 @@ typedef enum
 {
     KEY_ENCODER,
     KEY_POWER,
-    KEYNUM,
+    KEY_NUM,
 } KEY_ID;
 
 typedef struct KEY_Device {
