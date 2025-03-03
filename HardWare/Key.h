@@ -21,9 +21,11 @@ typedef struct KEY_Device {
     void* Priv_Data;
 } KEY_Device;
 
+KEY_Device* GetKeyDevice(KEY_ID ID);
+
+
 void Key_Init(void);
 void Key_Scan(void);
-KEY_Device* GetKeyDevice(KEY_ID ID);
 
 
 #endif
