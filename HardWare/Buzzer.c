@@ -56,7 +56,7 @@ BUZZER_Device* Drv_Buzzer_GetDevice(BUZZER_ID ID)
 	{
 		BUZZER_Data* pData = (BUZZER_Data*)g_Buzzer_Devs[i].Priv_Data;
 		if (pData == 0)
-		return 0;
+			return 0;
 		if (pData->ID == ID)
 			return &g_Buzzer_Devs[i];
 	}

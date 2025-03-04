@@ -336,7 +336,7 @@
               <MiscControls>--no-multibyte-chars</MiscControls>
               <Define>USE_STDPERIPH_DRIVER,STM32F10X_MD</Define>
               <Undefine></Undefine>
-              <IncludePath>.\Start;.\Library;.\User;.\User;.\Menu;.\HardWare;.\System;.\OLED;.\Games</IncludePath>
+              <IncludePath>.\Start;.\Library;.\User;.\User;.\Menu;.\HardWare;.\System;.\OLED</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -671,11 +671,6 @@
               <FilePath>.\Menu\Menu.h</FilePath>
             </File>
             <File>
-              <FileName>Menu_Data.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\Menu\Menu_Data.c</FilePath>
-            </File>
-            <File>
               <FileName>Menu_Setting.c</FileName>
               <FileType>1</FileType>
               <FilePath>.\Menu\Menu_Setting.c</FilePath>
@@ -894,36 +889,6 @@
               <FileName>OLED_Patch_byAdam.c</FileName>
               <FileType>1</FileType>
               <FilePath>.\OLED\OLED_Patch_byAdam.c</FilePath>
-            </File>
-          </Files>
-        </Group>
-        <Group>
-          <GroupName>Games</GroupName>
-          <Files>
-            <File>
-              <FileName>Game_Of_Life.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\Games\Game_Of_Life.c</FilePath>
-            </File>
-            <File>
-              <FileName>Game_Of_Life.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>.\Games\Game_Of_Life.h</FilePath>
-            </File>
-            <File>
-              <FileName>Game_Snake.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\Games\Game_Snake.c</FilePath>
-            </File>
-            <File>
-              <FileName>Game_Snake.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>.\Games\Game_Snake.h</FilePath>
-            </File>
-            <File>
-              <FileName>Game_Snake_Data.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>.\Games\Game_Snake_Data.h</FilePath>
             </File>
           </Files>
         </Group>
