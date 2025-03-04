@@ -15,9 +15,9 @@ typedef struct ENCODER_Device {
     void* Priv_Data;
 } ENCODER_Device;
 
-ENCODER_Device* GetEncoderDevice(ENCODER_ID ID);
+ENCODER_Device* Drv_Encoder_GetDevice(ENCODER_ID ID);
 
-void Encoder_Init(void);
+void Dev_Encoder_Init(void);
 
 
 #endif

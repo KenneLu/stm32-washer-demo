@@ -50,20 +50,20 @@ uint8_t Menu_Power_Off_CBRegister(MenuPowerOffCallBack CB)
   */
 void Menu_Init(void)
 {
-	g_pKeyDev_Encoder = GetKeyDevice(KEY_ENCODER);
+	g_pKeyDev_Encoder = Drv_Key_GetDevice(KEY_ENCODER);
 	if (g_pKeyDev_Encoder)
 	{
 		g_pKeyDev_Encoder->Key_CBRegister_R(g_pKeyDev_Encoder, Change_Enter_Key);
 		g_pKeyDev_Encoder->Key_CBRegister_LP(g_pKeyDev_Encoder, Change_Back_Key);
 	}
 
-	g_pKeyDev_Power = GetKeyDevice(KEY_POWER);
+	g_pKeyDev_Power = Drv_Key_GetDevice(KEY_POWER);
 	if (g_pKeyDev_Power)
 	{
 		g_pKeyDev_Power->Key_CBRegister_R(g_pKeyDev_Power, Change_Power_Key);
 	}
 
-	g_pDev_Encoder = GetEncoderDevice(ENCODER);
+	g_pDev_Encoder = Drv_Encoder_GetDevice(ENCODER);
 }
 
 /**

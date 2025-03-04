@@ -21,9 +21,9 @@ typedef struct DHT11_Device {
     void* Priv_Data;
 } DHT11_Device;
 
-DHT11_Device* GetDHT11Device(DHT11_ID ID);
+DHT11_Device* Drv_DHT11_GetDevice(DHT11_ID ID);
 
-void DHT11_Init(void);
+void Drv_DHT11_Init(void);
 
 
 #endif

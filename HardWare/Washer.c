@@ -118,7 +118,7 @@ void Washer_Init(Washer* pWasher)
 	OLED_ShowString_Easy(1, 1, "Init...        ");
 
 	// 初始化DHT11
-	DHT11_Init();
+	Drv_DHT11_Init();
 
 	// 初始化电机驱动
 	TB6612_Init();
@@ -142,8 +142,8 @@ void Washer_Init(Washer* pWasher)
 	GPIO_Init(LED_GPIO_x, &GPIO_InitStructure);
 
 	// 初始化蜂鸣器
-	Buzzer_Init();
-	g_pDev_Buzzer = GetBuzzerDevice(BUZZER);
+	Drv_Buzzer_Init();
+	g_pDev_Buzzer = Drv_Buzzer_GetDevice(BUZZER);
 
 	// 初始化W25Q64
 	W25Q64_Init();
@@ -331,7 +331,7 @@ void Washer_Heat_Water()
 
 	//接收温度和湿度的数据
 	DHT11_HumiTemp DHT11_Data;
-	DHT11_Device* pDev_DHT11 = GetDHT11Device(DHT11);
+	DHT11_Device* pDev_DHT11 = Drv_DHT11_GetDevice(DHT11);
 	if (pDev_DHT11)
 		DHT11_Data = pDev_DHT11->DHT11_Get_HumiTemp(pDev_DHT11);
 
@@ -609,7 +609,7 @@ void Washer_Heat_Dry()
 
 	//接收温度和湿度的数据
 	DHT11_HumiTemp DHT11_Data;
-	DHT11_Device* pDev_DHT11 = GetDHT11Device(DHT11);
+	DHT11_Device* pDev_DHT11 = Drv_DHT11_GetDevice(DHT11);
 	if (pDev_DHT11)
 		DHT11_Data = pDev_DHT11->DHT11_Get_HumiTemp(pDev_DHT11);
 

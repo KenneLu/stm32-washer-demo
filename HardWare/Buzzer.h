@@ -16,9 +16,9 @@ typedef struct BUZZER_Device {
     void* Priv_Data;
 } BUZZER_Device;
 
-BUZZER_Device* GetBuzzerDevice(BUZZER_ID ID);
+BUZZER_Device* Drv_Buzzer_GetDevice(BUZZER_ID ID);
 
-void Buzzer_Init(void);
+void Drv_Buzzer_Init(void);
 
 
 #endif

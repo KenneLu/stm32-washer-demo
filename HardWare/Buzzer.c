@@ -47,23 +47,21 @@ static BUZZER_Data g_Buzzer_Datas[BUZZER_NUM];
 static BUZZER_Device g_Buzzer_Devs[BUZZER_NUM];
 
 
-//--------------------------------------------------
-
-
-BUZZER_Device* GetBuzzerDevice(BUZZER_ID ID)
+BUZZER_Device* Drv_Buzzer_GetDevice(BUZZER_ID ID)
 {
 	for (int i = 0; i < sizeof(g_Buzzer_Devs) / sizeof(g_Buzzer_Devs[0]); i++)
 	{
-		BUZZER_Data* data = (BUZZER_Data*)g_Buzzer_Devs[i].Priv_Data;
-		if (!data) return 0;
-		if (data->ID == ID)
+		BUZZER_Data* pData = (BUZZER_Data*)g_Buzzer_Devs[i].Priv_Data;
+		if (pData == 0) return 0;
+
+		if (pData->ID == ID)
 			return &g_Buzzer_Devs[i];
 	}
 
 	return 0;
 }
 
-void Buzzer_Init(void)
+void Drv_Buzzer_Init(void)
 {
 	for (uint8_t i = 0; i < BUZZER_NUM; i++)
 	{
@@ -100,48 +98,49 @@ void Buzzer_Init(void)
 	}
 }
 
+
+//--------------------------------------------------
+
+
 void Buzzer_On(BUZZER_Device* pDev)
 {
-	BUZZER_Data* data = (BUZZER_Data*)pDev->Priv_Data;
-	if (data)
-	{
-		if (data->HW.Is_High_Active)
-			GPIO_SetBits(data->HW.PORT, data->HW.PIN);
-		else
-			GPIO_ResetBits(data->HW.PORT, data->HW.PIN);
-	}
+	BUZZER_Data* pData = (BUZZER_Data*)pDev->Priv_Data;
+	if (pData == 0) return;
+
+	if (pData->HW.Is_High_Active)
+		GPIO_SetBits(pData->HW.PORT, pData->HW.PIN);
+	else
+		GPIO_ResetBits(pData->HW.PORT, pData->HW.PIN);
 }
 
 void Buzzer_Off(BUZZER_Device* pDev)
 {
-	BUZZER_Data* data = (BUZZER_Data*)pDev->Priv_Data;
-	if (data)
-	{
-		if (data->HW.Is_High_Active)
-			GPIO_ResetBits(data->HW.PORT, data->HW.PIN);
-		else
-			GPIO_SetBits(data->HW.PORT, data->HW.PIN);
-	}
+	BUZZER_Data* pData = (BUZZER_Data*)pDev->Priv_Data;
+	if (pData == 0) return;
+
+	if (pData->HW.Is_High_Active)
+		GPIO_ResetBits(pData->HW.PORT, pData->HW.PIN);
+	else
+		GPIO_SetBits(pData->HW.PORT, pData->HW.PIN);
+
 }
 
 void Buzzer_Revert(BUZZER_Device* pDev)
 {
-	BUZZER_Data* data = (BUZZER_Data*)pDev->Priv_Data;
-	if (data)
-	{
-		if (GPIO_ReadInputDataBit(data->HW.PORT, data->HW.PIN))
-			GPIO_ResetBits(data->HW.PORT, data->HW.PIN);
-		else
-			GPIO_SetBits(data->HW.PORT, data->HW.PIN);
-	}
+	BUZZER_Data* pData = (BUZZER_Data*)pDev->Priv_Data;
+	if (pData == 0) return;
+
+	if (GPIO_ReadInputDataBit(pData->HW.PORT, pData->HW.PIN))
+		GPIO_ResetBits(pData->HW.PORT, pData->HW.PIN);
+	else
+		GPIO_SetBits(pData->HW.PORT, pData->HW.PIN);
+
 }
 
 uint8_t Is_Buzzer_On(BUZZER_Device* pDev)
 {
-	BUZZER_Data* data = (BUZZER_Data*)pDev->Priv_Data;
-	if (data)
-	{
-		return data->Status == BUZZER_ON;
-	}
-	return 0;
+	BUZZER_Data* pData = (BUZZER_Data*)pDev->Priv_Data;
+	if (pData == 0) return 0;
+
+	return pData->Status == BUZZER_ON;
 }

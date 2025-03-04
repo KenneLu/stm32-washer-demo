@@ -98,7 +98,7 @@ int main(void)
 
 	OLED_Init();
 #if TEST_ENCODER
-	Encoder_Init();
+	Dev_Encoder_Init();
 	OLED_ShowString_Easy_Easy(1, 1, "CNT:+00000Times");
 	OLED_ShowString_Easy_Easy(2, 1, "Pressed:");
 #endif
@@ -124,7 +124,7 @@ int main(void)
 #if TEST_MPU6050_BUG
 	MPU6050_Init(); // 初始化MPU6050
 	TB6612_Init();	// 初始化电机驱动
-	Buzzer_Init();	// 初始化蜂鸣器
+	Drv_Buzzer_Init();	// 初始化蜂鸣器
 
 	uint8_t ID = MPU6050_GetID();
 	OLED_ShowString_Easy(1, 1, "ID:");
@@ -194,7 +194,7 @@ int main(void)
 	Delay_s(1);
 #endif
 #if TEST_BUZZER
-	Buzzer_Init();
+	Drv_Buzzer_Init();
 #endif
 #if TEST_DHT11
 	OLED_ShowString_Easy(1, 1, "Humi:"); 	// 温度 Temperature
@@ -214,9 +214,9 @@ int main(void)
 	OLED_ShowString_Easy(3, 1, "TIM2:");
 #endif
 #if TEST_KEY
-	Key_Init();
+	Drv_Key_Init();
 	Timer_Init();
-	Encoder_Init();
+	Dev_Encoder_Init();
 	OLED_ShowString_Easy(1, 1, "Init");
 	Key_CBRegister_P(KEY_ENCODER_PRESS, Key_CB_Press);
 	Key_CBRegister_R(KEY_ENCODER_PRESS, Key_CB_Release);
@@ -225,22 +225,22 @@ int main(void)
 	Key_CBRegister_LP_R(KEY_ENCODER_PRESS, Key_CB_LongPress_Release);
 #endif
 #if TEST_MENU
-	Key_Init();
+	Drv_Key_Init();
 	Timer_Init();
-	Encoder_Init();
+	Dev_Encoder_Init();
 	Menu_Init();
 #endif
 #if TEST_MENU_WASHER
-	Key_Init();
+	Drv_Key_Init();
 	Timer_Init();
-	Encoder_Init();
+	Dev_Encoder_Init();
 	Menu_Init();
 	Menu_Washer_Power_On();
 #endif
 #if TEST_MENU_WASHER_V2
-	Key_Init();
+	Drv_Key_Init();
 	Timer_Init();
-	Encoder_Init();
+	Dev_Encoder_Init();
 	Menu_Init();
 	Menu_Washer_Power_On();
 #endif
@@ -362,7 +362,7 @@ void TIM2_IRQHandler(void) //1ms
 {
 	if (TIM_GetITStatus(TIM2, TIM_IT_Update) == SET)
 	{
-		Key_Scan();
+		Drv_Key_Scan();
 		TIM_ClearITPendingBit(TIM2, TIM_IT_Update);
 	}
 }
@@ -372,7 +372,7 @@ void TIM2_IRQHandler(void) //1ms
 {
 	if (TIM_GetITStatus(TIM2, TIM_IT_Update) == SET)
 	{
-		Key_Scan();
+		Drv_Key_Scan();
 		TIM_ClearITPendingBit(TIM2, TIM_IT_Update);
 	}
 }
@@ -382,7 +382,7 @@ void TIM2_IRQHandler(void) //1ms
 {
 	if (TIM_GetITStatus(TIM2, TIM_IT_Update) == SET)
 	{
-		Key_Scan();
+		Drv_Key_Scan();
 		TIM_ClearITPendingBit(TIM2, TIM_IT_Update);
 	}
 }
@@ -392,7 +392,7 @@ void TIM2_IRQHandler(void) //1ms
 {
 	if (TIM_GetITStatus(TIM2, TIM_IT_Update) == SET)
 	{
-		Key_Scan();
+		Drv_Key_Scan();
 		TIM_ClearITPendingBit(TIM2, TIM_IT_Update);
 	}
 }

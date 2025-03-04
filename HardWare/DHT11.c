@@ -44,23 +44,20 @@ static DHT11_Data g_DHT11_Datas[DHT11_NUM];
 static DHT11_Device g_DHT11_Devs[DHT11_NUM];
 
 
-//--------------------------------------------------
-
-
-DHT11_Device* GetDHT11Device(DHT11_ID ID)
+DHT11_Device* Drv_DHT11_GetDevice(DHT11_ID ID)
 {
 	for (int i = 0; i < sizeof(g_DHT11_Devs) / sizeof(g_DHT11_Devs[0]); i++)
 	{
-		DHT11_Data* data = (DHT11_Data*)g_DHT11_Devs[i].Priv_Data;
-		if (!data) return 0;
-		if (data->ID == ID)
+		DHT11_Data* pData = (DHT11_Data*)g_DHT11_Devs[i].Priv_Data;
+		if (!pData) return 0;
+		if (pData->ID == ID)
 			return &g_DHT11_Devs[i];
 	}
 
 	return 0;
 }
 
-void DHT11_Init(void)
+void Drv_DHT11_Init(void)
 {
 	for (uint8_t i = 0; i < DHT11_NUM; i++)
 	{
@@ -85,9 +82,14 @@ void DHT11_Init(void)
 	Delay_ms(500);	// 读取响应需要时间，延时500ms
 }
 
+
+//--------------------------------------------------
+
+
 void DHT11_GPIO_Init_Out(DHT11_Device* pDev)
 {
 	DHT11_Data* pData = (DHT11_Data*)pDev->Priv_Data;
+	if (pData == 0) return;
 
 	RCC_APB2PeriphClockCmd(pData->HW._RCC, ENABLE);
 
@@ -102,6 +104,7 @@ void DHT11_GPIO_Init_Out(DHT11_Device* pDev)
 void DHT11_GPIO_Init_In(DHT11_Device* pDev)
 {
 	DHT11_Data* pData = (DHT11_Data*)pDev->Priv_Data;
+	if (pData == 0) return;
 
 	RCC_APB2PeriphClockCmd(pData->HW._RCC, ENABLE);
 
@@ -117,6 +120,8 @@ void DHT11_GPIO_Init_In(DHT11_Device* pDev)
 void DHT11_Start(DHT11_Device* pDev)
 {
 	DHT11_Data* pData = (DHT11_Data*)pDev->Priv_Data;
+	if (pData == 0) return;
+
 	GPIO_TypeDef* port = pData->HW.PORT;
 	uint16_t pin = pData->HW.PIN;
 
@@ -159,6 +164,8 @@ uint8_t DHT11_Recive_Byte(GPIO_TypeDef* port, uint16_t pin)
 void DHT11_Recive_Data(DHT11_Device* pDev, DHT11_HumiTemp* Out)
 {
 	DHT11_Data* pData = (DHT11_Data*)pDev->Priv_Data;
+	if (pData == 0) return;
+
 	GPIO_TypeDef* port = pData->HW.PORT;
 	uint16_t pin = pData->HW.PIN;
 

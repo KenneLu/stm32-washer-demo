@@ -60,20 +60,20 @@ static ENCODER_Data g_Encoder_Datas[ENCODER_NUM];
 static ENCODER_Device g_Encoder_Devs[ENCODER_NUM];
 
 
-ENCODER_Device* GetEncoderDevice(ENCODER_ID ID)
+ENCODER_Device* Drv_Encoder_GetDevice(ENCODER_ID ID)
 {
     for (int i = 0; i < sizeof(g_Encoder_Devs) / sizeof(g_Encoder_Devs[0]); i++)
     {
-        ENCODER_Data* data = (ENCODER_Data*)g_Encoder_Devs[i].Priv_Data;
-        if (!data) return 0;
-        if (data->ID == ID)
+        ENCODER_Data* pData = (ENCODER_Data*)g_Encoder_Devs[i].Priv_Data;
+        if (!pData) return 0;
+        if (pData->ID == ID)
             return &g_Encoder_Devs[i];
     }
 
     return 0;
 }
 
-void Encoder_Init(void)
+void Dev_Encoder_Init(void)
 {
     for (uint8_t i = 0; i < ENCODER_NUM; i++)
     {

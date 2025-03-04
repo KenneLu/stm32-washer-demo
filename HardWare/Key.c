@@ -100,23 +100,20 @@ static KEY_Data g_Key_Datas[KEY_NUM];
 static KEY_Device g_Key_Devs[KEY_NUM];
 
 
-//--------------------------------------------------
-
-
-KEY_Device* GetKeyDevice(KEY_ID ID)
+KEY_Device* Drv_Key_GetDevice(KEY_ID ID)
 {
     for (int i = 0; i < sizeof(g_Key_Devs) / sizeof(g_Key_Devs[0]); i++)
     {
-        KEY_Data* data = (KEY_Data*)g_Key_Devs[i].Priv_Data;
-        if (!data) return NULL;
-        if (data->ID == ID)
+        KEY_Data* pData = (KEY_Data*)g_Key_Devs[i].Priv_Data;
+        if (!pData) return NULL;
+        if (pData->ID == ID)
             return &g_Key_Devs[i];
     }
 
     return NULL;
 }
 
-void Key_Init(void)
+void Drv_Key_Init(void)
 {
     for (uint8_t i = 0; i < KEY_NUM; i++)
     {
@@ -161,12 +158,16 @@ void Key_Init(void)
     }
 }
 
+
+//--------------------------------------------------
+
+
 uint8_t Key_CBRegister_P(KEY_Device* pDev, KeyCallBack CB)
 {
-    KEY_Data* data = (KEY_Data*)pDev->Priv_Data;
-    if (data->Callback.Press == 0)
+    KEY_Data* pData = (KEY_Data*)pDev->Priv_Data;
+    if (pData->Callback.Press == 0)
     {
-        data->Callback.Press = CB;
+        pData->Callback.Press = CB;
         return 1;
     }
     return 0;
@@ -174,10 +175,10 @@ uint8_t Key_CBRegister_P(KEY_Device* pDev, KeyCallBack CB)
 
 uint8_t Key_CBRegister_R(KEY_Device* pDev, KeyCallBack CB)
 {
-    KEY_Data* data = (KEY_Data*)pDev->Priv_Data;
-    if (data->Callback.Release == 0)
+    KEY_Data* pData = (KEY_Data*)pDev->Priv_Data;
+    if (pData->Callback.Release == 0)
     {
-        data->Callback.Release = CB;
+        pData->Callback.Release = CB;
         return 1;
     }
     return 0;
@@ -185,10 +186,10 @@ uint8_t Key_CBRegister_R(KEY_Device* pDev, KeyCallBack CB)
 
 uint8_t Key_CBRegister_LP(KEY_Device* pDev, KeyCallBack CB)
 {
-    KEY_Data* data = (KEY_Data*)pDev->Priv_Data;
-    if (data->Callback.LongPress == 0)
+    KEY_Data* pData = (KEY_Data*)pDev->Priv_Data;
+    if (pData->Callback.LongPress == 0)
     {
-        data->Callback.LongPress = CB;
+        pData->Callback.LongPress = CB;
         return 1;
     }
     return 0;
@@ -196,10 +197,10 @@ uint8_t Key_CBRegister_LP(KEY_Device* pDev, KeyCallBack CB)
 
 uint8_t Key_CBRegister_LP_Cont(KEY_Device* pDev, KeyCallBack CB)
 {
-    KEY_Data* data = (KEY_Data*)pDev->Priv_Data;
-    if (data->Callback.LongPress_Cont == 0)
+    KEY_Data* pData = (KEY_Data*)pDev->Priv_Data;
+    if (pData->Callback.LongPress_Cont == 0)
     {
-        data->Callback.LongPress_Cont = CB;
+        pData->Callback.LongPress_Cont = CB;
         return 1;
     }
     return 0;
@@ -207,10 +208,10 @@ uint8_t Key_CBRegister_LP_Cont(KEY_Device* pDev, KeyCallBack CB)
 
 uint8_t Key_CBRegister_LP_R(KEY_Device* pDev, KeyCallBack CB)
 {
-    KEY_Data* data = (KEY_Data*)pDev->Priv_Data;
-    if (data->Callback.LongPress_Release == 0)
+    KEY_Data* pData = (KEY_Data*)pDev->Priv_Data;
+    if (pData->Callback.LongPress_Release == 0)
     {
-        data->Callback.LongPress_Release = CB;
+        pData->Callback.LongPress_Release = CB;
         return 1;
     }
     return 0;
@@ -218,97 +219,97 @@ uint8_t Key_CBRegister_LP_R(KEY_Device* pDev, KeyCallBack CB)
 
 uint8_t Is_Key_Pressed(KEY_Device* pDev)
 {
-    KEY_Data* data = (KEY_Data*)pDev->Priv_Data;
-    if (data->HW.Is_High_Active)
+    KEY_Data* pData = (KEY_Data*)pDev->Priv_Data;
+    if (pData->HW.Is_High_Active)
     {
-        return (GPIO_ReadInputDataBit(data->HW.PORT, data->HW.PIN));
+        return (GPIO_ReadInputDataBit(pData->HW.PORT, pData->HW.PIN));
     }
     else
     {
-        return (!GPIO_ReadInputDataBit(data->HW.PORT, data->HW.PIN));
+        return (!GPIO_ReadInputDataBit(pData->HW.PORT, pData->HW.PIN));
     }
 }
 
-void Key_Scan(void)
+void Drv_Key_Scan(void)
 {
     for (uint8_t i = 0; i < KEY_NUM; i++)
     {
-        KEY_Data** data = (KEY_Data**)&(g_Key_Devs[i].Priv_Data);
+        KEY_Data** pData = (KEY_Data**)&(g_Key_Devs[i].Priv_Data);
         uint8_t KeyPressed = Is_Key_Pressed(&g_Key_Devs[i]);
-        switch ((*data)->Scan.ScanStep)
+        switch ((*pData)->Scan.ScanStep)
         {
         case STEP_WAIT: //等待阶段
             if (KeyPressed)
             {
-                (*data)->Scan.ScanStep = STEP_PRESS;
+                (*pData)->Scan.ScanStep = STEP_PRESS;
             }
             break;
         case STEP_PRESS: //单击按下阶段
             if (KeyPressed)
             {
-                if ((--((*data)->Scan.ShakeTime)) == 0)
+                if ((--((*pData)->Scan.ShakeTime)) == 0)
                 {
-                    (*data)->Scan.ShakeTime = KEY_SCANTIME;
-                    (*data)->Scan.ScanStep = STEP_LONG_PRESS;
-                    (*data)->Status = KEY_PRESS;  //按键单击按下
-                    if ((*data)->Callback.Press)
+                    (*pData)->Scan.ShakeTime = KEY_SCANTIME;
+                    (*pData)->Scan.ScanStep = STEP_LONG_PRESS;
+                    (*pData)->Status = KEY_PRESS;  //按键单击按下
+                    if ((*pData)->Callback.Press)
                     {
-                        (*data)->Callback.Press();
+                        (*pData)->Callback.Press();
                     }
                 }
             }
             else
             {
-                (*data)->Scan.ShakeTime = KEY_SCANTIME;
-                (*data)->Scan.ScanStep = STEP_WAIT;
+                (*pData)->Scan.ShakeTime = KEY_SCANTIME;
+                (*pData)->Scan.ScanStep = STEP_WAIT;
             }
             break;
         case STEP_LONG_PRESS: //长按按下阶段
             if (KeyPressed)
             {
-                if ((--((*data)->Scan.LongPressTime)) == 0)
+                if ((--((*pData)->Scan.LongPressTime)) == 0)
                 {
-                    (*data)->Scan.LongPressTime = KEY_PRESS_LONG_TIME;
-                    (*data)->Scan.ScanStep = STEP_CONTINUOUS_PRESS;
-                    (*data)->Status = KEY_LONG_PRESS;  //按键单击按下
-                    if ((*data)->Callback.LongPress)
+                    (*pData)->Scan.LongPressTime = KEY_PRESS_LONG_TIME;
+                    (*pData)->Scan.ScanStep = STEP_CONTINUOUS_PRESS;
+                    (*pData)->Status = KEY_LONG_PRESS;  //按键单击按下
+                    if ((*pData)->Callback.LongPress)
                     {
-                        (*data)->Callback.LongPress();
+                        (*pData)->Callback.LongPress();
                     }
                 }
             }
             else
             {
-                (*data)->Scan.LongPressTime = KEY_PRESS_LONG_TIME;
-                (*data)->Scan.ScanStep = STEP_WAIT;
-                (*data)->Status = KEY_RELEASE;  //按键单击释放
-                if ((*data)->Callback.Release)
+                (*pData)->Scan.LongPressTime = KEY_PRESS_LONG_TIME;
+                (*pData)->Scan.ScanStep = STEP_WAIT;
+                (*pData)->Status = KEY_RELEASE;  //按键单击释放
+                if ((*pData)->Callback.Release)
                 {
-                    (*data)->Callback.Release();
+                    (*pData)->Callback.Release();
                 }
             }
             break;
         case STEP_CONTINUOUS_PRESS: //持续长按阶段
             if (KeyPressed)
             {
-                if ((--((*data)->Scan.ContPressTime)) == 0)
+                if ((--((*pData)->Scan.ContPressTime)) == 0)
                 {
-                    (*data)->Scan.ContPressTime = KEY_PRESS_CONTINUE_TIME;
-                    (*data)->Status = KEY_LONG_PRESS_CONTINUOUS;  //按键长按持续
-                    if ((*data)->Callback.LongPress_Cont)
+                    (*pData)->Scan.ContPressTime = KEY_PRESS_CONTINUE_TIME;
+                    (*pData)->Status = KEY_LONG_PRESS_CONTINUOUS;  //按键长按持续
+                    if ((*pData)->Callback.LongPress_Cont)
                     {
-                        (*data)->Callback.LongPress_Cont();
+                        (*pData)->Callback.LongPress_Cont();
                     }
                 }
             }
             else
             {
-                (*data)->Scan.ContPressTime = KEY_PRESS_CONTINUE_TIME;
-                (*data)->Scan.ScanStep = STEP_WAIT;
-                (*data)->Status = KEY_LONG_PRESS_RELEASE;  //按键长按释放
-                if ((*data)->Callback.LongPress_Release)
+                (*pData)->Scan.ContPressTime = KEY_PRESS_CONTINUE_TIME;
+                (*pData)->Scan.ScanStep = STEP_WAIT;
+                (*pData)->Status = KEY_LONG_PRESS_RELEASE;  //按键长按释放
+                if ((*pData)->Callback.LongPress_Release)
                 {
-                    (*data)->Callback.LongPress_Release();
+                    (*pData)->Callback.LongPress_Release();
                 }
             }
             break;

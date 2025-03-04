@@ -820,6 +820,16 @@
               <FileType>5</FileType>
               <FilePath>.\HardWare\Washer.h</FilePath>
             </File>
+            <File>
+              <FileName>Drv_I2C_HW.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\HardWare\Drv_I2C_HW.c</FilePath>
+            </File>
+            <File>
+              <FileName>Drv_I2C_HW.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\HardWare\Drv_I2C_HW.h</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
