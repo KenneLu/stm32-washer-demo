@@ -2,91 +2,178 @@
 #include  "DHT11.h"
 #include  "Delay.h"
 
-void DH11_GPIO_Init_Out(void)
+
+#define DHT11_HIGH(PORT, PIN) GPIO_SetBits(PORT, PIN)
+#define DHT11_LOW(PORT, PIN) GPIO_ResetBits(PORT, PIN)
+#define DHT11_READ(PORT, PIN) GPIO_ReadInputDataBit(PORT, PIN)
+
+typedef struct
 {
-	RCC_APB2PeriphClockCmd(DHT11_GPIO_RCC, ENABLE);
+	DHT11_ID ID;
+	GPIO_TypeDef* PORT;
+	uint16_t PIN;
+	GPIOMode_TypeDef MODE_IN;	// 输入模式
+	GPIOMode_TypeDef MODE_OUT;	// 输出模式
+	uint32_t _RCC;
+} DHT11_HARDWARE;
 
-	GPIO_InitTypeDef GPIO_InitStructure;
-	GPIO_InitStructure.GPIO_Mode = DHT11_GOIO_MODE_OUT;
-	GPIO_InitStructure.GPIO_Pin = DHT11_GPIO_PIN_DATA;
-	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+typedef struct {
+	DHT11_ID ID;
+	DHT11_HARDWARE GPIO;
+} DHT11_Data;
 
-	GPIO_Init(DHT11_GOIO_x, &GPIO_InitStructure);
+
+DHT11_HumiTemp DHT11_Get_HumiTemp(DHT11_Device* pDev);
+void DHT11_Recive_Data(DHT11_Device* pDev, DHT11_HumiTemp* Out);
+
+
+//--------------------------------------------------
+
+
+static DHT11_HARDWARE g_DHT11_GPIOS[DHT11_NUM] = {
+	{
+		.ID = DHT11,
+		.PORT = GPIOB,
+		.PIN = GPIO_Pin_6,
+		.MODE_IN = GPIO_Mode_IN_FLOATING,
+		.MODE_OUT = GPIO_Mode_Out_PP,
+		._RCC = RCC_APB2Periph_GPIOB,
+	},
+};
+static DHT11_Data g_DHT11_Datas[DHT11_NUM];
+static DHT11_Device g_DHT11_Devs[DHT11_NUM];
+
+
+//--------------------------------------------------
+
+
+DHT11_Device* GetDHT11Device(DHT11_ID ID)
+{
+	for (int i = 0; i < sizeof(g_DHT11_Devs) / sizeof(g_DHT11_Devs[0]); i++)
+	{
+		DHT11_Data* data = (DHT11_Data*)g_DHT11_Devs[i].Priv_Data;
+		if (!data) return 0;
+		if (data->ID == ID)
+			return &g_DHT11_Devs[i];
+	}
+
+	return 0;
 }
 
-void DH11_GPIO_Init_In(void)
+void DHT11_Init(void)
 {
-	RCC_APB2PeriphClockCmd(DHT11_GPIO_RCC, ENABLE);
+	for (uint8_t i = 0; i < DHT11_NUM; i++)
+	{
+		// Data Init
+		g_DHT11_Datas[i].ID = (DHT11_ID)i;
+		g_DHT11_Datas[i].GPIO = g_DHT11_GPIOS[i];
+
+		// Device Init
+		g_DHT11_Devs[i].DHT11_Get_HumiTemp = DHT11_Get_HumiTemp;
+		g_DHT11_Devs[i].Priv_Data = (void*)&g_DHT11_Datas[i];
+
+		DHT11_Get_HumiTemp(&g_DHT11_Devs[i]);	// 第一次读取数据，初始化GPIO
+	}
+	Delay_ms(500);	// 读取响应需要时间，延时500ms
+}
+
+void DHT11_GPIO_Init_Out(DHT11_Device* pDev)
+{
+	DHT11_Data* pData = (DHT11_Data*)pDev->Priv_Data;
+
+	RCC_APB2PeriphClockCmd(pData->GPIO._RCC, ENABLE);
 
 	GPIO_InitTypeDef GPIO_InitStructure;
-	GPIO_InitStructure.GPIO_Mode = DHT11_GOIO_MODE_IN;
-	GPIO_InitStructure.GPIO_Pin = DHT11_GPIO_PIN_DATA;
+	GPIO_InitStructure.GPIO_Mode = pData->GPIO.MODE_OUT;
+	GPIO_InitStructure.GPIO_Pin = pData->GPIO.PIN;
 	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
 
-	GPIO_Init(DHT11_GOIO_x, &GPIO_InitStructure);
+	GPIO_Init(pData->GPIO.PORT, &GPIO_InitStructure);
+}
+
+void DHT11_GPIO_Init_In(DHT11_Device* pDev)
+{
+	DHT11_Data* pData = (DHT11_Data*)pDev->Priv_Data;
+
+	RCC_APB2PeriphClockCmd(pData->GPIO._RCC, ENABLE);
+
+	GPIO_InitTypeDef GPIO_InitStructure;
+	GPIO_InitStructure.GPIO_Mode = pData->GPIO.MODE_IN;
+	GPIO_InitStructure.GPIO_Pin = pData->GPIO.PIN;
+	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+
+	GPIO_Init(pData->GPIO.PORT, &GPIO_InitStructure);
 }
 
 //主机向DHT11发送开始指令
-void DHT11_Start(void)
+void DHT11_Start(DHT11_Device* pDev)
 {
-	DH11_GPIO_Init_Out();	// 输出模式，准备发送开始指令
+	DHT11_Data* pData = (DHT11_Data*)pDev->Priv_Data;
+	GPIO_TypeDef* port = pData->GPIO.PORT;
+	uint16_t pin = pData->GPIO.PIN;
 
-	DHT11_HIGH;				// 先拉高
+	DHT11_GPIO_Init_Out(pDev);	// 输出模式，准备发送开始指令=
+
+	DHT11_HIGH(port, pin);	// 先拉高
 	Delay_us(30);
 
-	DHT11_LOW;				// 拉低电平至少18us
+	DHT11_LOW(port, pin);	// 拉低电平至少18us
 	Delay_ms(20);
 
-	DHT11_HIGH;				// 拉高电平20~40us
+	DHT11_HIGH(port, pin);	// 拉高电平20~40us
 	Delay_us(30);
 
-	DH11_GPIO_Init_In();	// 输入模式，准备接收HDT11返回的数据
+	DHT11_GPIO_Init_In(pDev);	// 输入模式，准备接收HDT11返回的数据
 }
 
-uint8_t DHT11_Recive_Byte(void)
+uint8_t DHT11_Recive_Byte(GPIO_TypeDef* port, uint16_t pin)
 {
-	uint8_t Data;
+	uint8_t ReciveData;
 
-	for (uint8_t i = 0;i < 8;i++)	//1个数据就是1个字节byte，1个字节byte有8位bit
+	for (uint8_t i = 0; i < 8; i++)				//1个数据就是1个字节byte，1个字节byte有8位bit
 	{
-		while (Read_Data == 0);		//从1bit开始，低电平变高电平，等待低电平结束
-		Delay_us(30);				//延迟30us是为了区别数据0和数据1，0只有26~28us
+		while (DHT11_READ(port, pin) == 0);		//从1bit开始，低电平变高电平，等待低电平结束
+		Delay_us(30);							//延迟30us是为了区别数据0和数据1，0只有26~28us
 
-		Data <<= 1;					//左移
+		ReciveData <<= 1;						//左移
 
-		if (Read_Data == 1)			//如果过了30us还是高电平的话就是数据1
+		if (DHT11_READ(port, pin) == 1)			//如果过了30us还是高电平的话就是数据1
 		{
-			Data |= 1;				//数据+1
+			ReciveData |= 1;					//数据+1
 		}
 
-		while (Read_Data == 1);		//高电平变低电平，等待高电平结束
+		while (DHT11_READ(port, pin) == 1);		//高电平变低电平，等待高电平结束
 	}
 
-	return Data;
+	return ReciveData;
 }
 
-void DHT11_Recive_Data(DHT11_Data_t* Out)
+void DHT11_Recive_Data(DHT11_Device* pDev, DHT11_HumiTemp* Out)
 {
+	DHT11_Data* pData = (DHT11_Data*)pDev->Priv_Data;
+	GPIO_TypeDef* port = pData->GPIO.PORT;
+	uint16_t pin = pData->GPIO.PIN;
+
 	uint8_t CHECK;
 
-	DHT11_Start();		// 主机向DHT11发送开始指令
-	DHT11_HIGH; 		// 拉高电平
+	DHT11_Start(pDev);			// 主机向DHT11发送开始指令
+	DHT11_HIGH(port, pin); 		// 拉高电平
 
-	if (Read_Data == 0)	// 判断DHT11是否响应
+	if (DHT11_READ(port, pin) == 0)	// 判断DHT11是否响应
 	{
-		while (Read_Data == 0); // 低电平变高电平，等待低电平结束
-		while (Read_Data == 1); // 高电平变低电平，等待高电平结束
+		while (DHT11_READ(port, pin) == 0); // 低电平变高电平，等待低电平结束
+		while (DHT11_READ(port, pin) == 1); // 高电平变低电平，等待高电平结束
 
 		//接收数据及校验位
-		Out->Humi = DHT11_Recive_Byte();
-		Out->Humi_Dec = DHT11_Recive_Byte();
-		Out->Temp = DHT11_Recive_Byte();
-		Out->Temp_Dec = DHT11_Recive_Byte();
-		CHECK = DHT11_Recive_Byte();
+		Out->Humi = DHT11_Recive_Byte(port, pin);
+		Out->Humi_Dec = DHT11_Recive_Byte(port, pin);
+		Out->Temp = DHT11_Recive_Byte(port, pin);
+		Out->Temp_Dec = DHT11_Recive_Byte(port, pin);
+		CHECK = DHT11_Recive_Byte(port, pin);
 
-		DHT11_LOW;		// 当最后一bit数据传送完毕后，DHT11拉低总线 50us
-		Delay_us(55);	// 这里延时55us
-		DHT11_HIGH; 	// 随后总线由上拉电阻拉高进入空闲状态。
+		DHT11_LOW(port, pin);	// 当最后一bit数据传送完毕后，DHT11拉低总线 50us
+		Delay_us(55);			// 这里延时55us
+		DHT11_HIGH(port, pin); 	// 随后总线由上拉电阻拉高进入空闲状态。
 
 		//和检验位对比，判断校验接收到的数据是否正确，如果不正确则返回0
 		if (Out->Humi + Out->Humi_Dec + Out->Temp + Out->Temp_Dec != CHECK)
@@ -97,5 +184,12 @@ void DHT11_Recive_Data(DHT11_Data_t* Out)
 			Out->Temp_Dec = 0;
 		}
 	}
+}
+
+DHT11_HumiTemp DHT11_Get_HumiTemp(DHT11_Device* pDev)
+{
+	DHT11_HumiTemp Out;
+	DHT11_Recive_Data(pDev, &Out);
+	return Out;
 }
 

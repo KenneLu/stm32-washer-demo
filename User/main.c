@@ -299,7 +299,7 @@ int main(void)
 		Buzzer_Breathe();
 #endif
 #if TEST_DHT11
-		DHT11_Data_t DHT11_Data;
+		DHT11_HumiTemp DHT11_Data;
 		DHT11_Recive_Data(&DHT11_Data); //接收温度和湿度的数据
 
 		OLED_ShowNum_Easy(1, 6, (uint32_t)DHT11_Data.Humi, 2);

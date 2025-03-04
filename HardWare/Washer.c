@@ -118,9 +118,7 @@ void Washer_Init(Washer* pWasher)
 	OLED_ShowString_Easy(1, 1, "Init...        ");
 
 	// 初始化DHT11
-	DHT11_Data_t DHT11_Data;
-	DHT11_Recive_Data(&DHT11_Data); //接收温度和湿度的数据
-	Delay_s(1);
+	DHT11_Init();
 
 	// 初始化电机驱动
 	TB6612_Init();
@@ -331,10 +329,16 @@ void Washer_Heat_Water()
 		Washer_LED_On(1, LED_RED);
 	}
 
-	DHT11_Data_t DHT11_Data;
-	DHT11_Recive_Data(&DHT11_Data); //接收温度和湿度的数据
+	//接收温度和湿度的数据
+	DHT11_HumiTemp DHT11_Data;
+	DHT11_Device* pDev_DHT11 = GetDHT11Device(DHT11);
+	if (pDev_DHT11)
+		DHT11_Data = pDev_DHT11->DHT11_Get_HumiTemp(pDev_DHT11);
+
+	// 读取响应需要时间，延时500ms
 	Delay_ms(500);
 
+	// 显示新数值
 	OLED_ShowNum_Easy(2, 6, (uint32_t)DHT11_Data.Temp, 2);
 	OLED_ShowNum_Easy(2, 9, (uint32_t)DHT11_Data.Temp_Dec, 2);
 
@@ -603,10 +607,16 @@ void Washer_Heat_Dry()
 		Washer_LED_On(1, LED_RED);
 	}
 
-	DHT11_Data_t DHT11_Data;
-	DHT11_Recive_Data(&DHT11_Data); //接收温度和湿度的数据
+	//接收温度和湿度的数据
+	DHT11_HumiTemp DHT11_Data;
+	DHT11_Device* pDev_DHT11 = GetDHT11Device(DHT11);
+	if (pDev_DHT11)
+		DHT11_Data = pDev_DHT11->DHT11_Get_HumiTemp(pDev_DHT11);
+
+	// 读取响应需要时间，延时500ms
 	Delay_ms(500);
 
+	// 显示新数值
 	OLED_ShowNum_Easy(2, 6, (uint32_t)DHT11_Data.Humi, 2);
 	OLED_ShowNum_Easy(2, 9, (uint32_t)DHT11_Data.Humi_Dec, 2);
 
