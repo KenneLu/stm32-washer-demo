@@ -14,6 +14,7 @@
 #include "W25Q64.h"
 
 BUZZER_Device* g_pDev_Buzzer;
+MPU6050_Device* g_pDev_MPU6050;
 
 uint8_t Washer_Data[10] = { 0 };
 
@@ -131,7 +132,8 @@ void Washer_Init(Washer* pWasher)
 	Washer_Door_Lock(); // 锁门
 
 	// 初始化MPU6050，用于姿态检测
-	MPU6050_Init();
+	Drv_MPU6050_Init();
+	g_pDev_MPU6050 = Drv_MPU6050_GetDevice(MPU6050);
 
 	// 初始化 LED
 	RCC_APB2PeriphClockCmd(LED_GPIO_RCC, ENABLE);
@@ -758,7 +760,7 @@ int8_t Washer_Run(void* Param)
 			static int16_t AccX, AccY, AccZ, GyroX, GyroY, GyroZ;
 			static int16_t AccX_Abs, AccY_Abs;
 			static uint8_t Shake_Time = 0;
-			MPU6050_GetData(&AccX, &AccY, &AccZ, &GyroX, &GyroY, &GyroZ);
+			g_pDev_MPU6050->MPU6050_GetData(g_pDev_MPU6050, &AccX, &AccY, &AccZ, &GyroX, &GyroY, &GyroZ);
 			AccX_Abs = AccX > 0 ? AccX : -AccX;
 			AccY_Abs = AccY > 0 ? AccY : -AccY;
 			if (AccX_Abs > 50 || AccY_Abs > 50) // 瞬时加速度大于50
