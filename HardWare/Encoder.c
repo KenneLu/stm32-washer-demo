@@ -1,72 +1,178 @@
 #include "stm32f10x.h"                  //Device header
 #include "Encoder.h"
 
-void Encoder_Init()
+typedef struct
 {
-    //开启 GPIO 时钟
-    RCC_APB2PeriphClockCmd(Encoder_GPIO_RCC, ENABLE);
+    ENCODER_ID ID;
+    GPIO_TypeDef* PORT;
+    uint16_t PIN_A;
+    uint16_t PIN_B;
+    GPIOMode_TypeDef MODE;
+    uint32_t _RCC;
+    TIM_TypeDef* TIM_PORT;
+    uint32_t TIM_RCC;
+    uint16_t TIM_CHANNEL_1;
+    uint16_t TIM_CHANNEL_2;
+    uint16_t TIM_ENCODERMODE;
+    uint16_t TIM_IC1POLAROTY;
+    uint16_t TIM_IC2POLARITY;
+    uint16_t TIM_CLOCKDIVISION;
+    uint16_t TIM_PERIOD;
+    uint16_t TIM_PRESCALER;
+    uint8_t TIM_REPETITIONCOUNTER;
+} ENCODER_HARDWARE;
 
-    //初始化 GPIO
-    GPIO_InitTypeDef GPIO_InitStructure;
-    GPIO_InitStructure.GPIO_Mode = Encoder_GOIO_MODE;
-    GPIO_InitStructure.GPIO_Pin = Encoder_GOIO_PIN_A | Encoder_GOIO_PIN_B | Encoder_GOIO_PIN_C;
-    GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
-    GPIO_Init(Encoder_GOIO_x, &GPIO_InitStructure);
+typedef struct {
+    ENCODER_ID ID;
+    ENCODER_HARDWARE HW;
+} ENCODER_Data;
 
-    //初始化 IC
-    TIM_ICInitTypeDef TIM_ICInitStructure;
-    TIM_ICStructInit(&TIM_ICInitStructure);
-    TIM_ICInitStructure.TIM_Channel = Encoder_TIM_Channel_A;
-    TIM_ICInitStructure.TIM_ICFilter = 0xF;
-    TIM_ICInit(Encoder_TIM_x, &TIM_ICInitStructure);
-    TIM_ICInitStructure.TIM_Channel = Encoder_TIM_Channel_B;
-    TIM_ICInitStructure.TIM_ICFilter = 0xF;
-    TIM_ICInit(Encoder_TIM_x, &TIM_ICInitStructure);
+int16_t Encoder_GetCount(ENCODER_Device* pDev);
+int16_t Encoder_GetSpeed(ENCODER_Device* pDev);
+int16_t Encoder_Get_Div4(ENCODER_Device* pDev);
 
-    //开启 Encoder_TIM_x 时钟
-    RCC_APB1PeriphClockCmd(Encoder_TIM_RCC, ENABLE);
 
-    //初始化编码器接口
-    TIM_EncoderInterfaceConfig(Encoder_TIM_x, TIM_EncoderMode_TI12, TIM_ICPolarity_Falling, TIM_ICPolarity_Rising);
+//--------------------------------------------------
 
-    //配置时基单元
-    TIM_TimeBaseInitTypeDef TIM_TimeBaseInitStructure;
-    TIM_TimeBaseStructInit(&TIM_TimeBaseInitStructure);
-    TIM_TimeBaseInitStructure.TIM_ClockDivision = TIM_CKD_DIV1;
-    TIM_TimeBaseInitStructure.TIM_Period = 65536 - 1; //利用补码特性得到负数
-    TIM_TimeBaseInitStructure.TIM_Prescaler = 1 - 1;
-    TIM_TimeBaseInitStructure.TIM_RepetitionCounter = 0;
-    TIM_TimeBaseInit(Encoder_TIM_x, &TIM_TimeBaseInitStructure);
 
-    //启动定时器
-    TIM_Cmd(Encoder_TIM_x, ENABLE);
+static ENCODER_HARDWARE g_Encoder_HWs[ENCODER_NUM] = {
+    {
+        .ID = ENCODER,
+        .PORT = GPIOA,
+        .PIN_A = GPIO_Pin_6,
+        .PIN_B = GPIO_Pin_7,
+        .MODE = GPIO_Mode_IPU,
+        ._RCC = RCC_APB2Periph_GPIOA,
+        .TIM_PORT = TIM3,
+        .TIM_RCC = RCC_APB1Periph_TIM3,
+        .TIM_CHANNEL_1 = TIM_Channel_1,
+        .TIM_CHANNEL_2 = TIM_Channel_2,
+        .TIM_ENCODERMODE = TIM_EncoderMode_TI12,
+        .TIM_IC1POLAROTY = TIM_ICPolarity_Falling,
+        .TIM_IC2POLARITY = TIM_ICPolarity_Rising,
+        .TIM_CLOCKDIVISION = TIM_CKD_DIV1,
+        .TIM_PERIOD = 65536 - 1, //利用补码特性得到负数
+        .TIM_PRESCALER = 1 - 1,
+        .TIM_REPETITIONCOUNTER = 0,
+    },
+};
+static ENCODER_Data g_Encoder_Datas[ENCODER_NUM];
+static ENCODER_Device g_Encoder_Devs[ENCODER_NUM];
+
+
+ENCODER_Device* GetEncoderDevice(ENCODER_ID ID)
+{
+    for (int i = 0; i < sizeof(g_Encoder_Devs) / sizeof(g_Encoder_Devs[0]); i++)
+    {
+        ENCODER_Data* data = (ENCODER_Data*)g_Encoder_Devs[i].Priv_Data;
+        if (!data) return 0;
+        if (data->ID == ID)
+            return &g_Encoder_Devs[i];
+    }
+
+    return 0;
 }
 
-uint8_t Encoder_Pressed(void)
+void Encoder_Init(void)
 {
-    return GPIO_ReadInputDataBit(Encoder_GOIO_x, Encoder_GOIO_PIN_C) == 0;
+    for (uint8_t i = 0; i < ENCODER_NUM; i++)
+    {
+        // Get Hardware
+        ENCODER_HARDWARE hw;
+        for (uint8_t j = 0; j < sizeof(g_Encoder_HWs) / sizeof(g_Encoder_HWs[0]); j++)
+        {
+            if (g_Encoder_HWs[j].ID == (ENCODER_ID)i)
+                hw = g_Encoder_HWs[j];
+        }
+
+        // Data Init
+        g_Encoder_Datas[i].ID = (ENCODER_ID)i;
+        g_Encoder_Datas[i].HW = hw;
+
+        // Device Init
+        g_Encoder_Devs[i].Encoder_GetCount = Encoder_GetCount;
+        g_Encoder_Devs[i].Encoder_GetSpeed = Encoder_GetSpeed;
+        g_Encoder_Devs[i].Encoder_Get_Div4 = Encoder_Get_Div4;
+        g_Encoder_Devs[i].Priv_Data = (void*)&g_Encoder_Datas[i];
+
+        // Hardware Init
+
+        //开启 GPIO 时钟
+        RCC_APB2PeriphClockCmd(hw._RCC, ENABLE);
+
+        //初始化 GPIO
+        GPIO_InitTypeDef GPIO_InitStructure;
+        GPIO_InitStructure.GPIO_Mode = hw.MODE;
+        GPIO_InitStructure.GPIO_Pin = hw.PIN_A | hw.PIN_B;
+        GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+        GPIO_Init(hw.PORT, &GPIO_InitStructure);
+
+        //初始化 IC
+        TIM_ICInitTypeDef TIM_ICInitStructure;
+        TIM_ICStructInit(&TIM_ICInitStructure);
+        TIM_ICInitStructure.TIM_Channel = hw.TIM_CHANNEL_1;
+        TIM_ICInitStructure.TIM_ICFilter = 0xF;
+        TIM_ICInit(hw.TIM_PORT, &TIM_ICInitStructure);
+        TIM_ICInitStructure.TIM_Channel = hw.TIM_CHANNEL_2;
+        TIM_ICInitStructure.TIM_ICFilter = 0xF;
+        TIM_ICInit(hw.TIM_PORT, &TIM_ICInitStructure);
+
+        //开启 Encoder_TIM_x 时钟
+        RCC_APB1PeriphClockCmd(hw.TIM_RCC, ENABLE);
+
+        //初始化编码器接口
+        TIM_EncoderInterfaceConfig(
+            hw.TIM_PORT,
+            hw.TIM_ENCODERMODE,
+            hw.TIM_IC1POLAROTY,
+            hw.TIM_IC2POLARITY
+        );
+
+        //配置时基单元
+        TIM_TimeBaseInitTypeDef TIM_TimeBaseInitStructure;
+        TIM_TimeBaseStructInit(&TIM_TimeBaseInitStructure);
+
+        TIM_TimeBaseInitStructure.TIM_ClockDivision = hw.TIM_CLOCKDIVISION;
+        TIM_TimeBaseInitStructure.TIM_Period = hw.TIM_PERIOD;
+        TIM_TimeBaseInitStructure.TIM_Prescaler = hw.TIM_PRESCALER;
+        TIM_TimeBaseInitStructure.TIM_RepetitionCounter = hw.TIM_REPETITIONCOUNTER;
+        TIM_TimeBaseInit(hw.TIM_PORT, &TIM_TimeBaseInitStructure);
+
+        //启动定时器
+        TIM_Cmd(hw.TIM_PORT, ENABLE);
+    }
 }
 
-int16_t Encoder_GetCount(void)
+
+//--------------------------------------------------
+
+
+int16_t Encoder_GetCount(ENCODER_Device* pDev)
 {
-    return (int16_t)TIM_GetCounter(Encoder_TIM_x) / 4; //编码器计数器的计数值是 4 倍的 TIM_GetCounter() 的值
+    ENCODER_Data* pData = (ENCODER_Data*)pDev->Priv_Data;
+
+    //编码器计数器的计数值是 4 倍的 TIM_GetCounter() 的值
+    return (int16_t)TIM_GetCounter(pData->HW.TIM_PORT) / 4;
 }
 
-int16_t Encoder_GetSpeed(void)
+int16_t Encoder_GetSpeed(ENCODER_Device* pDev)
 {
-    int16_t Temp = TIM_GetCounter(Encoder_TIM_x);
-    TIM_SetCounter(Encoder_TIM_x, 0);
+    ENCODER_Data* pData = (ENCODER_Data*)pDev->Priv_Data;
+    int16_t Temp = TIM_GetCounter(pData->HW.TIM_PORT);
+    TIM_SetCounter(pData->HW.TIM_PORT, 0);
     return Temp;
 }
 
-int16_t Encoder_Get_Div4(void)
+int16_t Encoder_Get_Div4(ENCODER_Device* pDev)
 {
-    /*除以4输出*/
-    int16_t Temp = TIM_GetCounter(Encoder_TIM_x);	//踩坑记录:TIM_GetCounter()返回无符号16位整数, 赋值给有符号整型前不要做运算
+    ENCODER_Data* pData = (ENCODER_Data*)pDev->Priv_Data;
+
+    //踩坑记录:TIM_GetCounter()返回无符号16位整数, 赋值给有符号整型前不要做运算
+    int16_t Temp = TIM_GetCounter(pData->HW.TIM_PORT);
 
     if (Temp / 4)
     {
-        TIM_SetCounter(Encoder_TIM_x, Temp % 4);
+        TIM_SetCounter(pData->HW.TIM_PORT, Temp % 4);
         return Temp / 4;
     }
     return 0;

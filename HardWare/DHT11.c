@@ -19,7 +19,7 @@ typedef struct
 
 typedef struct {
 	DHT11_ID ID;
-	DHT11_HARDWARE GPIO;
+	DHT11_HARDWARE HW;
 } DHT11_Data;
 
 
@@ -30,7 +30,7 @@ void DHT11_Recive_Data(DHT11_Device* pDev, DHT11_HumiTemp* Out);
 //--------------------------------------------------
 
 
-static DHT11_HARDWARE g_DHT11_GPIOS[DHT11_NUM] = {
+static DHT11_HARDWARE g_DHT11_HWs[DHT11_NUM] = {
 	{
 		.ID = DHT11,
 		.PORT = GPIOB,
@@ -64,9 +64,17 @@ void DHT11_Init(void)
 {
 	for (uint8_t i = 0; i < DHT11_NUM; i++)
 	{
+		// Get Hardware
+		DHT11_HARDWARE hw;
+		for (uint8_t j = 0; j < sizeof(g_DHT11_HWs) / sizeof(g_DHT11_HWs[0]); j++)
+		{
+			if (g_DHT11_HWs[j].ID == (DHT11_ID)i)
+				hw = g_DHT11_HWs[j];
+		}
+
 		// Data Init
 		g_DHT11_Datas[i].ID = (DHT11_ID)i;
-		g_DHT11_Datas[i].GPIO = g_DHT11_GPIOS[i];
+		g_DHT11_Datas[i].HW = hw;
 
 		// Device Init
 		g_DHT11_Devs[i].DHT11_Get_HumiTemp = DHT11_Get_HumiTemp;
@@ -81,36 +89,36 @@ void DHT11_GPIO_Init_Out(DHT11_Device* pDev)
 {
 	DHT11_Data* pData = (DHT11_Data*)pDev->Priv_Data;
 
-	RCC_APB2PeriphClockCmd(pData->GPIO._RCC, ENABLE);
+	RCC_APB2PeriphClockCmd(pData->HW._RCC, ENABLE);
 
 	GPIO_InitTypeDef GPIO_InitStructure;
-	GPIO_InitStructure.GPIO_Mode = pData->GPIO.MODE_OUT;
-	GPIO_InitStructure.GPIO_Pin = pData->GPIO.PIN;
+	GPIO_InitStructure.GPIO_Mode = pData->HW.MODE_OUT;
+	GPIO_InitStructure.GPIO_Pin = pData->HW.PIN;
 	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
 
-	GPIO_Init(pData->GPIO.PORT, &GPIO_InitStructure);
+	GPIO_Init(pData->HW.PORT, &GPIO_InitStructure);
 }
 
 void DHT11_GPIO_Init_In(DHT11_Device* pDev)
 {
 	DHT11_Data* pData = (DHT11_Data*)pDev->Priv_Data;
 
-	RCC_APB2PeriphClockCmd(pData->GPIO._RCC, ENABLE);
+	RCC_APB2PeriphClockCmd(pData->HW._RCC, ENABLE);
 
 	GPIO_InitTypeDef GPIO_InitStructure;
-	GPIO_InitStructure.GPIO_Mode = pData->GPIO.MODE_IN;
-	GPIO_InitStructure.GPIO_Pin = pData->GPIO.PIN;
+	GPIO_InitStructure.GPIO_Mode = pData->HW.MODE_IN;
+	GPIO_InitStructure.GPIO_Pin = pData->HW.PIN;
 	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
 
-	GPIO_Init(pData->GPIO.PORT, &GPIO_InitStructure);
+	GPIO_Init(pData->HW.PORT, &GPIO_InitStructure);
 }
 
 //主机向DHT11发送开始指令
 void DHT11_Start(DHT11_Device* pDev)
 {
 	DHT11_Data* pData = (DHT11_Data*)pDev->Priv_Data;
-	GPIO_TypeDef* port = pData->GPIO.PORT;
-	uint16_t pin = pData->GPIO.PIN;
+	GPIO_TypeDef* port = pData->HW.PORT;
+	uint16_t pin = pData->HW.PIN;
 
 	DHT11_GPIO_Init_Out(pDev);	// 输出模式，准备发送开始指令=
 
@@ -151,8 +159,8 @@ uint8_t DHT11_Recive_Byte(GPIO_TypeDef* port, uint16_t pin)
 void DHT11_Recive_Data(DHT11_Device* pDev, DHT11_HumiTemp* Out)
 {
 	DHT11_Data* pData = (DHT11_Data*)pDev->Priv_Data;
-	GPIO_TypeDef* port = pData->GPIO.PORT;
-	uint16_t pin = pData->GPIO.PIN;
+	GPIO_TypeDef* port = pData->HW.PORT;
+	uint16_t pin = pData->HW.PIN;
 
 	uint8_t CHECK;
 

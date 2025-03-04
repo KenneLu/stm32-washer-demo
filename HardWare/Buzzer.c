@@ -21,7 +21,7 @@ typedef struct
 typedef struct {
 	BUZZER_ID ID;
 	BUZZER_STATUS Status;
-	BUZZER_HARDWARE GPIO;
+	BUZZER_HARDWARE HW;
 } BUZZER_Data;
 
 void Buzzer_On(BUZZER_Device* pDev);
@@ -33,7 +33,7 @@ uint8_t Is_Buzzer_On(BUZZER_Device* pDev);
 //--------------------------------------------------
 
 
-static BUZZER_HARDWARE g_Buzzer_GPIOS[BUZZER_NUM] = {
+static BUZZER_HARDWARE g_Buzzer_HWs[BUZZER_NUM] = {
 	{
 		.ID = BUZZER,
 		.PORT = GPIOA,
@@ -67,10 +67,18 @@ void Buzzer_Init(void)
 {
 	for (uint8_t i = 0; i < BUZZER_NUM; i++)
 	{
+		// Get Hardware
+		BUZZER_HARDWARE hw;
+		for (uint8_t j = 0; j < sizeof(g_Buzzer_HWs) / sizeof(g_Buzzer_HWs[0]); j++)
+		{
+			if (g_Buzzer_HWs[j].ID == (BUZZER_ID)i)
+				hw = g_Buzzer_HWs[j];
+		}
+
 		// Data Init
 		g_Buzzer_Datas[i].ID = (BUZZER_ID)i;
 		g_Buzzer_Datas[i].Status = BUZZER_OFF;
-		g_Buzzer_Datas[i].GPIO = g_Buzzer_GPIOS[i];
+		g_Buzzer_Datas[i].HW = hw;
 
 		// Device Init
 		g_Buzzer_Devs[i].Buzzer_On = Buzzer_On;
@@ -80,12 +88,12 @@ void Buzzer_Init(void)
 		g_Buzzer_Devs[i].Priv_Data = (void*)&g_Buzzer_Datas[i];
 
 		// Hardware Init
-		RCC_APB2PeriphClockCmd(g_Buzzer_Datas[i].GPIO._RCC, ENABLE);
+		RCC_APB2PeriphClockCmd(hw._RCC, ENABLE);
 		GPIO_InitTypeDef GPIO_InitStructure;
-		GPIO_InitStructure.GPIO_Pin = g_Buzzer_Datas[i].GPIO.PIN;
+		GPIO_InitStructure.GPIO_Pin = hw.PIN;
 		GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
-		GPIO_InitStructure.GPIO_Mode = g_Buzzer_Datas[i].GPIO.MODE;
-		GPIO_Init(g_Buzzer_Datas[i].GPIO.PORT, &GPIO_InitStructure);
+		GPIO_InitStructure.GPIO_Mode = hw.MODE;
+		GPIO_Init(hw.PORT, &GPIO_InitStructure);
 
 		// Buzzer Off
 		Buzzer_Off((BUZZER_Device*)&g_Buzzer_Devs[i]);
@@ -97,10 +105,10 @@ void Buzzer_On(BUZZER_Device* pDev)
 	BUZZER_Data* data = (BUZZER_Data*)pDev->Priv_Data;
 	if (data)
 	{
-		if (data->GPIO.Is_High_Active)
-			GPIO_SetBits(data->GPIO.PORT, data->GPIO.PIN);
+		if (data->HW.Is_High_Active)
+			GPIO_SetBits(data->HW.PORT, data->HW.PIN);
 		else
-			GPIO_ResetBits(data->GPIO.PORT, data->GPIO.PIN);
+			GPIO_ResetBits(data->HW.PORT, data->HW.PIN);
 	}
 }
 
@@ -109,10 +117,10 @@ void Buzzer_Off(BUZZER_Device* pDev)
 	BUZZER_Data* data = (BUZZER_Data*)pDev->Priv_Data;
 	if (data)
 	{
-		if (data->GPIO.Is_High_Active)
-			GPIO_ResetBits(data->GPIO.PORT, data->GPIO.PIN);
+		if (data->HW.Is_High_Active)
+			GPIO_ResetBits(data->HW.PORT, data->HW.PIN);
 		else
-			GPIO_SetBits(data->GPIO.PORT, data->GPIO.PIN);
+			GPIO_SetBits(data->HW.PORT, data->HW.PIN);
 	}
 }
 
@@ -121,10 +129,10 @@ void Buzzer_Revert(BUZZER_Device* pDev)
 	BUZZER_Data* data = (BUZZER_Data*)pDev->Priv_Data;
 	if (data)
 	{
-		if (GPIO_ReadInputDataBit(data->GPIO.PORT, data->GPIO.PIN))
-			GPIO_ResetBits(data->GPIO.PORT, data->GPIO.PIN);
+		if (GPIO_ReadInputDataBit(data->HW.PORT, data->HW.PIN))
+			GPIO_ResetBits(data->HW.PORT, data->HW.PIN);
 		else
-			GPIO_SetBits(data->GPIO.PORT, data->GPIO.PIN);
+			GPIO_SetBits(data->HW.PORT, data->HW.PIN);
 	}
 }
 

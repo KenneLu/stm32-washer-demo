@@ -61,7 +61,7 @@ typedef struct {
     KEY_ID ID;
     KEY_STATUS Status;
     KEY_CALLBACK Callback;
-    KEY_HARDWARE GPIO;
+    KEY_HARDWARE HW;
     KEY_SCAN Scan;
 } KEY_Data;
 
@@ -76,17 +76,8 @@ uint8_t Is_Key_Pressed(KEY_Device* pDev);
 //--------------------------------------------------
 
 
-static KEY_HARDWARE g_Key_GPIOS[KEY_NUM] = {
-    //按键1：编码器
-    {
-        .ID = KEY_ENCODER,
-        .PORT = GPIOA,
-        .PIN = GPIO_Pin_5,
-        .MODE = GPIO_Mode_IPU,
-        ._RCC = RCC_APB2Periph_GPIOA,
-        .Is_High_Active = 0
-    },
-    //按键2：电源
+static KEY_HARDWARE g_Key_HWs[KEY_NUM] = {
+    //电源按钮
     {
         .ID = KEY_POWER,
         .PORT = GPIOA,
@@ -94,6 +85,15 @@ static KEY_HARDWARE g_Key_GPIOS[KEY_NUM] = {
         .MODE = GPIO_Mode_IPD,
         ._RCC = RCC_APB2Periph_GPIOA,
         .Is_High_Active = 1
+    },
+    //编码器按下
+    {
+        .ID = KEY_ENCODER,
+        .PORT = GPIOA,
+        .PIN = GPIO_Pin_5,
+        .MODE = GPIO_Mode_IPU,
+        ._RCC = RCC_APB2Periph_GPIOA,
+        .Is_High_Active = 0
     },
 };
 static KEY_Data g_Key_Datas[KEY_NUM];
@@ -120,6 +120,14 @@ void Key_Init(void)
 {
     for (uint8_t i = 0; i < KEY_NUM; i++)
     {
+        // Get Hardware
+        KEY_HARDWARE hw;
+        for (uint8_t j = 0; j < sizeof(g_Key_HWs) / sizeof(g_Key_HWs[0]); j++)
+        {
+            if (g_Key_HWs[j].ID == (KEY_ID)i)
+                hw = g_Key_HWs[j];
+        }
+
         // Data Init
         g_Key_Datas[i].ID = (KEY_ID)i;
         g_Key_Datas[i].Status = KEY_IDLE;
@@ -132,7 +140,7 @@ void Key_Init(void)
         g_Key_Datas[i].Scan.ShakeTime = KEY_SCANTIME;
         g_Key_Datas[i].Scan.LongPressTime = KEY_PRESS_LONG_TIME;
         g_Key_Datas[i].Scan.ContPressTime = KEY_PRESS_CONTINUE_TIME;
-        g_Key_Datas[i].GPIO = g_Key_GPIOS[i];
+        g_Key_Datas[i].HW = hw;
 
         // Device Init
         g_Key_Devs[i].Key_CBRegister_P = Key_CBRegister_P;
@@ -144,12 +152,12 @@ void Key_Init(void)
         g_Key_Devs[i].Priv_Data = (void*)&g_Key_Datas[i];
 
         // Hardware Init
-        RCC_APB2PeriphClockCmd(g_Key_Datas[i].GPIO._RCC, ENABLE);
+        RCC_APB2PeriphClockCmd(hw._RCC, ENABLE);
         GPIO_InitTypeDef GPIO_InitStructure;
-        GPIO_InitStructure.GPIO_Pin = g_Key_Datas[i].GPIO.PIN;
+        GPIO_InitStructure.GPIO_Pin = hw.PIN;
         GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
-        GPIO_InitStructure.GPIO_Mode = g_Key_Datas[i].GPIO.MODE;
-        GPIO_Init(g_Key_Datas[i].GPIO.PORT, &GPIO_InitStructure);
+        GPIO_InitStructure.GPIO_Mode = hw.MODE;
+        GPIO_Init(hw.PORT, &GPIO_InitStructure);
     }
 }
 
@@ -211,13 +219,13 @@ uint8_t Key_CBRegister_LP_R(KEY_Device* pDev, KeyCallBack CB)
 uint8_t Is_Key_Pressed(KEY_Device* pDev)
 {
     KEY_Data* data = (KEY_Data*)pDev->Priv_Data;
-    if (data->GPIO.Is_High_Active)
+    if (data->HW.Is_High_Active)
     {
-        return (GPIO_ReadInputDataBit(data->GPIO.PORT, data->GPIO.PIN));
+        return (GPIO_ReadInputDataBit(data->HW.PORT, data->HW.PIN));
     }
     else
     {
-        return (!GPIO_ReadInputDataBit(data->GPIO.PORT, data->GPIO.PIN));
+        return (!GPIO_ReadInputDataBit(data->HW.PORT, data->HW.PIN));
     }
 }
 

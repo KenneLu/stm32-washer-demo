@@ -30,6 +30,7 @@ uint8_t Key_Power = 0;	//电源键
 
 KEY_Device* g_pKeyDev_Encoder = 0;
 KEY_Device* g_pKeyDev_Power = 0;
+ENCODER_Device* g_pDev_Encoder = 0;
 
 MenuPowerOffCallBack Menu_Power_Off_CB = 0;
 uint8_t Menu_Power_Off_CBRegister(MenuPowerOffCallBack CB)
@@ -61,6 +62,8 @@ void Menu_Init(void)
 	{
 		g_pKeyDev_Power->Key_CBRegister_R(g_pKeyDev_Power, Change_Power_Key);
 	}
+
+	g_pDev_Encoder = GetEncoderDevice(ENCODER);
 }
 
 /**
@@ -208,7 +211,9 @@ int8_t Menu_Roll_Event(void)//菜单滚动
 {
 	// if (Key_Up_Get()) { return 1; }			//按键上
 	// if (Key_Down_Get()) { return -1; }		//按键下
-	return Encoder_Get_Div4();			//旋钮编码器
+
+	//旋钮编码器
+	return g_pDev_Encoder->Encoder_Get_Div4(g_pDev_Encoder);
 }
 
 int8_t Menu_Enter_Event(void)//菜单确认
