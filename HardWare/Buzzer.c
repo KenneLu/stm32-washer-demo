@@ -24,10 +24,10 @@ typedef struct {
 	BUZZER_HARDWARE HW;
 } BUZZER_Data;
 
-void Buzzer_On(BUZZER_Device* pDev);
-void Buzzer_Off(BUZZER_Device* pDev);
-void Buzzer_Revert(BUZZER_Device* pDev);
-uint8_t Is_Buzzer_On(BUZZER_Device* pDev);
+void On(BUZZER_Device* pDev);
+void Off(BUZZER_Device* pDev);
+void Revert(BUZZER_Device* pDev);
+uint8_t Is_On(BUZZER_Device* pDev);
 
 
 //--------------------------------------------------
@@ -47,17 +47,19 @@ static BUZZER_Data g_Buzzer_Datas[BUZZER_NUM];
 static BUZZER_Device g_Buzzer_Devs[BUZZER_NUM];
 
 
+//--------------------------------------------------
+
+
 BUZZER_Device* Drv_Buzzer_GetDevice(BUZZER_ID ID)
 {
 	for (int i = 0; i < sizeof(g_Buzzer_Devs) / sizeof(g_Buzzer_Devs[0]); i++)
 	{
 		BUZZER_Data* pData = (BUZZER_Data*)g_Buzzer_Devs[i].Priv_Data;
-		if (pData == 0) return 0;
-
+		if (pData == 0)
+		return 0;
 		if (pData->ID == ID)
 			return &g_Buzzer_Devs[i];
 	}
-
 	return 0;
 }
 
@@ -79,10 +81,10 @@ void Drv_Buzzer_Init(void)
 		g_Buzzer_Datas[i].HW = hw;
 
 		// Device Init
-		g_Buzzer_Devs[i].Buzzer_On = Buzzer_On;
-		g_Buzzer_Devs[i].Buzzer_Off = Buzzer_Off;
-		g_Buzzer_Devs[i].Buzzer_Revert = Buzzer_Revert;
-		g_Buzzer_Devs[i].Is_Buzzer_On = Is_Buzzer_On;
+		g_Buzzer_Devs[i].On = On;
+		g_Buzzer_Devs[i].Off = Off;
+		g_Buzzer_Devs[i].Revert = Revert;
+		g_Buzzer_Devs[i].Is_On = Is_On;
 		g_Buzzer_Devs[i].Priv_Data = (void*)&g_Buzzer_Datas[i];
 
 		// Hardware Init
@@ -94,7 +96,7 @@ void Drv_Buzzer_Init(void)
 		GPIO_Init(hw.PORT, &GPIO_InitStructure);
 
 		// Buzzer Off
-		Buzzer_Off((BUZZER_Device*)&g_Buzzer_Devs[i]);
+		Off((BUZZER_Device*)&g_Buzzer_Devs[i]);
 	}
 }
 
@@ -102,7 +104,7 @@ void Drv_Buzzer_Init(void)
 //--------------------------------------------------
 
 
-void Buzzer_On(BUZZER_Device* pDev)
+void On(BUZZER_Device* pDev)
 {
 	BUZZER_Data* pData = (BUZZER_Data*)pDev->Priv_Data;
 	if (pData == 0) return;
@@ -113,7 +115,7 @@ void Buzzer_On(BUZZER_Device* pDev)
 		GPIO_ResetBits(pData->HW.PORT, pData->HW.PIN);
 }
 
-void Buzzer_Off(BUZZER_Device* pDev)
+void Off(BUZZER_Device* pDev)
 {
 	BUZZER_Data* pData = (BUZZER_Data*)pDev->Priv_Data;
 	if (pData == 0) return;
@@ -125,7 +127,7 @@ void Buzzer_Off(BUZZER_Device* pDev)
 
 }
 
-void Buzzer_Revert(BUZZER_Device* pDev)
+void Revert(BUZZER_Device* pDev)
 {
 	BUZZER_Data* pData = (BUZZER_Data*)pDev->Priv_Data;
 	if (pData == 0) return;
@@ -137,7 +139,7 @@ void Buzzer_Revert(BUZZER_Device* pDev)
 
 }
 
-uint8_t Is_Buzzer_On(BUZZER_Device* pDev)
+uint8_t Is_On(BUZZER_Device* pDev)
 {
 	BUZZER_Data* pData = (BUZZER_Data*)pDev->Priv_Data;
 	if (pData == 0) return 0;

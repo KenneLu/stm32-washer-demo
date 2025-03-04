@@ -22,13 +22,13 @@ typedef struct {
 } I2C_HW_Data;
 
 
-void I2C_HW_GenerateSTART(I2C_HW_Device* pDev, FunctionalState NewState);
-void I2C_HW_GenerateSTOP(I2C_HW_Device* pDev, FunctionalState NewState);
-void I2C_HW_AcknowledgeConfig(I2C_HW_Device* pDev, FunctionalState NewState);
-void I2C_HW_Send7bitAddress(I2C_HW_Device* pDev, uint8_t Address, uint8_t I2C_Direction);
-void I2C_HW_SendData(I2C_HW_Device* pDev, uint8_t Data);
-uint8_t I2C_HW_ReceiveData(I2C_HW_Device* pDev);
-ErrorStatus I2C_HW_CheckEvent(I2C_HW_Device* pDev, uint32_t I2C_EVENT);
+void GenerateSTART(I2C_HW_Device* pDev, FunctionalState NewState);
+void GenerateSTOP(I2C_HW_Device* pDev, FunctionalState NewState);
+void AcknowledgeConfig(I2C_HW_Device* pDev, FunctionalState NewState);
+void Send7bitAddress(I2C_HW_Device* pDev, uint8_t Address, uint8_t I2C_Direction);
+void SendData(I2C_HW_Device* pDev, uint8_t Data);
+uint8_t ReceiveData(I2C_HW_Device* pDev);
+ErrorStatus CheckEvent(I2C_HW_Device* pDev, uint32_t I2C_EVENT);
 
 
 //--------------------------------------------------
@@ -51,16 +51,19 @@ static I2C_HW_Data g_I2C_HW_Datas[I2C_HW_NUM];
 static I2C_HW_Device g_I2C_HW_Devs[I2C_HW_NUM];
 
 
+//--------------------------------------------------
+
+
 I2C_HW_Device* Drv_I2C_HW_GetDevice(I2C_HW_ID ID)
 {
     for (int i = 0; i < sizeof(g_I2C_HW_Devs) / sizeof(g_I2C_HW_Devs[0]); i++)
     {
         I2C_HW_Data* pData = (I2C_HW_Data*)g_I2C_HW_Devs[i].Priv_Data;
-        if (!pData) return 0;
+        if (pData == 0)
+            return 0;
         if (pData->ID == ID)
             return &g_I2C_HW_Devs[i];
     }
-
     return 0;
 }
 
@@ -81,13 +84,13 @@ void Drv_I2C_HW_Init(void)
         g_I2C_HW_Datas[i].HW = hw;
 
         // Device Init
-        g_I2C_HW_Devs[i].I2C_HW_GenerateSTART = I2C_HW_GenerateSTART;
-        g_I2C_HW_Devs[i].I2C_HW_GenerateSTOP = I2C_HW_GenerateSTOP;
-        g_I2C_HW_Devs[i].I2C_HW_AcknowledgeConfig = I2C_HW_AcknowledgeConfig;
-        g_I2C_HW_Devs[i].I2C_HW_Send7bitAddress = I2C_HW_Send7bitAddress;
-        g_I2C_HW_Devs[i].I2C_HW_SendData = I2C_HW_SendData;
-        g_I2C_HW_Devs[i].I2C_HW_ReceiveData = I2C_HW_ReceiveData;
-        g_I2C_HW_Devs[i].I2C_HW_CheckEvent = I2C_HW_CheckEvent;
+        g_I2C_HW_Devs[i].GenerateSTART = GenerateSTART;
+        g_I2C_HW_Devs[i].GenerateSTOP = GenerateSTOP;
+        g_I2C_HW_Devs[i].AcknowledgeConfig = AcknowledgeConfig;
+        g_I2C_HW_Devs[i].Send7bitAddress = Send7bitAddress;
+        g_I2C_HW_Devs[i].SendData = SendData;
+        g_I2C_HW_Devs[i].ReceiveData = ReceiveData;
+        g_I2C_HW_Devs[i].CheckEvent = CheckEvent;
         g_I2C_HW_Devs[i].Priv_Data = (void*)&g_I2C_HW_Datas[i];
 
         // Hardware Init
@@ -110,49 +113,49 @@ void Drv_I2C_HW_Init(void)
 //--------------------------------------------------
 
 
-void I2C_HW_GenerateSTART(I2C_HW_Device* pDev, FunctionalState NewState)
+void GenerateSTART(I2C_HW_Device* pDev, FunctionalState NewState)
 {
     I2C_HW_Data* pData = (I2C_HW_Data*)pDev->Priv_Data;
     if (pData == 0) return;
     I2C_GenerateSTART(pData->HW.PORT, NewState);
 }
 
-void I2C_HW_GenerateSTOP(I2C_HW_Device* pDev, FunctionalState NewState)
+void GenerateSTOP(I2C_HW_Device* pDev, FunctionalState NewState)
 {
     I2C_HW_Data* pData = (I2C_HW_Data*)pDev->Priv_Data;
     if (pData == 0) return;
     I2C_GenerateSTOP(pData->HW.PORT, NewState);
 }
 
-void I2C_HW_AcknowledgeConfig(I2C_HW_Device* pDev, FunctionalState NewState)
+void AcknowledgeConfig(I2C_HW_Device* pDev, FunctionalState NewState)
 {
     I2C_HW_Data* pData = (I2C_HW_Data*)pDev->Priv_Data;
     if (pData == 0) return;
     I2C_AcknowledgeConfig(pData->HW.PORT, NewState);
 }
 
-void I2C_HW_Send7bitAddress(I2C_HW_Device* pDev, uint8_t Address, uint8_t I2C_Direction)
+void Send7bitAddress(I2C_HW_Device* pDev, uint8_t Address, uint8_t I2C_Direction)
 {
     I2C_HW_Data* pData = (I2C_HW_Data*)pDev->Priv_Data;
     if (pData == 0) return;
     I2C_Send7bitAddress(pData->HW.PORT, Address, I2C_Direction);
 }
 
-void I2C_HW_SendData(I2C_HW_Device* pDev, uint8_t Data)
+void SendData(I2C_HW_Device* pDev, uint8_t Data)
 {
     I2C_HW_Data* pData = (I2C_HW_Data*)pDev->Priv_Data;
     if (pData == 0) return;
     I2C_SendData(pData->HW.PORT, Data);
 }
 
-uint8_t I2C_HW_ReceiveData(I2C_HW_Device* pDev)
+uint8_t ReceiveData(I2C_HW_Device* pDev)
 {
     I2C_HW_Data* pData = (I2C_HW_Data*)pDev->Priv_Data;
     if (pData == 0) return 0;
-    I2C_ReceiveData(pData->HW.PORT);
+    return I2C_ReceiveData(pData->HW.PORT);
 }
 
-ErrorStatus I2C_HW_CheckEvent(I2C_HW_Device* pDev, uint32_t I2C_EVENT)
+ErrorStatus CheckEvent(I2C_HW_Device* pDev, uint32_t I2C_EVENT)
 {
     I2C_HW_Data* pData = (I2C_HW_Data*)pDev->Priv_Data;
     if (pData == 0) return ERROR;

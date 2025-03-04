@@ -9,10 +9,10 @@ typedef enum
 } BUZZER_ID;
 
 typedef struct BUZZER_Device {
-    void(*Buzzer_On)(struct BUZZER_Device* pDev);
-    void(*Buzzer_Off)(struct BUZZER_Device* pDev);
-    void(*Buzzer_Revert)(struct BUZZER_Device* pDev);
-    uint8_t(*Is_Buzzer_On)(struct BUZZER_Device* pDev);
+    void(*On)(struct BUZZER_Device* pDev);
+    void(*Off)(struct BUZZER_Device* pDev);
+    void(*Revert)(struct BUZZER_Device* pDev);
+    uint8_t(*Is_On)(struct BUZZER_Device* pDev);
     void* Priv_Data;
 } BUZZER_Device;
 

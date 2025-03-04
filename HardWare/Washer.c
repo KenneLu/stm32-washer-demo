@@ -93,11 +93,6 @@ void Washer_OLED_Refresh()
 	OLED_ShowNum_Easy(4, 14, g_Washer->Wash_Cnt, 1);
 }
 
-void Washer_Init_Basic(void)
-{
-
-}
-
 void Washer_Init(Washer* pWasher)
 {
 	if (!pWasher)
@@ -193,7 +188,7 @@ void Washer_Stop(uint8_t Custom_Shout_Down)
 {
 	TB6612_Motor_SetSpeed(0);
 	Washer_Door_UnLock();
-	g_pDev_Buzzer->Buzzer_Off(g_pDev_Buzzer);
+	g_pDev_Buzzer->Off(g_pDev_Buzzer);
 	Washer_LED_On(0, LED_RED);
 	Washer_LED_On(0, LED_BLUE);
 	if (Custom_Shout_Down)
@@ -271,11 +266,11 @@ void Washer_Error()
 	}
 
 	Washer_LED_Revert(LED_RED);
-	g_pDev_Buzzer->Buzzer_Revert(g_pDev_Buzzer);
+	g_pDev_Buzzer->Revert(g_pDev_Buzzer);
 	if (g_Washer_Error_Cur == NO_ERROR) //异常解除
 	{
 		Washer_LED_On(0, LED_RED);
-		g_pDev_Buzzer->Buzzer_Off(g_pDev_Buzzer);
+		g_pDev_Buzzer->Off(g_pDev_Buzzer);
 
 		Delay_ms(500);
 		Washer_OLED_Refresh();
@@ -335,7 +330,7 @@ void Washer_Heat_Water()
 	DHT11_HumiTemp DHT11_Data;
 	DHT11_Device* pDev_DHT11 = Drv_DHT11_GetDevice(DHT11);
 	if (pDev_DHT11)
-		DHT11_Data = pDev_DHT11->DHT11_Get_HumiTemp(pDev_DHT11);
+		DHT11_Data = pDev_DHT11->Get_HumiTemp(pDev_DHT11);
 
 	// 读取响应需要时间，延时500ms
 	Delay_ms(500);
@@ -613,7 +608,7 @@ void Washer_Heat_Dry()
 	DHT11_HumiTemp DHT11_Data;
 	DHT11_Device* pDev_DHT11 = Drv_DHT11_GetDevice(DHT11);
 	if (pDev_DHT11)
-		DHT11_Data = pDev_DHT11->DHT11_Get_HumiTemp(pDev_DHT11);
+		DHT11_Data = pDev_DHT11->Get_HumiTemp(pDev_DHT11);
 
 	// 读取响应需要时间，延时500ms
 	Delay_ms(500);
@@ -760,7 +755,7 @@ int8_t Washer_Run(void* Param)
 			static int16_t AccX, AccY, AccZ, GyroX, GyroY, GyroZ;
 			static int16_t AccX_Abs, AccY_Abs;
 			static uint8_t Shake_Time = 0;
-			g_pDev_MPU6050->MPU6050_GetData(g_pDev_MPU6050, &AccX, &AccY, &AccZ, &GyroX, &GyroY, &GyroZ);
+			g_pDev_MPU6050->GetData(g_pDev_MPU6050, &AccX, &AccY, &AccZ, &GyroX, &GyroY, &GyroZ);
 			AccX_Abs = AccX > 0 ? AccX : -AccX;
 			AccY_Abs = AccY > 0 ? AccY : -AccY;
 			if (AccX_Abs > 50 || AccY_Abs > 50) // 瞬时加速度大于50

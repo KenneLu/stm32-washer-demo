@@ -17,7 +17,7 @@ typedef enum
 } DHT11_ID;
 
 typedef struct DHT11_Device {
-    DHT11_HumiTemp(*DHT11_Get_HumiTemp)(struct DHT11_Device* pDev);
+    DHT11_HumiTemp(*Get_HumiTemp)(struct DHT11_Device* pDev);
     void* Priv_Data;
 } DHT11_Device;
 

@@ -53,14 +53,14 @@ void Menu_Init(void)
 	g_pKeyDev_Encoder = Drv_Key_GetDevice(KEY_ENCODER);
 	if (g_pKeyDev_Encoder)
 	{
-		g_pKeyDev_Encoder->Key_CBRegister_R(g_pKeyDev_Encoder, Change_Enter_Key);
-		g_pKeyDev_Encoder->Key_CBRegister_LP(g_pKeyDev_Encoder, Change_Back_Key);
+		g_pKeyDev_Encoder->CBRegister_R(g_pKeyDev_Encoder, Change_Enter_Key);
+		g_pKeyDev_Encoder->CBRegister_LP(g_pKeyDev_Encoder, Change_Back_Key);
 	}
 
 	g_pKeyDev_Power = Drv_Key_GetDevice(KEY_POWER);
 	if (g_pKeyDev_Power)
 	{
-		g_pKeyDev_Power->Key_CBRegister_R(g_pKeyDev_Power, Change_Power_Key);
+		g_pKeyDev_Power->CBRegister_R(g_pKeyDev_Power, Change_Power_Key);
 	}
 
 	g_pDev_Encoder = Drv_Encoder_GetDevice(ENCODER);
@@ -213,7 +213,7 @@ int8_t Menu_Roll_Event(void)//菜单滚动
 	// if (Key_Down_Get()) { return -1; }		//按键下
 
 	//旋钮编码器
-	return g_pDev_Encoder->Encoder_Get_Div4(g_pDev_Encoder);
+	return g_pDev_Encoder->GetDiv4(g_pDev_Encoder);
 }
 
 int8_t Menu_Enter_Event(void)//菜单确认

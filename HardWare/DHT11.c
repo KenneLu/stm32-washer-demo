@@ -1,6 +1,6 @@
 #include "stm32f10x.h"                  // Device header
-#include  "DHT11.h"
-#include  "Delay.h"
+#include "DHT11.h"
+#include "Delay.h"
 
 
 #define DHT11_HIGH(PORT, PIN) GPIO_SetBits(PORT, PIN)
@@ -23,7 +23,7 @@ typedef struct {
 } DHT11_Data;
 
 
-DHT11_HumiTemp DHT11_Get_HumiTemp(DHT11_Device* pDev);
+DHT11_HumiTemp Get_HumiTemp(DHT11_Device* pDev);
 void DHT11_Recive_Data(DHT11_Device* pDev, DHT11_HumiTemp* Out);
 
 
@@ -44,16 +44,19 @@ static DHT11_Data g_DHT11_Datas[DHT11_NUM];
 static DHT11_Device g_DHT11_Devs[DHT11_NUM];
 
 
+//--------------------------------------------------
+
+
 DHT11_Device* Drv_DHT11_GetDevice(DHT11_ID ID)
 {
 	for (int i = 0; i < sizeof(g_DHT11_Devs) / sizeof(g_DHT11_Devs[0]); i++)
 	{
 		DHT11_Data* pData = (DHT11_Data*)g_DHT11_Devs[i].Priv_Data;
-		if (!pData) return 0;
+		if (pData == 0)
+			return 0;
 		if (pData->ID == ID)
 			return &g_DHT11_Devs[i];
 	}
-
 	return 0;
 }
 
@@ -74,10 +77,10 @@ void Drv_DHT11_Init(void)
 		g_DHT11_Datas[i].HW = hw;
 
 		// Device Init
-		g_DHT11_Devs[i].DHT11_Get_HumiTemp = DHT11_Get_HumiTemp;
+		g_DHT11_Devs[i].Get_HumiTemp = Get_HumiTemp;
 		g_DHT11_Devs[i].Priv_Data = (void*)&g_DHT11_Datas[i];
 
-		DHT11_Get_HumiTemp(&g_DHT11_Devs[i]);	// 第一次读取数据，初始化GPIO
+		Get_HumiTemp(&g_DHT11_Devs[i]);	// 第一次读取数据，初始化GPIO
 	}
 	Delay_ms(500);	// 读取响应需要时间，延时500ms
 }
@@ -201,7 +204,7 @@ void DHT11_Recive_Data(DHT11_Device* pDev, DHT11_HumiTemp* Out)
 	}
 }
 
-DHT11_HumiTemp DHT11_Get_HumiTemp(DHT11_Device* pDev)
+DHT11_HumiTemp Get_HumiTemp(DHT11_Device* pDev)
 {
 	DHT11_HumiTemp Out;
 	DHT11_Recive_Data(pDev, &Out);

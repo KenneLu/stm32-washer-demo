@@ -27,9 +27,9 @@ typedef struct {
     ENCODER_HARDWARE HW;
 } ENCODER_Data;
 
-int16_t Encoder_GetCount(ENCODER_Device* pDev);
-int16_t Encoder_GetSpeed(ENCODER_Device* pDev);
-int16_t Encoder_Get_Div4(ENCODER_Device* pDev);
+int16_t GetCount(ENCODER_Device* pDev);
+int16_t GetSpeed(ENCODER_Device* pDev);
+int16_t GetDiv4(ENCODER_Device* pDev);
 
 
 //--------------------------------------------------
@@ -60,16 +60,19 @@ static ENCODER_Data g_Encoder_Datas[ENCODER_NUM];
 static ENCODER_Device g_Encoder_Devs[ENCODER_NUM];
 
 
+//--------------------------------------------------
+
+
 ENCODER_Device* Drv_Encoder_GetDevice(ENCODER_ID ID)
 {
     for (int i = 0; i < sizeof(g_Encoder_Devs) / sizeof(g_Encoder_Devs[0]); i++)
     {
         ENCODER_Data* pData = (ENCODER_Data*)g_Encoder_Devs[i].Priv_Data;
-        if (!pData) return 0;
+        if (pData == 0)
+            return 0;
         if (pData->ID == ID)
             return &g_Encoder_Devs[i];
     }
-
     return 0;
 }
 
@@ -90,9 +93,9 @@ void Dev_Encoder_Init(void)
         g_Encoder_Datas[i].HW = hw;
 
         // Device Init
-        g_Encoder_Devs[i].Encoder_GetCount = Encoder_GetCount;
-        g_Encoder_Devs[i].Encoder_GetSpeed = Encoder_GetSpeed;
-        g_Encoder_Devs[i].Encoder_Get_Div4 = Encoder_Get_Div4;
+        g_Encoder_Devs[i].GetCount = GetCount;
+        g_Encoder_Devs[i].GetSpeed = GetSpeed;
+        g_Encoder_Devs[i].GetDiv4 = GetDiv4;
         g_Encoder_Devs[i].Priv_Data = (void*)&g_Encoder_Datas[i];
 
         // Hardware Init
@@ -147,7 +150,7 @@ void Dev_Encoder_Init(void)
 //--------------------------------------------------
 
 
-int16_t Encoder_GetCount(ENCODER_Device* pDev)
+int16_t GetCount(ENCODER_Device* pDev)
 {
     ENCODER_Data* pData = (ENCODER_Data*)pDev->Priv_Data;
 
@@ -155,7 +158,7 @@ int16_t Encoder_GetCount(ENCODER_Device* pDev)
     return (int16_t)TIM_GetCounter(pData->HW.TIM_PORT) / 4;
 }
 
-int16_t Encoder_GetSpeed(ENCODER_Device* pDev)
+int16_t GetSpeed(ENCODER_Device* pDev)
 {
     ENCODER_Data* pData = (ENCODER_Data*)pDev->Priv_Data;
     int16_t Temp = TIM_GetCounter(pData->HW.TIM_PORT);
@@ -163,7 +166,7 @@ int16_t Encoder_GetSpeed(ENCODER_Device* pDev)
     return Temp;
 }
 
-int16_t Encoder_Get_Div4(ENCODER_Device* pDev)
+int16_t GetDiv4(ENCODER_Device* pDev)
 {
     ENCODER_Data* pData = (ENCODER_Data*)pDev->Priv_Data;
 

@@ -4,8 +4,6 @@
 #include "Drv_I2C_HW.h"
 
 
-I2C_HW_Device* g_pDev_I2C_HW;
-
 typedef struct
 {
 	MPU6050_ID ID;
@@ -24,14 +22,16 @@ typedef struct {
 
 void MPU6050_WriteReg(MPU6050_Device* pDev, uint8_t RegAddress, uint8_t Data);
 uint8_t MPU6050_ReadReg(MPU6050_Device* pDev, uint8_t RegAddress);
-uint8_t MPU6050_GetID(MPU6050_Device* pDev);
-void MPU6050_GetData(MPU6050_Device* pDev,
+uint8_t GetID(MPU6050_Device* pDev);
+void GetData(MPU6050_Device* pDev,
 	int16_t* AccX, int16_t* AccY, int16_t* AccZ,
 	int16_t* GyroX, int16_t* GyroY, int16_t* GyroZ);
 
 
 //--------------------------------------------------
 
+
+I2C_HW_Device* g_pDev_I2C_HW;
 
 static MPU6050_HARDWARE g_MPU6050_HWs[MPU6050_NUM] = {
 	{
@@ -48,17 +48,19 @@ static MPU6050_Data g_MPU6050_Datas[MPU6050_NUM];
 static MPU6050_Device g_MPU6050_Devs[MPU6050_NUM];
 
 
+//--------------------------------------------------
+
+
 MPU6050_Device* Drv_MPU6050_GetDevice(MPU6050_ID ID)
 {
 	for (int i = 0; i < sizeof(g_MPU6050_Devs) / sizeof(g_MPU6050_Devs[0]); i++)
 	{
 		MPU6050_Data* pData = (MPU6050_Data*)g_MPU6050_Devs[i].Priv_Data;
-		if (pData == 0) return 0;
-
+		if (pData == 0)
+			return 0;
 		if (pData->ID == ID)
 			return &g_MPU6050_Devs[i];
 	}
-
 	return 0;
 }
 
@@ -82,8 +84,8 @@ void Drv_MPU6050_Init(void)
 		g_MPU6050_Datas[i].HW = hw;
 
 		// Device Init
-		g_MPU6050_Devs[i].MPU6050_GetID = MPU6050_GetID;
-		g_MPU6050_Devs[i].MPU6050_GetData = MPU6050_GetData;
+		g_MPU6050_Devs[i].GetID = GetID;
+		g_MPU6050_Devs[i].GetData = GetData;
 		g_MPU6050_Devs[i].Priv_Data = (void*)&g_MPU6050_Datas[i];
 
 		// Hardware Init
@@ -108,12 +110,12 @@ void Drv_MPU6050_Init(void)
 //--------------------------------------------------
 
 
-uint8_t MPU6050_GetID(MPU6050_Device* pDev)
+uint8_t GetID(MPU6050_Device* pDev)
 {
 	return MPU6050_ReadReg(pDev, MPU6050_WHO_AM_I);
 }
 
-void MPU6050_GetData(MPU6050_Device* pDev,
+void GetData(MPU6050_Device* pDev,
 	int16_t* AccX, int16_t* AccY, int16_t* AccZ,
 	int16_t* GyroX, int16_t* GyroY, int16_t* GyroZ)
 {
@@ -148,7 +150,7 @@ void MPU6050_WaitEvent(uint32_t I2C_EVENT)
 {
 	uint32_t Timeout;
 	Timeout = 10000; // 随便填的，实际项目需要严格一些
-	while (g_pDev_I2C_HW->I2C_HW_CheckEvent(g_pDev_I2C_HW, I2C_EVENT) != SUCCESS)
+	while (g_pDev_I2C_HW->CheckEvent(g_pDev_I2C_HW, I2C_EVENT) != SUCCESS)
 	{
 		Timeout--;
 		if (Timeout == 0)
@@ -163,20 +165,20 @@ void MPU6050_WriteReg(MPU6050_Device* pDev, uint8_t RegAddress, uint8_t Data)
 	MPU6050_Data* pData = (MPU6050_Data*)pDev->Priv_Data;
 	if (pData == 0) return;
 
-	g_pDev_I2C_HW->I2C_HW_GenerateSTART(g_pDev_I2C_HW, ENABLE); // START
+	g_pDev_I2C_HW->GenerateSTART(g_pDev_I2C_HW, ENABLE); // START
 	MPU6050_WaitEvent(I2C_EVENT_MASTER_MODE_SELECT); // EV5
 
 	// 发送和接收都硬件自带应答，无需软件额外处理。如果应答错误，硬件会自动触发相关中断	
-	g_pDev_I2C_HW->I2C_HW_Send7bitAddress(g_pDev_I2C_HW, pData->HW.ADDRESS, I2C_Direction_Transmitter); // MPU6050_ADDRESS
+	g_pDev_I2C_HW->Send7bitAddress(g_pDev_I2C_HW, pData->HW.ADDRESS, I2C_Direction_Transmitter); // MPU6050_ADDRESS
 	MPU6050_WaitEvent(I2C_EVENT_MASTER_TRANSMITTER_MODE_SELECTED); // EV6
 
-	g_pDev_I2C_HW->I2C_HW_SendData(g_pDev_I2C_HW, RegAddress); // MPU6050_RegAddress
+	g_pDev_I2C_HW->SendData(g_pDev_I2C_HW, RegAddress); // MPU6050_RegAddress
 	MPU6050_WaitEvent(I2C_EVENT_MASTER_BYTE_TRANSMITTING); // EV8
 
-	g_pDev_I2C_HW->I2C_HW_SendData(g_pDev_I2C_HW, Data); // Send Data
+	g_pDev_I2C_HW->SendData(g_pDev_I2C_HW, Data); // Send Data
 	MPU6050_WaitEvent(I2C_EVENT_MASTER_BYTE_TRANSMITTED); // EV8_2
 
-	g_pDev_I2C_HW->I2C_HW_GenerateSTOP(g_pDev_I2C_HW, ENABLE); // STOP
+	g_pDev_I2C_HW->GenerateSTOP(g_pDev_I2C_HW, ENABLE); // STOP
 }
 
 uint8_t MPU6050_ReadReg(MPU6050_Device* pDev, uint8_t RegAddress)
@@ -184,28 +186,28 @@ uint8_t MPU6050_ReadReg(MPU6050_Device* pDev, uint8_t RegAddress)
 	MPU6050_Data* pData = (MPU6050_Data*)pDev->Priv_Data;
 	if (pData == 0) return 0;
 
-	g_pDev_I2C_HW->I2C_HW_GenerateSTART(g_pDev_I2C_HW, ENABLE); // START
+	g_pDev_I2C_HW->GenerateSTART(g_pDev_I2C_HW, ENABLE); // START
 	MPU6050_WaitEvent(I2C_EVENT_MASTER_MODE_SELECT); // EV5
 
-	g_pDev_I2C_HW->I2C_HW_Send7bitAddress(g_pDev_I2C_HW, pData->HW.ADDRESS, I2C_Direction_Transmitter); // MPU6050_ADDRESS
+	g_pDev_I2C_HW->Send7bitAddress(g_pDev_I2C_HW, pData->HW.ADDRESS, I2C_Direction_Transmitter); // MPU6050_ADDRESS
 	MPU6050_WaitEvent(I2C_EVENT_MASTER_TRANSMITTER_MODE_SELECTED); // EV6
 
-	g_pDev_I2C_HW->I2C_HW_SendData(g_pDev_I2C_HW, RegAddress); // MPU6050_RegAddress
+	g_pDev_I2C_HW->SendData(g_pDev_I2C_HW, RegAddress); // MPU6050_RegAddress
 	MPU6050_WaitEvent(I2C_EVENT_MASTER_BYTE_TRANSMITTED); // EV8 TRANSMITTED
 
-	g_pDev_I2C_HW->I2C_HW_GenerateSTART(g_pDev_I2C_HW, ENABLE); // RESTART
+	g_pDev_I2C_HW->GenerateSTART(g_pDev_I2C_HW, ENABLE); // RESTART
 	MPU6050_WaitEvent(I2C_EVENT_MASTER_MODE_SELECT); // EV5
 
-	g_pDev_I2C_HW->I2C_HW_Send7bitAddress(g_pDev_I2C_HW, pData->HW.ADDRESS, I2C_Direction_Receiver); // MPU6050_ADDRESS
+	g_pDev_I2C_HW->Send7bitAddress(g_pDev_I2C_HW, pData->HW.ADDRESS, I2C_Direction_Receiver); // MPU6050_ADDRESS
 	MPU6050_WaitEvent(I2C_EVENT_MASTER_RECEIVER_MODE_SELECTED); // EV6
 
-	g_pDev_I2C_HW->I2C_HW_AcknowledgeConfig(g_pDev_I2C_HW, DISABLE); // Ack(0) // EV6_1
-	g_pDev_I2C_HW->I2C_HW_GenerateSTOP(g_pDev_I2C_HW, ENABLE); // STOP // EV6_1
+	g_pDev_I2C_HW->AcknowledgeConfig(g_pDev_I2C_HW, DISABLE); // Ack(0) // EV6_1
+	g_pDev_I2C_HW->GenerateSTOP(g_pDev_I2C_HW, ENABLE); // STOP // EV6_1
 
 	MPU6050_WaitEvent(I2C_EVENT_MASTER_BYTE_RECEIVED); // EV7
-	uint8_t Data = g_pDev_I2C_HW->I2C_HW_ReceiveData(g_pDev_I2C_HW); // Receive Data
+	uint8_t Data = g_pDev_I2C_HW->ReceiveData(g_pDev_I2C_HW); // Receive Data
 
-	g_pDev_I2C_HW->I2C_HW_AcknowledgeConfig(g_pDev_I2C_HW, ENABLE); // Ack(1) // 复位，便于以后接收多个字节
+	g_pDev_I2C_HW->AcknowledgeConfig(g_pDev_I2C_HW, ENABLE); // Ack(1) // 复位，便于以后接收多个字节
 
 	return Data;
 }

@@ -110,7 +110,7 @@ int main(void)
 #endif
 #if TEST_MPU6050
 	MPU6050_Init();
-	uint8_t ID = MPU6050_GetID();
+	uint8_t ID = GetID();
 	OLED_ShowString_Easy(1, 1, "ID:");
 	OLED_ShowHexNum_Easy(1, 4, ID, 2);
 	int16_t AccX, AccY, AccZ, GyroX, GyroY, GyroZ;
@@ -126,7 +126,7 @@ int main(void)
 	TB6612_Init();	// 初始化电机驱动
 	Drv_Buzzer_Init();	// 初始化蜂鸣器
 
-	uint8_t ID = MPU6050_GetID();
+	uint8_t ID = GetID();
 	OLED_ShowString_Easy(1, 1, "ID:");
 	OLED_ShowHexNum_Easy(1, 4, ID, 2);
 	int16_t AccX, AccY, AccZ, GyroX, GyroY, GyroZ;
@@ -218,11 +218,11 @@ int main(void)
 	Timer_Init();
 	Dev_Encoder_Init();
 	OLED_ShowString_Easy(1, 1, "Init");
-	Key_CBRegister_P(KEY_ENCODER_PRESS, Key_CB_Press);
-	Key_CBRegister_R(KEY_ENCODER_PRESS, Key_CB_Release);
-	Key_CBRegister_LP(KEY_ENCODER_PRESS, Key_CB_LongPress);
-	Key_CBRegister_LP_Cont(KEY_ENCODER_PRESS, Key_CB_LongPress_Continuos);
-	Key_CBRegister_LP_R(KEY_ENCODER_PRESS, Key_CB_LongPress_Release);
+	CBRegister_P(KEY_ENCODER_PRESS, Key_CB_Press);
+	CBRegister_R(KEY_ENCODER_PRESS, Key_CB_Release);
+	CBRegister_LP(KEY_ENCODER_PRESS, Key_CB_LongPress);
+	CBRegister_LP_Cont(KEY_ENCODER_PRESS, Key_CB_LongPress_Continuos);
+	CBRegister_LP_R(KEY_ENCODER_PRESS, Key_CB_LongPress_Release);
 #endif
 #if TEST_MENU
 	Drv_Key_Init();
@@ -252,7 +252,7 @@ int main(void)
 	{
 
 #if TEST_ENCODER
-		OLED_ShowSignedNum_Easy(1, 5, Encoder_GetCount(), 5);
+		OLED_ShowSignedNum_Easy(1, 5, GetCount(), 5);
 		OLED_ShowNum_Easy(2, 10, (uint32_t)Encoder_Pressed(), 1);
 #endif
 #if TEST_TB6612
@@ -262,7 +262,7 @@ int main(void)
 		Servo_Motorr_Breathe();
 #endif
 #if TEST_MPU6050
-		MPU6050_GetData(&AccX, &AccY, &AccZ, &GyroX, &GyroY, &GyroZ);
+		GetData(&AccX, &AccY, &AccZ, &GyroX, &GyroY, &GyroZ);
 		OLED_ShowSignedNum_Easy(2, 3, AccX, 4);
 		OLED_ShowSignedNum_Easy(3, 3, AccY, 4);
 		OLED_ShowSignedNum_Easy(4, 3, AccZ, 4);
@@ -272,7 +272,7 @@ int main(void)
 		Delay_ms(100);
 #endif
 #if TEST_MPU6050_BUG
-		MPU6050_GetData(&AccX, &AccY, &AccZ, &GyroX, &GyroY, &GyroZ);
+		GetData(&AccX, &AccY, &AccZ, &GyroX, &GyroY, &GyroZ);
 		OLED_ShowSignedNum_Easy(2, 3, AccX, 4);
 		OLED_ShowSignedNum_Easy(3, 3, AccY, 4);
 		Delay_ms(100);
@@ -282,10 +282,10 @@ int main(void)
 		AccY_Abs = AccY > 0 ? AccY : -AccY;
 		if (AccX_Abs > 50 || AccY_Abs > 50) // 瞬时加速度大于50
 		{
-			Buzzer_Revert();
+			Revert();
 			TB6612_Motor_SetSpeed(0);
 			Delay_ms(2000);
-			Buzzer_Revert();
+			Revert();
 		}
 		else
 		{

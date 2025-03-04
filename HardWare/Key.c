@@ -1,6 +1,5 @@
 #include "stm32F10x.h"
 #include "Key.h"
-#include "string.h"
 #include "Timer.h"
 
 //按键消抖时间
@@ -65,12 +64,12 @@ typedef struct {
     KEY_SCAN Scan;
 } KEY_Data;
 
-uint8_t Key_CBRegister_P(KEY_Device* pDev, KeyCallBack CB);
-uint8_t Key_CBRegister_R(KEY_Device* pDev, KeyCallBack CB);
-uint8_t Key_CBRegister_LP(KEY_Device* pDev, KeyCallBack CB);
-uint8_t Key_CBRegister_LP_Cont(KEY_Device* pDev, KeyCallBack CB);
-uint8_t Key_CBRegister_LP_R(KEY_Device* pDev, KeyCallBack CB);
-uint8_t Is_Key_Pressed(KEY_Device* pDev);
+uint8_t CBRegister_P(KEY_Device* pDev, KeyCallBack CB);
+uint8_t CBRegister_R(KEY_Device* pDev, KeyCallBack CB);
+uint8_t CBRegister_LP(KEY_Device* pDev, KeyCallBack CB);
+uint8_t CBRegister_LP_Cont(KEY_Device* pDev, KeyCallBack CB);
+uint8_t CBRegister_LP_R(KEY_Device* pDev, KeyCallBack CB);
+uint8_t Is_Press(KEY_Device* pDev);
 
 
 //--------------------------------------------------
@@ -100,17 +99,20 @@ static KEY_Data g_Key_Datas[KEY_NUM];
 static KEY_Device g_Key_Devs[KEY_NUM];
 
 
+//--------------------------------------------------
+
+
 KEY_Device* Drv_Key_GetDevice(KEY_ID ID)
 {
     for (int i = 0; i < sizeof(g_Key_Devs) / sizeof(g_Key_Devs[0]); i++)
     {
         KEY_Data* pData = (KEY_Data*)g_Key_Devs[i].Priv_Data;
-        if (!pData) return NULL;
+        if (pData == 0)
+            return 0;
         if (pData->ID == ID)
             return &g_Key_Devs[i];
     }
-
-    return NULL;
+    return 0;
 }
 
 void Drv_Key_Init(void)
@@ -140,12 +142,12 @@ void Drv_Key_Init(void)
         g_Key_Datas[i].HW = hw;
 
         // Device Init
-        g_Key_Devs[i].Key_CBRegister_P = Key_CBRegister_P;
-        g_Key_Devs[i].Key_CBRegister_R = Key_CBRegister_R;
-        g_Key_Devs[i].Key_CBRegister_LP = Key_CBRegister_LP;
-        g_Key_Devs[i].Key_CBRegister_LP_Cont = Key_CBRegister_LP_Cont;
-        g_Key_Devs[i].Key_CBRegister_LP_R = Key_CBRegister_LP_R;
-        g_Key_Devs[i].Is_Key_Pressed = Is_Key_Pressed;
+        g_Key_Devs[i].CBRegister_P = CBRegister_P;
+        g_Key_Devs[i].CBRegister_R = CBRegister_R;
+        g_Key_Devs[i].CBRegister_LP = CBRegister_LP;
+        g_Key_Devs[i].CBRegister_LP_Cont = CBRegister_LP_Cont;
+        g_Key_Devs[i].CBRegister_LP_R = CBRegister_LP_R;
+        g_Key_Devs[i].Is_Press = Is_Press;
         g_Key_Devs[i].Priv_Data = (void*)&g_Key_Datas[i];
 
         // Hardware Init
@@ -162,7 +164,7 @@ void Drv_Key_Init(void)
 //--------------------------------------------------
 
 
-uint8_t Key_CBRegister_P(KEY_Device* pDev, KeyCallBack CB)
+uint8_t CBRegister_P(KEY_Device* pDev, KeyCallBack CB)
 {
     KEY_Data* pData = (KEY_Data*)pDev->Priv_Data;
     if (pData->Callback.Press == 0)
@@ -173,7 +175,7 @@ uint8_t Key_CBRegister_P(KEY_Device* pDev, KeyCallBack CB)
     return 0;
 }
 
-uint8_t Key_CBRegister_R(KEY_Device* pDev, KeyCallBack CB)
+uint8_t CBRegister_R(KEY_Device* pDev, KeyCallBack CB)
 {
     KEY_Data* pData = (KEY_Data*)pDev->Priv_Data;
     if (pData->Callback.Release == 0)
@@ -184,7 +186,7 @@ uint8_t Key_CBRegister_R(KEY_Device* pDev, KeyCallBack CB)
     return 0;
 }
 
-uint8_t Key_CBRegister_LP(KEY_Device* pDev, KeyCallBack CB)
+uint8_t CBRegister_LP(KEY_Device* pDev, KeyCallBack CB)
 {
     KEY_Data* pData = (KEY_Data*)pDev->Priv_Data;
     if (pData->Callback.LongPress == 0)
@@ -195,7 +197,7 @@ uint8_t Key_CBRegister_LP(KEY_Device* pDev, KeyCallBack CB)
     return 0;
 }
 
-uint8_t Key_CBRegister_LP_Cont(KEY_Device* pDev, KeyCallBack CB)
+uint8_t CBRegister_LP_Cont(KEY_Device* pDev, KeyCallBack CB)
 {
     KEY_Data* pData = (KEY_Data*)pDev->Priv_Data;
     if (pData->Callback.LongPress_Cont == 0)
@@ -206,7 +208,7 @@ uint8_t Key_CBRegister_LP_Cont(KEY_Device* pDev, KeyCallBack CB)
     return 0;
 }
 
-uint8_t Key_CBRegister_LP_R(KEY_Device* pDev, KeyCallBack CB)
+uint8_t CBRegister_LP_R(KEY_Device* pDev, KeyCallBack CB)
 {
     KEY_Data* pData = (KEY_Data*)pDev->Priv_Data;
     if (pData->Callback.LongPress_Release == 0)
@@ -217,7 +219,7 @@ uint8_t Key_CBRegister_LP_R(KEY_Device* pDev, KeyCallBack CB)
     return 0;
 }
 
-uint8_t Is_Key_Pressed(KEY_Device* pDev)
+uint8_t Is_Press(KEY_Device* pDev)
 {
     KEY_Data* pData = (KEY_Data*)pDev->Priv_Data;
     if (pData->HW.Is_High_Active)
@@ -235,7 +237,7 @@ void Drv_Key_Scan(void)
     for (uint8_t i = 0; i < KEY_NUM; i++)
     {
         KEY_Data** pData = (KEY_Data**)&(g_Key_Devs[i].Priv_Data);
-        uint8_t KeyPressed = Is_Key_Pressed(&g_Key_Devs[i]);
+        uint8_t KeyPressed = Is_Press(&g_Key_Devs[i]);
         switch ((*pData)->Scan.ScanStep)
         {
         case STEP_WAIT: //等待阶段
