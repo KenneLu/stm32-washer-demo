@@ -17,6 +17,7 @@ static BUZZER_Device* g_pDev_Buzzer;
 static MPU6050_Device* g_pDev_MPU6050;
 static W25Q64_Device* g_pDev_W25Q64;
 static AD_Device* g_pDev_TCRT5000;
+static SERVOMOTOR_Device* g_pDev_SERVOMOTOR;
 
 static uint8_t g_Washer_Data[10] = { 0 };
 
@@ -79,12 +80,12 @@ void Washer_LED_Revert(LED_TYPE type)
 
 void Washer_Door_UnLock()
 {
-	Servo_Motor_SetAngle(0);
+	g_pDev_SERVOMOTOR->SetAngle(g_pDev_SERVOMOTOR, 0);
 }
 
 void Washer_Door_Lock()
 {
-	Servo_Motor_SetAngle(50);
+	g_pDev_SERVOMOTOR->SetAngle(g_pDev_SERVOMOTOR, 50);
 }
 
 void Washer_OLED_Refresh()
@@ -126,7 +127,8 @@ void Washer_Init(Washer* pWasher)
 	g_pDev_TCRT5000 = Drv_AD_GetDevice(AD_TCRT5000);
 
 	// 初始化舵机，用于锁门
-	Servo_Motor_Init();
+	Drv_ServoMotor_Init();
+	g_pDev_SERVOMOTOR = Drv_ServoMotor_GetDevice(SERVOMOTOR);
 	Washer_Door_Lock(); // 锁门
 
 	// 初始化MPU6050，用于姿态检测
