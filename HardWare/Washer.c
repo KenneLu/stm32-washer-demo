@@ -16,6 +16,7 @@
 static BUZZER_Device* g_pDev_Buzzer;
 static MPU6050_Device* g_pDev_MPU6050;
 static W25Q64_Device* g_pDev_W25Q64;
+static AD_Device* g_pDev_TCRT5000;
 
 static uint8_t g_Washer_Data[10] = { 0 };
 
@@ -121,7 +122,8 @@ void Washer_Init(Washer* pWasher)
 	TB6612_Init();
 
 	// 初始化ADC, 用于检测门是否打开
-	MyAD_Init();
+	Drv_AD_Init();
+	g_pDev_TCRT5000 = Drv_AD_GetDevice(AD_TCRT5000);
 
 	// 初始化舵机，用于锁门
 	Servo_Motor_Init();
@@ -746,9 +748,7 @@ int8_t Washer_Run(void* Param)
 			g_Washer_Error_Cur = NO_ERROR;
 
 			// 检测门是否打开
-			static uint16_t* pADValue;
-			pADValue = MyAD_GetValue();
-			if (pADValue[AD_Comp_TCRT5000] > 400) // 大于1.5cm距离
+			if (g_pDev_TCRT5000->GetValue(g_pDev_TCRT5000) > 400) // 大于1.5cm距离
 			{
 				g_Washer_Error_Cur = ERROR_DOOR_OPEN;
 			}
