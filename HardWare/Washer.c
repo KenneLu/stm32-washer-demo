@@ -18,6 +18,7 @@ static MPU6050_Device* g_pDev_MPU6050;
 static W25Q64_Device* g_pDev_W25Q64;
 static AD_Device* g_pDev_TCRT5000;
 static SERVOMOTOR_Device* g_pDev_SERVOMOTOR;
+static TB6612_Device* g_pDev_TB6612;
 
 static uint8_t g_Washer_Data[10] = { 0 };
 
@@ -120,7 +121,8 @@ void Washer_Init(Washer* pWasher)
 	Drv_DHT11_Init();
 
 	// 初始化电机驱动
-	TB6612_Init();
+	Drv_TB6612_Init();
+	g_pDev_TB6612 = Drv_TB6612_GetDevice(TB6612);
 
 	// 初始化ADC, 用于检测门是否打开
 	Drv_AD_Init();
@@ -192,7 +194,7 @@ void Washer_Init(Washer* pWasher)
 
 void Washer_Stop(uint8_t Custom_Shout_Down)
 {
-	TB6612_Motor_SetSpeed(0);
+	g_pDev_TB6612->SetSpeed(g_pDev_TB6612, 0);
 	Washer_Door_UnLock();
 	g_pDev_Buzzer->Off(g_pDev_Buzzer);
 	Washer_LED_On(0, LED_RED);
@@ -404,7 +406,7 @@ void Washer_Wash()
 	switch (Wash_Status_Cur)
 	{
 	case S_WASH_TURN_LEFT:
-		TB6612_Motor_SetSpeed(0);
+		g_pDev_TB6612->SetSpeed(g_pDev_TB6612, 0);
 		if (Wash_Loop_Cnt >= 6) //600ms
 		{
 			Wash_Loop_Cnt = 0;
@@ -412,7 +414,7 @@ void Washer_Wash()
 		}
 		break;
 	case S_WASH_LEFT_SPEED_UP_15:
-		TB6612_Motor_SetSpeed(15);
+		g_pDev_TB6612->SetSpeed(g_pDev_TB6612, 15);
 		if (Wash_Loop_Cnt >= 6)
 		{
 			Wash_Loop_Cnt = 0;
@@ -420,7 +422,7 @@ void Washer_Wash()
 		}
 		break;
 	case S_WASH_LEFT_SPEED_UP_40:
-		TB6612_Motor_SetSpeed(40);
+		g_pDev_TB6612->SetSpeed(g_pDev_TB6612, 40);
 		if (Wash_Loop_Cnt >= 8)
 		{
 			Wash_Loop_Cnt = 0;
@@ -428,7 +430,8 @@ void Washer_Wash()
 		}
 		break;
 	case S_WASH_LEFT_SPEED_DOWN_15:
-		TB6612_Motor_SetSpeed(15);
+		g_pDev_TB6612->SetSpeed(g_pDev_TB6612, 15);
+
 		if (Wash_Loop_Cnt >= 6)
 		{
 			Wash_Loop_Cnt = 0;
@@ -436,7 +439,7 @@ void Washer_Wash()
 		}
 		break;
 	case S_WASH_TURN_RIGHT:
-		TB6612_Motor_SetSpeed(0);
+		g_pDev_TB6612->SetSpeed(g_pDev_TB6612, 0);
 		if (Wash_Loop_Cnt >= 6)
 		{
 			Wash_Loop_Cnt = 0;
@@ -444,7 +447,7 @@ void Washer_Wash()
 		}
 		break;
 	case S_WASH_RIGHT_SPEED_UP_15:
-		TB6612_Motor_SetSpeed(-15);
+		g_pDev_TB6612->SetSpeed(g_pDev_TB6612, -15);
 		if (Wash_Loop_Cnt >= 6)
 		{
 			Wash_Loop_Cnt = 0;
@@ -452,7 +455,7 @@ void Washer_Wash()
 		}
 		break;
 	case S_WASH_RIGHT_SPEED_UP_40:
-		TB6612_Motor_SetSpeed(-40);
+		g_pDev_TB6612->SetSpeed(g_pDev_TB6612, -40);
 		if (Wash_Loop_Cnt >= 8)
 		{
 			Wash_Loop_Cnt = 0;
@@ -460,7 +463,7 @@ void Washer_Wash()
 		}
 		break;
 	case S_WASH_RIGHT_SPEED_DOWN_15:
-		TB6612_Motor_SetSpeed(-15);
+		g_pDev_TB6612->SetSpeed(g_pDev_TB6612, -15);
 		if (Wash_Loop_Cnt >= 6)
 		{
 			Wash_Loop_Cnt = 0;
@@ -481,7 +484,7 @@ void Washer_Wash()
 
 		g_Loop_Cnt = 0;
 		Wash_Loop_Cnt = 0;
-		TB6612_Motor_SetSpeed(0);
+		g_pDev_TB6612->SetSpeed(g_pDev_TB6612, 0);
 		g_Status_Next = S_DRAIN_WATER;
 
 		Delay_ms(DISPLAY_DELAY_MS);
@@ -532,7 +535,7 @@ void Washer_Spin_Dry()
 	switch (Spin_Dry_Status_Cur)
 	{
 	case S_SPIN_STOP:
-		TB6612_Motor_SetSpeed(0);
+		g_pDev_TB6612->SetSpeed(g_pDev_TB6612, 0);
 		if (WASHER_CNT_100MS >= 5)
 		{
 			g_Loop_Cnt = 0;
@@ -540,7 +543,7 @@ void Washer_Spin_Dry()
 		}
 		break;
 	case S_SPIN_LEFT_SPEED_UP_20:
-		TB6612_Motor_SetSpeed(20);
+		g_pDev_TB6612->SetSpeed(g_pDev_TB6612, 20);
 		if (WASHER_CNT_S >= 3)
 		{
 			g_Loop_Cnt = 0;
@@ -548,7 +551,7 @@ void Washer_Spin_Dry()
 		}
 		break;
 	case S_SPIN_LEFT_SPEED_UP_40:
-		TB6612_Motor_SetSpeed(40);
+		g_pDev_TB6612->SetSpeed(g_pDev_TB6612, 40);
 		if (WASHER_CNT_S >= 3)
 		{
 			g_Loop_Cnt = 0;
@@ -556,7 +559,7 @@ void Washer_Spin_Dry()
 		}
 		break;
 	case S_SPIN_LEFT_SPEED_UP_60:
-		TB6612_Motor_SetSpeed(60);
+		g_pDev_TB6612->SetSpeed(g_pDev_TB6612, 60);
 		OLED_ShowNum_Easy(1, 11, WASHER_CNT_MIN, 2);
 		if ((WASHER_CNT_MIN) >= g_Washer->Spin_Dry_Time)
 		{
@@ -565,18 +568,18 @@ void Washer_Spin_Dry()
 		}
 		break;
 	case S_SPIN_LEFT_SPEED_DOWN_40:
-		TB6612_Motor_SetSpeed(40);
+		g_pDev_TB6612->SetSpeed(g_pDev_TB6612, 40);
 		if (WASHER_CNT_100MS >= 5)
 		{
 			g_Loop_Cnt = 0;
 			Spin_Dry_Status_Cur = S_SPIN_LEFT_SPEED_DOWN_20;
 		}
 	case S_SPIN_LEFT_SPEED_DOWN_20:
-		TB6612_Motor_SetSpeed(20);
+		g_pDev_TB6612->SetSpeed(g_pDev_TB6612, 20);
 		if (WASHER_CNT_100MS >= 5)
 		{
 			g_Loop_Cnt = 0;
-			TB6612_Motor_SetSpeed(0);
+			g_pDev_TB6612->SetSpeed(g_pDev_TB6612, 0);
 			g_Status_Next = S_WASH_CNT;
 
 			OLED_ShowString_Easy(2, 1, "spin dry[DONE]"); //甩干结束
