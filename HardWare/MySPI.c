@@ -124,8 +124,11 @@ SPI_Device* Drv_SPI_GetDevice(SPI_DEVICE_ID ID)
 	return 0;
 }
 
+static uint8_t g_DeviceGetSPI_Finish = 0; // 防止不同的地方调用Drv_SPI_Init()时重复获取SPI设备
 void Drv_SPI_Init(void)
 {
+	if (g_DeviceGetSPI_Finish == 1) return;
+
 	// Device Get SPI(HW/SW)
 	for (uint8_t i = 0; i < SPI_DEVICE_NUM; i++)
 	{
@@ -195,6 +198,7 @@ void Drv_SPI_Init(void)
 			GPIO_Init(pHWSPI->GPIO_PORT, &GPIO_InitStructure);
 
 			// HWSPI Init
+			if (pHWSPI->IS_INIT == 1) continue;
 			RCC_APB1PeriphClockCmd(pHWSPI->SPI_RCC, ENABLE);
 			SPI_InitTypeDef SPI_InitStructure;
 			SPI_InitStructure.SPI_Mode = pHWSPI->SPI_Mode;
@@ -218,6 +222,8 @@ void Drv_SPI_Init(void)
 		// Default Settings
 		Write_SS(&g_SPI_Devs[i], 1); // 默认不选中从机
 	}
+
+	g_DeviceGetSPI_Finish = 1;
 }
 
 

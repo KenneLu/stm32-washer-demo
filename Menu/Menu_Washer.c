@@ -10,6 +10,9 @@
 #include "Delay.h"
 
 
+static W25Q64_Device* g_pDev_W25Q64;
+
+
 char* Uchar2Str(int Num);
 void DexNum_2_Str(char** Str, int DexNum);
 void StrNum_2_Str(char** Str, char* Val, uint8_t Len);
@@ -87,11 +90,12 @@ void Menu_Washer_Power_On(void)
 	OLED_Clear_Easy();
 
 	// 初始化W25Q64
-	W25Q64_Init();
+	Drv_W25Q64_Init();
+	g_pDev_W25Q64 = Drv_W25Q64_GetDevice(W25Q64);
 
 	// 检查是客户主动关机，还是意外掉电
 	uint8_t Washer_Data[10] = { 0 };
-	W25Q64_ReadData(0x000000, Washer_Data, 10);
+	g_pDev_W25Q64->ReadData(g_pDev_W25Q64, 0x000000, Washer_Data, 10);
 	if (Washer_Data[9] == ACCIDENT_SHUTDOWN)
 	{
 		OLED_ShowString_Easy(1, 1, "Restore Last");
@@ -125,8 +129,8 @@ void Menu_Washer_Power_Off(void)
 	// 客户主动关机
 	uint8_t Washer_Data[10] = { 0 };
 	Washer_Data[9] = CUSTOMER_SHUTDOWN;
-	W25Q64_SectorErase(0x000000);
-	W25Q64_PageProgram(0x000000, Washer_Data, 10);
+	g_pDev_W25Q64->SectorErase(g_pDev_W25Q64, 0x000000);
+	g_pDev_W25Q64->PageProgram(g_pDev_W25Q64, 0x000000, Washer_Data, 10);
 
 	// 开始待机
 	RCC_APB1PeriphClockCmd(RCC_APB1Periph_PWR, ENABLE);    //使能PWR外设时钟

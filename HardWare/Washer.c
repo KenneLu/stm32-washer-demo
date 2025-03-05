@@ -13,10 +13,11 @@
 #include "Buzzer.h"
 #include "W25Q64.h"
 
-BUZZER_Device* g_pDev_Buzzer;
-MPU6050_Device* g_pDev_MPU6050;
+static BUZZER_Device* g_pDev_Buzzer;
+static MPU6050_Device* g_pDev_MPU6050;
+static W25Q64_Device* g_pDev_W25Q64;
 
-uint8_t Washer_Data[10] = { 0 };
+static uint8_t g_Washer_Data[10] = { 0 };
 
 #define DISPLAY_DELAY_MS 500
 
@@ -143,20 +144,21 @@ void Washer_Init(Washer* pWasher)
 	g_pDev_Buzzer = Drv_Buzzer_GetDevice(BUZZER);
 
 	// 初始化W25Q64
-	W25Q64_Init();
+	Drv_W25Q64_Init();
+	g_pDev_W25Q64 = Drv_W25Q64_GetDevice(W25Q64);
 
-	W25Q64_ReadData(0x000000, Washer_Data, 10);
-	if (Washer_Data[9] == ACCIDENT_SHUTDOWN)
+	g_pDev_W25Q64->ReadData(g_pDev_W25Q64, 0x000000, g_Washer_Data, 10);
+	if (g_Washer_Data[9] == ACCIDENT_SHUTDOWN)
 	{
-		g_Washer->Wash_Cnt = Washer_Data[0];
-		g_Washer->Wash_Time = Washer_Data[1];
-		g_Washer->Spin_Dry_Time = Washer_Data[2];
-		g_Washer->Water_Volume = Washer_Data[3];
-		g_Washer->Water_Temp = Washer_Data[4];
-		g_Washer->Heat_Temp = Washer_Data[5];
-		g_Status_Next = (WASHER_STATUS)Washer_Data[6];
-		g_Status_Cur = (WASHER_STATUS)Washer_Data[7];
-		g_Status_Last = (WASHER_STATUS)Washer_Data[8];
+		g_Washer->Wash_Cnt = g_Washer_Data[0];
+		g_Washer->Wash_Time = g_Washer_Data[1];
+		g_Washer->Spin_Dry_Time = g_Washer_Data[2];
+		g_Washer->Water_Volume = g_Washer_Data[3];
+		g_Washer->Water_Temp = g_Washer_Data[4];
+		g_Washer->Heat_Temp = g_Washer_Data[5];
+		g_Status_Next = (WASHER_STATUS)g_Washer_Data[6];
+		g_Status_Cur = (WASHER_STATUS)g_Washer_Data[7];
+		g_Status_Last = (WASHER_STATUS)g_Washer_Data[8];
 
 		return;
 	}
@@ -193,9 +195,9 @@ void Washer_Stop(uint8_t Custom_Shout_Down)
 	Washer_LED_On(0, LED_BLUE);
 	if (Custom_Shout_Down)
 	{
-		Washer_Data[9] = CUSTOMER_SHUTDOWN;
-		W25Q64_SectorErase(0x000000);
-		W25Q64_PageProgram(0x000000, Washer_Data, 10);
+		g_Washer_Data[9] = CUSTOMER_SHUTDOWN;
+		g_pDev_W25Q64->SectorErase(g_pDev_W25Q64, 0x000000);
+		g_pDev_W25Q64->PageProgram(g_pDev_W25Q64, 0x000000, g_Washer_Data, 10);
 	}
 
 	Delay_ms(100);
@@ -819,16 +821,16 @@ int8_t Washer_Run(void* Param)
 void Washer_Save(void)
 {
 	// 记录当前状态变化，防止意外断电
-	Washer_Data[0] = g_Washer->Wash_Cnt;
-	Washer_Data[1] = g_Washer->Wash_Time;
-	Washer_Data[2] = g_Washer->Spin_Dry_Time;
-	Washer_Data[3] = g_Washer->Water_Volume;
-	Washer_Data[4] = g_Washer->Water_Temp;
-	Washer_Data[5] = g_Washer->Heat_Temp;
-	Washer_Data[6] = g_Status_Next;
-	Washer_Data[7] = g_Status_Cur;
-	Washer_Data[8] = g_Status_Last;
-	Washer_Data[9] = ACCIDENT_SHUTDOWN;
-	W25Q64_SectorErase(0x000000);
-	W25Q64_PageProgram(0x000000, Washer_Data, 10);
+	g_Washer_Data[0] = g_Washer->Wash_Cnt;
+	g_Washer_Data[1] = g_Washer->Wash_Time;
+	g_Washer_Data[2] = g_Washer->Spin_Dry_Time;
+	g_Washer_Data[3] = g_Washer->Water_Volume;
+	g_Washer_Data[4] = g_Washer->Water_Temp;
+	g_Washer_Data[5] = g_Washer->Heat_Temp;
+	g_Washer_Data[6] = g_Status_Next;
+	g_Washer_Data[7] = g_Status_Cur;
+	g_Washer_Data[8] = g_Status_Last;
+	g_Washer_Data[9] = ACCIDENT_SHUTDOWN;
+	g_pDev_W25Q64->SectorErase(g_pDev_W25Q64, 0x000000);
+	g_pDev_W25Q64->PageProgram(g_pDev_W25Q64, 0x000000, g_Washer_Data, 10);
 }
