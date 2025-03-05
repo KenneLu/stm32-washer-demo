@@ -19,11 +19,11 @@
   */
 
 #include "stm32f10x.h"
-#include "OLED.h"
 #include <string.h>
 #include <math.h>
 #include <stdio.h>
 #include <stdarg.h>
+#include "Drv_OLED.h"
 
   /**
 	* 数据存储格式：

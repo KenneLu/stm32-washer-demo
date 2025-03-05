@@ -1,6 +1,6 @@
 #include "stm32f10x.h"                  // Device header
-#include "MPU6050_Reg.h"
-#include "MPU6050.h"
+#include "Drv_MPU6050_Reg.h"
+#include "Drv_MPU6050.h"
 #include "Drv_I2C_HW.h"
 
 

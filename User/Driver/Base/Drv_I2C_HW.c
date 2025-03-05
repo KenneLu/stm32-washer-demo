@@ -1,6 +1,6 @@
 #include "stm32f10x.h"                  // Device header
+#include "Sys_Delay.h"
 #include "Drv_I2C_HW.h"
-#include "Delay.h"
 
 
 typedef struct

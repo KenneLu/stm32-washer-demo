@@ -2,8 +2,8 @@
 #define __OLED_H
 
 #include <stdint.h>
-#include "OLED_Data.h"
-#include "timer.h"
+#include "Sys_Timer.h"
+#include "Drv_OLED_Data.h"
 
 /*参数宏定义*********************/
 

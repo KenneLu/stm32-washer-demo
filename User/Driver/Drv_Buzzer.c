@@ -1,6 +1,6 @@
 #include "stm32f10x.h"                  // Device header
-#include "Buzzer.h"
-#include "Delay.h"
+#include "Drv_Buzzer.h"
+#include "Sys_Delay.h"
 
 typedef enum
 {

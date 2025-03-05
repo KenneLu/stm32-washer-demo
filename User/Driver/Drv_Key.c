@@ -1,6 +1,6 @@
 #include "stm32F10x.h"
-#include "Key.h"
-#include "Timer.h"
+#include "Sys_Timer.h"
+#include "Drv_Key.h"
 
 //按键消抖时间
 #define KEY_SCANTIME                SYS_MS * 20     // 20ms

@@ -1,5 +1,5 @@
 #include "stm32f10x.h"                  // Device header
-#include "MyAD.h"
+#include "Drv_AD.h"
 
 uint16_t g_ADs_Value[16];
 

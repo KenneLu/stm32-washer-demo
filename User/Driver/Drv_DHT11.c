@@ -1,6 +1,6 @@
 #include "stm32f10x.h"                  // Device header
-#include "DHT11.h"
-#include "Delay.h"
+#include "Sys_Delay.h"
+#include "Drv_DHT11.h"
 
 
 #define DHT11_HIGH(PORT, PIN) GPIO_SetBits(PORT, PIN)

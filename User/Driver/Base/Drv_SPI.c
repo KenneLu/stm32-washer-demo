@@ -1,5 +1,5 @@
 #include "stm32f10x.h"                  // Device header
-#include "MySPI.h"
+#include "Drv_SPI.h"
 
 
 typedef enum

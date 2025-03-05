@@ -1,5 +1,16 @@
 # stm32-washer-demo
-- 基于 STM32F103C8T6 的洗衣机小项目，供初学练习。
+- 项目描述：基于 STM32F103C8T6 的洗衣机小项目，供初学练习。
+- 演示视频：https://www.bilibili.com/video/BV19bCVYkEFB/
+- Github链接：https://github.com/KenneLu/stm32-washer-demo
+- Gitee链接：https://gitee.com/KenneLu/stm32-washer-demo
+
+
+
+## 分支版本
+
+- V1.0.0分支：裸机。
+- V2.0.0分支：裸机 + 面向对象。
+-  main 分支：FreeRTOS + 面向对象（开发中...）
 
 
 
@@ -21,6 +32,7 @@
 
 ## 原理图
 
+- 注：如果下图无法展示，在本地【README.assets】中也可找到。
 - 下图外设均为模块，**请忽略模块的电路细节**，主要参考与STM32的接口连线。
 
 ![](https://github.com/KenneLu/stm32-washer-demo/blob/main/README.assets/Img1.jpg)
@@ -30,6 +42,9 @@
 
 
 ## 状态机
+
+- 注：如果下图无法展示，在本地【README.assets】中也可找到。
+- 下图为状态机，**后续改用FreeRTOS后可能会取消**，改成Task模式。
 
 ![](https://github.com/KenneLu/stm32-washer-demo/blob/main/README.assets/Img3.jpg)
 
