@@ -51,8 +51,16 @@ W25Q64_Device* Drv_W25Q64_GetDevice(W25Q64_ID ID)
 	return 0;
 }
 
+static uint8_t Is_SPI_Init = 0;
 void Drv_W25Q64_Init(void)
 {
+	if (Is_SPI_Init == 0)
+	{
+		// Hardware Init
+		Drv_SPI_Init();
+		Is_SPI_Init = 1;
+	}
+
 	for (uint8_t i = 0; i < W25Q64_NUM; i++)
 	{
 		// Get Hardware
@@ -61,7 +69,8 @@ void Drv_W25Q64_Init(void)
 		{
 			if (g_W25Q64_HWs[j].ID == (W25Q64_ID)i)
 				hw = g_W25Q64_HWs[j];
-			hw.pSPI = Drv_SPI_GetDevice(hw.SPI_ID);
+			if (Is_SPI_Init == 1)
+				hw.pSPI = Drv_SPI_GetDevice(hw.SPI_ID);
 		}
 
 		// Data Init
@@ -75,9 +84,6 @@ void Drv_W25Q64_Init(void)
 		g_W25Q64_Devs[i].SectorErase = SectorErase;
 		g_W25Q64_Devs[i].Priv_Data = (void*)&g_W25Q64_Datas[i];
 	}
-
-	// Hardware Init
-	Drv_SPI_Init();
 }
 
 
