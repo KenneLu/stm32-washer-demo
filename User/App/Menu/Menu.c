@@ -13,23 +13,12 @@
   *菜单用到的按键函数独立出来,方便移植和修改,比如没有编码器可以用上下两个按键代替;
   */
 
-uint8_t Key_Enter_Get(void);
-uint8_t Key_Back_Get(void);
-uint8_t Key_Power_Get(void);
-void Change_Enter_Key(void);
-void Change_Back_Key(void);
-void Change_Power_Key(void);
 
 enum CursorStyle CurStyle = reverse;
 int8_t Speed_Factor = 8;																		//光标动画速度系数;
 float Roll_Speed = 2;																			//滚动动画速度系数;
 
-uint8_t Key_Enter = 0;	//确认键
-uint8_t Key_Back = 0;	//返回键
-uint8_t Key_Power = 0;	//电源键
 
-KEY_Device* g_pKeyDev_Encoder = 0;
-KEY_Device* g_pKeyDev_Power = 0;
 ENCODER_Device* g_pDev_Encoder = 0;
 
 MenuPowerOffCallBack Menu_Power_Off_CB = 0;
@@ -42,6 +31,97 @@ uint8_t Menu_Power_Off_CBRegister(MenuPowerOffCallBack CB)
 	}
 	return 0;
 }
+
+//--------------------------------------------
+struct Menu_Keys
+{
+	uint8_t Confirm; 	//确认键
+	uint8_t Back;		//返回键
+	uint8_t Power;		//电源键
+};
+struct Menu_Keys g_Menu_Keys;
+
+static uint8_t Is_Key_Active(uint8_t* Key)
+{
+	if (!(*Key)) return 0;
+	*Key = 0;
+	return 1;
+}
+
+static int8_t Menu_Confirm_Event(void)
+{
+	return Is_Key_Active(&g_Menu_Keys.Confirm);
+}
+
+static int8_t Menu_Back_Event(void)
+{
+	return Is_Key_Active(&g_Menu_Keys.Back);
+}
+
+static int8_t Menu_Power_Event(void)
+{
+	return Is_Key_Active(&g_Menu_Keys.Power);
+}
+
+static void Key_Confirm_Active(void)
+{
+	g_Menu_Keys.Confirm = 1;
+}
+
+static void Key_Quit_Active(void)
+{
+	g_Menu_Keys.Back = 1;
+}
+
+static void Key_Power_Active(void)
+{
+	g_Menu_Keys.Power = 1;
+}
+
+static void Menu_Key_Init(void)
+{
+	KEY_Device* pDev_KeyEncoder = 0;
+	KEY_Device* pDev_KeyPower = 0;
+	pDev_KeyEncoder = Drv_Key_GetDevice(KEY_ENCODER);
+	if (pDev_KeyEncoder)
+	{
+		pDev_KeyEncoder->CBRegister_R(pDev_KeyEncoder, Key_Confirm_Active);
+		pDev_KeyEncoder->CBRegister_LP(pDev_KeyEncoder, Key_Quit_Active);
+	}
+	pDev_KeyPower = Drv_Key_GetDevice(KEY_POWER);
+	if (pDev_KeyPower)
+	{
+		pDev_KeyPower->CBRegister_R(pDev_KeyPower, Key_Power_Active);
+	}
+}
+
+static void Menu_Key_DeInit(void)
+{
+	KEY_Device* pDev_KeyEncoder = 0;
+	KEY_Device* pDev_KeyPower = 0;
+	pDev_KeyEncoder = Drv_Key_GetDevice(KEY_ENCODER);
+	if (pDev_KeyEncoder)
+	{
+		pDev_KeyEncoder->CBUnregister_R(pDev_KeyEncoder, Key_Confirm_Active);
+		pDev_KeyEncoder->CBUnregister_LP(pDev_KeyEncoder, Key_Quit_Active);
+	}
+	pDev_KeyPower = Drv_Key_GetDevice(KEY_POWER);
+	if (pDev_KeyPower)
+	{
+		pDev_KeyPower->CBUnregister_R(pDev_KeyPower, Key_Power_Active);
+	}
+}
+
+//--------------------------------------------
+
+
+int8_t Menu_Roll_Event(void);
+int8_t Menu_Confirm_Event(void);
+int8_t Menu_Back_Event(void);
+int8_t Menu_Power_Event(void);
+uint8_t Get_NameLen(char* String);
+
+
 /**
   * 函    数：菜单初始化
   * 参    数：无
@@ -50,19 +130,7 @@ uint8_t Menu_Power_Off_CBRegister(MenuPowerOffCallBack CB)
   */
 void Menu_Init(void)
 {
-	g_pKeyDev_Encoder = Drv_Key_GetDevice(KEY_ENCODER);
-	if (g_pKeyDev_Encoder)
-	{
-		g_pKeyDev_Encoder->CBRegister_R(g_pKeyDev_Encoder, Change_Enter_Key);
-		g_pKeyDev_Encoder->CBRegister_LP(g_pKeyDev_Encoder, Change_Back_Key);
-	}
-
-	g_pKeyDev_Power = Drv_Key_GetDevice(KEY_POWER);
-	if (g_pKeyDev_Power)
-	{
-		g_pKeyDev_Power->CBRegister_R(g_pKeyDev_Power, Change_Power_Key);
-	}
-
+	Menu_Key_Init();
 	g_pDev_Encoder = Drv_Encoder_GetDevice(ENCODER);
 }
 
@@ -74,6 +142,7 @@ void Menu_Init(void)
   */
 int8_t Menu_Run(Option_Class* Option, int8_t Choose)
 {
+	Menu_Key_Init(); //可能执行二级菜单，注册按键事件
 	int8_t Catch_i = Choose;	//选中下标
 	int8_t Cursor_i = Choose;	//光标下标
 	int8_t Show_i = 0; 		//显示起始下标
@@ -179,7 +248,7 @@ int8_t Menu_Run(Option_Class* Option, int8_t Choose)
 		//int delay = 1000000; while(delay--);
 	/**********************************************************/
 
-		if (Menu_Enter_Event())			//获取按键
+		if (Menu_Confirm_Event())			//获取按键
 		{
 			// /*如果功能不为空则执行功能，否则返回。这种情况如果在函数中打开子菜单，则会导致死循环。适用原来的Main_Menu()系列*/
 			// if (Option[Catch_i].Func)
@@ -191,6 +260,7 @@ int8_t Menu_Run(Option_Class* Option, int8_t Choose)
 			/*不论是否有功能科执行，都返回。这种情况如果函数里没有打开子菜单，则会导致过度返回一页。适用当前Washer_Menu()系列*/
 			if (Option[Catch_i].Func)
 			{
+				Menu_Key_DeInit(); // 可能会执行纯功能函数，解除按键注册
 				Option[Catch_i].Func(Option[Catch_i].pFuncParam);
 			}
 			return Catch_i;	// 返回子菜单选中下标
@@ -216,21 +286,6 @@ int8_t Menu_Roll_Event(void)//菜单滚动
 	return g_pDev_Encoder->GetDiv4(g_pDev_Encoder);
 }
 
-int8_t Menu_Enter_Event(void)//菜单确认
-{
-	return Key_Enter_Get();
-}
-
-int8_t Menu_Back_Event(void)//菜单返回
-{
-	return Key_Back_Get();
-}
-
-int8_t Menu_Power_Event(void)//菜单电源
-{
-	return Key_Power_Get();
-}
-
 //计算选项名宽度;
 uint8_t Get_NameLen(char* String)
 {
@@ -241,50 +296,5 @@ uint8_t Get_NameLen(char* String)
 		else { len += 1; i += 1; }					//属于英文字符长度加1
 	}
 	return len;
-}
-
-uint8_t Key_Enter_Get(void)
-{
-	if (Key_Enter)
-	{
-		Key_Enter = 0;
-		return 1;
-	}
-	return 0;
-}
-
-uint8_t Key_Back_Get(void)
-{
-	if (Key_Back)
-	{
-		Key_Back = 0;
-		return 1;
-	}
-	return 0;
-}
-
-uint8_t Key_Power_Get(void)
-{
-	if (Key_Power)
-	{
-		Key_Power = 0;
-		return 1;
-	}
-	return 0;
-}
-
-void Change_Enter_Key(void)
-{
-	Key_Enter = 1;
-}
-
-void Change_Back_Key(void)
-{
-	Key_Back = 1;
-}
-
-void Change_Power_Key(void)
-{
-	Key_Power = 1;
 }
 

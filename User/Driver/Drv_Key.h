@@ -17,6 +17,11 @@ typedef struct KEY_Device {
     uint8_t(*CBRegister_LP)(struct KEY_Device* pDev, KeyCallBack CB);
     uint8_t(*CBRegister_LP_Cont)(struct KEY_Device* pDev, KeyCallBack CB);
     uint8_t(*CBRegister_LP_R)(struct KEY_Device* pDev, KeyCallBack CB);
+    uint8_t(*CBUnregister_P)(struct KEY_Device* pDev, KeyCallBack CB);
+    uint8_t(*CBUnregister_R)(struct KEY_Device* pDev, KeyCallBack CB);
+    uint8_t(*CBUnregister_LP)(struct KEY_Device* pDev, KeyCallBack CB);
+    uint8_t(*CBUnregister_LP_Cont)(struct KEY_Device* pDev, KeyCallBack CB);
+    uint8_t(*CBUnregister_LP_R)(struct KEY_Device* pDev, KeyCallBack CB);
     uint8_t(*Is_Press)(struct KEY_Device* pDev);
     void* Priv_Data;
 } KEY_Device;

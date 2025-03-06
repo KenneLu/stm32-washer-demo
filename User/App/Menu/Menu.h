@@ -29,17 +29,8 @@ uint8_t Menu_Power_Off_CBRegister(MenuPowerOffCallBack CB);
 
 void Menu_Init(void);
 int8_t Menu_Run(Option_Class* Option, int8_t Choose);
-int8_t Menu_Roll_Event(void);
-int8_t Menu_Enter_Event(void);
-int8_t Menu_Back_Event(void);
-int8_t Menu_Power_Event(void);
-uint8_t Get_NameLen(char* String);
 
-int8_t Main_Menu(void* Param);
-int8_t Tools_Menu(void* Param);
-int8_t Games_Menu(void* Param);
 int8_t Setting_Menu(void* Param);
-int8_t Information_Menu(void* Param);
 
 void Menu_Washer_Run(void);
 void Menu_Washer_Power_On(void);

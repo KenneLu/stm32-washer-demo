@@ -1,6 +1,7 @@
 #include "stm32F10x.h"
 #include "Sys_Timer.h"
 #include "Drv_Key.h"
+#include "stdlib.h"
 
 //按键消抖时间
 #define KEY_SCANTIME                SYS_MS * 20     // 20ms
@@ -10,6 +11,9 @@
 
 //持续长按间隔时间
 #define KEY_PRESS_CONTINUE_TIME     SYS_MS * 150    // 150ms
+
+//一个触发模式可绑回调个数
+#define KEY_CB_MAX_NUM              3         // 3个回调函数
 
 typedef enum
 {
@@ -49,17 +53,17 @@ typedef struct
 
 typedef struct
 {
-    KeyCallBack Press;              // 按下
-    KeyCallBack Release;            // 释放
-    KeyCallBack LongPress;          // 长按
-    KeyCallBack LongPress_Cont;     // 持续长按
-    KeyCallBack LongPress_Release;  // 长按释放
-} KEY_CALLBACK;
+    KeyCallBack* Press;              // 按下
+    KeyCallBack* Release;            // 释放
+    KeyCallBack* LongPress;          // 长按
+    KeyCallBack* LongPress_Cont;     // 持续长按
+    KeyCallBack* LongPress_Release;  // 长按释放
+} KEY_CB_LIST;
 
 typedef struct {
     KEY_ID ID;
     KEY_STATUS Status;
-    KEY_CALLBACK Callback;
+    KEY_CB_LIST CBList;
     KEY_HARDWARE HW;
     KEY_SCAN Scan;
 } KEY_Data;
@@ -69,6 +73,11 @@ uint8_t CBRegister_R(KEY_Device* pDev, KeyCallBack CB);
 uint8_t CBRegister_LP(KEY_Device* pDev, KeyCallBack CB);
 uint8_t CBRegister_LP_Cont(KEY_Device* pDev, KeyCallBack CB);
 uint8_t CBRegister_LP_R(KEY_Device* pDev, KeyCallBack CB);
+uint8_t CBUnregister_P(KEY_Device* pDev, KeyCallBack CB);
+uint8_t CBUnregister_R(KEY_Device* pDev, KeyCallBack CB);
+uint8_t CBUnregister_LP(KEY_Device* pDev, KeyCallBack CB);
+uint8_t CBUnregister_LP_Cont(KEY_Device* pDev, KeyCallBack CB);
+uint8_t CBUnregister_LP_R(KEY_Device* pDev, KeyCallBack CB);
 uint8_t Is_Press(KEY_Device* pDev);
 
 
@@ -130,11 +139,7 @@ void Drv_Key_Init(void)
         // Data Init
         g_Key_Datas[i].ID = (KEY_ID)i;
         g_Key_Datas[i].Status = KEY_IDLE;
-        g_Key_Datas[i].Callback.Press = 0;
-        g_Key_Datas[i].Callback.Release = 0;
-        g_Key_Datas[i].Callback.LongPress = 0;
-        g_Key_Datas[i].Callback.LongPress_Cont = 0;
-        g_Key_Datas[i].Callback.LongPress_Release = 0;
+
         g_Key_Datas[i].Scan.ScanStep = STEP_WAIT;
         g_Key_Datas[i].Scan.ShakeTime = KEY_SCANTIME;
         g_Key_Datas[i].Scan.LongPressTime = KEY_PRESS_LONG_TIME;
@@ -147,6 +152,11 @@ void Drv_Key_Init(void)
         g_Key_Devs[i].CBRegister_LP = CBRegister_LP;
         g_Key_Devs[i].CBRegister_LP_Cont = CBRegister_LP_Cont;
         g_Key_Devs[i].CBRegister_LP_R = CBRegister_LP_R;
+        g_Key_Devs[i].CBUnregister_P = CBUnregister_P;
+        g_Key_Devs[i].CBUnregister_R = CBUnregister_R;
+        g_Key_Devs[i].CBUnregister_LP = CBUnregister_LP;
+        g_Key_Devs[i].CBUnregister_LP_Cont = CBUnregister_LP_Cont;
+        g_Key_Devs[i].CBUnregister_LP_R = CBUnregister_LP_R;
         g_Key_Devs[i].Is_Press = Is_Press;
         g_Key_Devs[i].Priv_Data = (void*)&g_Key_Datas[i];
 
@@ -164,60 +174,126 @@ void Drv_Key_Init(void)
 //--------------------------------------------------
 
 
+uint8_t Register(KeyCallBack** ppCB, KeyCallBack CB)
+{
+    if (*ppCB == 0)
+        *ppCB = malloc(sizeof(KeyCallBack) * KEY_CB_MAX_NUM);
+    for (uint8_t i = 0; i < KEY_CB_MAX_NUM; i++)
+    {
+        if ((*ppCB)[i] != 0)
+        {
+            if ((*ppCB)[i] == CB)
+                return 0; //已经注册过了
+        }
+        else
+        {
+            (*ppCB)[i] = CB;
+            return 1;
+        }
+    }
+    return 0; //没位置了，注册失败
+}
+
+uint8_t Unregister(KeyCallBack* pCB, KeyCallBack CB)
+{
+    if (pCB == 0)
+        return 0;
+    for (uint8_t i = 0; i < KEY_CB_MAX_NUM; i++)
+    {
+        if (pCB[i] != 0)
+        {
+            if (pCB[i] == CB)
+            {
+                pCB[i] = 0;
+                return 1; //找到了，注销成功
+            }
+        }
+    }
+    return 0; //没有找到该回调函数
+}
+
+void Brodcase_Callback(KeyCallBack* pCB)
+{
+    // 广播回调函数
+    for (uint8_t i = 0; i < KEY_CB_MAX_NUM; i++)
+    {
+        if (pCB[i] != 0) pCB[i]();
+        else break;
+    }
+}
+
+// CBList Register
 uint8_t CBRegister_P(KEY_Device* pDev, KeyCallBack CB)
 {
     KEY_Data* pData = (KEY_Data*)pDev->Priv_Data;
-    if (pData->Callback.Press == 0)
-    {
-        pData->Callback.Press = CB;
-        return 1;
-    }
-    return 0;
+    if (pData == 0) return 0;
+    return Register(&(pData->CBList.Press), CB);
 }
 
 uint8_t CBRegister_R(KEY_Device* pDev, KeyCallBack CB)
 {
     KEY_Data* pData = (KEY_Data*)pDev->Priv_Data;
-    if (pData->Callback.Release == 0)
-    {
-        pData->Callback.Release = CB;
-        return 1;
-    }
-    return 0;
+    if (pData == 0) return 0;
+    return Register(&(pData->CBList.Release), CB);
 }
 
 uint8_t CBRegister_LP(KEY_Device* pDev, KeyCallBack CB)
 {
     KEY_Data* pData = (KEY_Data*)pDev->Priv_Data;
-    if (pData->Callback.LongPress == 0)
-    {
-        pData->Callback.LongPress = CB;
-        return 1;
-    }
-    return 0;
+    if (pData == 0) return 0;
+    return Register(&(pData->CBList.LongPress), CB);
 }
 
 uint8_t CBRegister_LP_Cont(KEY_Device* pDev, KeyCallBack CB)
 {
     KEY_Data* pData = (KEY_Data*)pDev->Priv_Data;
-    if (pData->Callback.LongPress_Cont == 0)
-    {
-        pData->Callback.LongPress_Cont = CB;
-        return 1;
-    }
-    return 0;
+    if (pData == 0) return 0;
+    return Register(&(pData->CBList.LongPress_Cont), CB);
 }
 
 uint8_t CBRegister_LP_R(KEY_Device* pDev, KeyCallBack CB)
 {
     KEY_Data* pData = (KEY_Data*)pDev->Priv_Data;
-    if (pData->Callback.LongPress_Release == 0)
-    {
-        pData->Callback.LongPress_Release = CB;
-        return 1;
-    }
-    return 0;
+    if (pData == 0) return 0;
+    return Register(&(pData->CBList.LongPress_Release), CB);
 }
+
+// CBList Unregister
+uint8_t CBUnregister_P(KEY_Device* pDev, KeyCallBack CB)
+{
+    KEY_Data* pData = (KEY_Data*)pDev->Priv_Data;
+    if (pData == 0) return 0;
+    return Unregister(pData->CBList.Press, CB);
+}
+
+uint8_t CBUnregister_R(KEY_Device* pDev, KeyCallBack CB)
+{
+    KEY_Data* pData = (KEY_Data*)pDev->Priv_Data;
+    if (pData == 0) return 0;
+    return Unregister(pData->CBList.Release, CB);
+}
+
+uint8_t CBUnregister_LP(KEY_Device* pDev, KeyCallBack CB)
+{
+    KEY_Data* pData = (KEY_Data*)pDev->Priv_Data;
+    if (pData == 0) return 0;
+    return Unregister(pData->CBList.LongPress, CB);
+}
+
+uint8_t CBUnregister_LP_Cont(KEY_Device* pDev, KeyCallBack CB)
+{
+    KEY_Data* pData = (KEY_Data*)pDev->Priv_Data;
+    if (pData == 0) return 0;
+    return Unregister(pData->CBList.LongPress_Cont, CB);
+}
+
+uint8_t CBUnregister_LP_R(KEY_Device* pDev, KeyCallBack CB)
+{
+    KEY_Data* pData = (KEY_Data*)pDev->Priv_Data;
+    if (pData == 0) return 0;
+    return Unregister(pData->CBList.LongPress_Release, CB);
+}
+
 
 uint8_t Is_Press(KEY_Device* pDev)
 {
@@ -254,9 +330,9 @@ void Drv_Key_Scan(void)
                     (*pData)->Scan.ShakeTime = KEY_SCANTIME;
                     (*pData)->Scan.ScanStep = STEP_LONG_PRESS;
                     (*pData)->Status = KEY_PRESS;  //按键单击按下
-                    if ((*pData)->Callback.Press)
+                    if ((*pData)->CBList.Press)
                     {
-                        (*pData)->Callback.Press();
+                        Brodcase_Callback((*pData)->CBList.Press);
                     }
                 }
             }
@@ -274,9 +350,9 @@ void Drv_Key_Scan(void)
                     (*pData)->Scan.LongPressTime = KEY_PRESS_LONG_TIME;
                     (*pData)->Scan.ScanStep = STEP_CONTINUOUS_PRESS;
                     (*pData)->Status = KEY_LONG_PRESS;  //按键单击按下
-                    if ((*pData)->Callback.LongPress)
+                    if ((*pData)->CBList.LongPress)
                     {
-                        (*pData)->Callback.LongPress();
+                        Brodcase_Callback((*pData)->CBList.LongPress);
                     }
                 }
             }
@@ -285,9 +361,9 @@ void Drv_Key_Scan(void)
                 (*pData)->Scan.LongPressTime = KEY_PRESS_LONG_TIME;
                 (*pData)->Scan.ScanStep = STEP_WAIT;
                 (*pData)->Status = KEY_RELEASE;  //按键单击释放
-                if ((*pData)->Callback.Release)
+                if ((*pData)->CBList.Release)
                 {
-                    (*pData)->Callback.Release();
+                    Brodcase_Callback((*pData)->CBList.Release);
                 }
             }
             break;
@@ -298,9 +374,9 @@ void Drv_Key_Scan(void)
                 {
                     (*pData)->Scan.ContPressTime = KEY_PRESS_CONTINUE_TIME;
                     (*pData)->Status = KEY_LONG_PRESS_CONTINUOUS;  //按键长按持续
-                    if ((*pData)->Callback.LongPress_Cont)
+                    if ((*pData)->CBList.LongPress_Cont)
                     {
-                        (*pData)->Callback.LongPress_Cont();
+                        Brodcase_Callback((*pData)->CBList.LongPress_Cont);
                     }
                 }
             }
@@ -309,9 +385,9 @@ void Drv_Key_Scan(void)
                 (*pData)->Scan.ContPressTime = KEY_PRESS_CONTINUE_TIME;
                 (*pData)->Scan.ScanStep = STEP_WAIT;
                 (*pData)->Status = KEY_LONG_PRESS_RELEASE;  //按键长按释放
-                if ((*pData)->Callback.LongPress_Release)
+                if ((*pData)->CBList.LongPress_Release)
                 {
-                    (*pData)->Callback.LongPress_Release();
+                    Brodcase_Callback((*pData)->CBList.LongPress_Release);
                 }
             }
             break;

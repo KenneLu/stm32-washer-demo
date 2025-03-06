@@ -16,7 +16,7 @@ static BUZZER_Device* g_pDev_Buzzer;
 static MPU6050_Device* g_pDev_MPU6050;
 static W25Q64_Device* g_pDev_W25Q64;
 static AD_Device* g_pDev_TCRT5000;
-static SERVOMOTOR_Device* g_pDev_SERVOMOTOR;
+static SERVOMOTOR_Device* g_pDev_ServoMotor;
 static TB6612_Device* g_pDev_TB6612;
 
 static uint8_t g_Washer_Data[10] = { 0 };
@@ -59,10 +59,93 @@ static uint32_t g_Wash_Cnt_Cur = 0;	// 当前洗衣次数
 static uint8_t g_Security_Monitor_On = 1;	// 安全监测开关
 static uint8_t g_OLED_Need_Refresh = 0;	// 刷新OLED标志位
 
-int8_t Menu_Enter_Event(void); // 临时这样解决一下 warning，后续再优化
-int8_t Menu_Back_Event(void); // 临时这样解决一下 warning，后续再优化
-int8_t Menu_Power_Event(void); // 临时这样解决一下 warning，后续再优化
+int8_t Washer_StartStop_Event(void); // 临时这样解决一下 warning，后续再优化
+int8_t Washer_Quit_Event(void); // 临时这样解决一下 warning，后续再优化
+int8_t Washer_Power_Event(void); // 临时这样解决一下 warning，后续再优化
 void Washer_Save(void); // 记录当前状态变化，防止意外断电
+
+
+//--------------------------------------------
+typedef struct
+{
+	uint8_t StartStop; 	//启停键
+	uint8_t Quit;		//结束键
+	uint8_t Power;		//电源键
+} Washer_Keys;
+Washer_Keys g_Washer_Keys;
+
+static uint8_t Is_Key_Active(uint8_t* Key)
+{
+	if (!(*Key)) return 0;
+	*Key = 0;
+	return 1;
+}
+
+static int8_t Washer_StartStop_Event(void)
+{
+	return Is_Key_Active(&g_Washer_Keys.StartStop);
+}
+
+static int8_t Washer_Quit_Event(void)
+{
+	return Is_Key_Active(&g_Washer_Keys.Quit);
+}
+
+static int8_t Washer_Power_Event(void)
+{
+	return Is_Key_Active(&g_Washer_Keys.Power);
+}
+
+static void Key_StartStop_Active(void)
+{
+	g_Washer_Keys.StartStop = 1;
+}
+
+static void Key_Quit_Active(void)
+{
+	g_Washer_Keys.Quit = 1;
+}
+
+static void Key_Power_Active(void)
+{
+	g_Washer_Keys.Power = 1;
+}
+
+static void Washer_Key_Init(void)
+{
+	KEY_Device* pDev_KeyEncoder = 0;
+	KEY_Device* pDev_KeyPower = 0;
+	pDev_KeyEncoder = Drv_Key_GetDevice(KEY_ENCODER);
+	if (pDev_KeyEncoder)
+	{
+		pDev_KeyEncoder->CBRegister_R(pDev_KeyEncoder, Key_StartStop_Active);
+		pDev_KeyEncoder->CBRegister_LP(pDev_KeyEncoder, Key_Quit_Active);
+	}
+	pDev_KeyPower = Drv_Key_GetDevice(KEY_POWER);
+	if (pDev_KeyPower)
+	{
+		pDev_KeyPower->CBRegister_R(pDev_KeyPower, Key_Power_Active);
+	}
+}
+
+static void Washer_Key_DeInit(void)
+{
+	KEY_Device* pDev_KeyEncoder = 0;
+	KEY_Device* pDev_KeyPower = 0;
+	pDev_KeyEncoder = Drv_Key_GetDevice(KEY_ENCODER);
+	if (pDev_KeyEncoder)
+	{
+		pDev_KeyEncoder->CBUnregister_R(pDev_KeyEncoder, Key_StartStop_Active);
+		pDev_KeyEncoder->CBUnregister_LP(pDev_KeyEncoder, Key_Quit_Active);
+	}
+	pDev_KeyPower = Drv_Key_GetDevice(KEY_POWER);
+	if (pDev_KeyPower)
+	{
+		pDev_KeyPower->CBUnregister_R(pDev_KeyPower, Key_Power_Active);
+	}
+}
+//--------------------------------------------
+
 
 void Washer_LED_On(int8_t on, LED_TYPE type)
 {
@@ -80,12 +163,12 @@ void Washer_LED_Revert(LED_TYPE type)
 
 void Washer_Door_UnLock()
 {
-	g_pDev_SERVOMOTOR->SetAngle(g_pDev_SERVOMOTOR, 0);
+	g_pDev_ServoMotor->SetAngle(g_pDev_ServoMotor, 0);
 }
 
 void Washer_Door_Lock()
 {
-	g_pDev_SERVOMOTOR->SetAngle(g_pDev_SERVOMOTOR, 50);
+	g_pDev_ServoMotor->SetAngle(g_pDev_ServoMotor, 50);
 }
 
 void Washer_OLED_Refresh()
@@ -116,6 +199,9 @@ void Washer_Init(Washer* pWasher)
 	Washer_OLED_Refresh();
 	OLED_ShowString_Easy(1, 1, "Init...        ");
 
+	// 初始化按键回调
+	Washer_Key_Init();
+
 	// 初始化DHT11
 	Drv_DHT11_Init();
 
@@ -129,7 +215,7 @@ void Washer_Init(Washer* pWasher)
 
 	// 初始化舵机，用于锁门
 	Drv_ServoMotor_Init();
-	g_pDev_SERVOMOTOR = Drv_ServoMotor_GetDevice(SERVOMOTOR);
+	g_pDev_ServoMotor = Drv_ServoMotor_GetDevice(SERVOMOTOR);
 	Washer_Door_Lock(); // 锁门
 
 	// 初始化MPU6050，用于姿态检测
@@ -218,7 +304,7 @@ void Washer_Pause()
 		Washer_Stop(0);
 	}
 
-	if (Menu_Enter_Event())	// 继续
+	if (Washer_StartStop_Event())	// 继续
 	{
 		Washer_Door_Lock(); // 门锁上锁
 		Washer_OLED_Refresh();
@@ -671,7 +757,7 @@ void Washer_Finish()
 		g_Security_Monitor_On = 0; // 关闭安全监测
 	}
 
-	if (Menu_Enter_Event())
+	if (Washer_StartStop_Event())
 	{
 		g_Status_Next = S_QUIT;
 	}
@@ -797,23 +883,23 @@ int8_t Washer_Run(void* Param)
 		}
 
 		// 暂停捕获，ERROR 状态下不暂停
-		if (Menu_Enter_Event() && g_Status_Cur != S_ERROR && g_Status_Cur != S_WASH_CNT)
+		if (Washer_StartStop_Event() && g_Status_Cur != S_ERROR && g_Status_Cur != S_WASH_CNT)
 		{
 			g_Status_Next = S_PAUSE;
-			g_OLED_Need_Refresh = 1; // 状态切换，刷新OLED
-
-			Washer_Save();
 		}
 
-		if (Menu_Power_Event())
+		if (Washer_Power_Event())
 		{
 			Washer_Stop(1);
+			Washer_Key_DeInit();
 			Menu_Washer_Power_Off();
 			return -1;
 		}
 
-		if (Menu_Back_Event()) {
+		if (Washer_Quit_Event())
+		{
 			Washer_Stop(1);
+			Washer_Key_DeInit();
 			return -1;
 		}
 

@@ -246,7 +246,7 @@ void Menu_Washer_Init(void)
 
 void Menu_Washer_Run(void)
 {
-	Menu_Power_Event(); // 忽略复位的那一次按键事件
+	// Menu_Power_Event(); // 忽略复位的那一次按键事件
 	Menu_Power_Off_CBRegister(Menu_Washer_Power_Off);
 	Menu_Washer_Mode_Select(0);
 }
