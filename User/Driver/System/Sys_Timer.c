@@ -1,6 +1,9 @@
 #include "stm32f10x.h"                  // Device header
 #include "Sys_Timer.h"
 
+
+#if FREERTOS == 0
+
 void Timer_Init(void)
 {
     // 1.开启通用时钟
@@ -54,3 +57,5 @@ void TIM2_IRQHandler(void)
     }
 }
 */
+
+#endif

@@ -336,7 +336,7 @@
               <MiscControls>--no-multibyte-chars</MiscControls>
               <Define>USE_STDPERIPH_DRIVER,STM32F10X_MD</Define>
               <Undefine></Undefine>
-              <IncludePath>..\Library;..\Library\Startup;..\User;..\User\App;..\User\App\Menu;..\User\Driver;..\User\Driver\Base;..\User\Driver\OLED;..\User\Driver\System</IncludePath>
+              <IncludePath>..\Library;..\Library\Startup;..\User;..\User\App;..\User\App\Menu;..\User\Driver;..\User\Driver\Base;..\User\Driver\OLED;..\User\Driver\System;..\FreeRTOS\Inc;..\FreeRTOS\Port\MemMang;..\FreeRTOS\Port\RVDS\ARM_CM3;..\FreeRTOS\Src</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -656,6 +656,11 @@
               <FilePath>..\User\main.c</FilePath>
             </File>
             <File>
+              <FileName>FreeRTOSConfig.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\User\FreeRTOSConfig.h</FilePath>
+            </File>
+            <File>
               <FileName>stm32f10x_conf.h</FileName>
               <FileType>5</FileType>
               <FilePath>..\User\stm32f10x_conf.h</FilePath>
@@ -684,6 +689,26 @@
               <FileName>Washer.h</FileName>
               <FileType>5</FileType>
               <FilePath>..\User\App\Washer.h</FilePath>
+            </File>
+            <File>
+              <FileName>Task_Manager.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\User\App\Task_Manager.h</FilePath>
+            </File>
+            <File>
+              <FileName>Task_KeyScan.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\User\App\Task_KeyScan.c</FilePath>
+            </File>
+            <File>
+              <FileName>Task_MainMenu.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\User\App\Task_MainMenu.c</FilePath>
+            </File>
+            <File>
+              <FileName>Task_Start.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\User\App\Task_Start.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -914,6 +939,156 @@
               <FileName>Sys_Timer.h</FileName>
               <FileType>5</FileType>
               <FilePath>..\User\Driver\System\Sys_Timer.h</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>FreeRTOS/Inc</GroupName>
+          <Files>
+            <File>
+              <FileName>atomic.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\FreeRTOS\Inc\atomic.h</FilePath>
+            </File>
+            <File>
+              <FileName>croutine.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\FreeRTOS\Inc\croutine.h</FilePath>
+            </File>
+            <File>
+              <FileName>deprecated_definitions.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\FreeRTOS\Inc\deprecated_definitions.h</FilePath>
+            </File>
+            <File>
+              <FileName>event_groups.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\FreeRTOS\Inc\event_groups.h</FilePath>
+            </File>
+            <File>
+              <FileName>FreeRTOS.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\FreeRTOS\Inc\FreeRTOS.h</FilePath>
+            </File>
+            <File>
+              <FileName>list.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\FreeRTOS\Inc\list.h</FilePath>
+            </File>
+            <File>
+              <FileName>message_buffer.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\FreeRTOS\Inc\message_buffer.h</FilePath>
+            </File>
+            <File>
+              <FileName>mpu_prototypes.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\FreeRTOS\Inc\mpu_prototypes.h</FilePath>
+            </File>
+            <File>
+              <FileName>mpu_wrappers.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\FreeRTOS\Inc\mpu_wrappers.h</FilePath>
+            </File>
+            <File>
+              <FileName>portable.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\FreeRTOS\Inc\portable.h</FilePath>
+            </File>
+            <File>
+              <FileName>projdefs.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\FreeRTOS\Inc\projdefs.h</FilePath>
+            </File>
+            <File>
+              <FileName>queue.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\FreeRTOS\Inc\queue.h</FilePath>
+            </File>
+            <File>
+              <FileName>semphr.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\FreeRTOS\Inc\semphr.h</FilePath>
+            </File>
+            <File>
+              <FileName>stack_macros.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\FreeRTOS\Inc\stack_macros.h</FilePath>
+            </File>
+            <File>
+              <FileName>StackMacros.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\FreeRTOS\Inc\StackMacros.h</FilePath>
+            </File>
+            <File>
+              <FileName>stream_buffer.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\FreeRTOS\Inc\stream_buffer.h</FilePath>
+            </File>
+            <File>
+              <FileName>task.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\FreeRTOS\Inc\task.h</FilePath>
+            </File>
+            <File>
+              <FileName>timers.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\FreeRTOS\Inc\timers.h</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>FreeRTOS/Port</GroupName>
+          <Files>
+            <File>
+              <FileName>heap_4.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\FreeRTOS\Port\MemMang\heap_4.c</FilePath>
+            </File>
+            <File>
+              <FileName>port.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\FreeRTOS\Port\RVDS\ARM_CM3\port.c</FilePath>
+            </File>
+            <File>
+              <FileName>portmacro.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\FreeRTOS\Port\RVDS\ARM_CM3\portmacro.h</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>FreeRTOS/Src</GroupName>
+          <Files>
+            <File>
+              <FileName>croutine.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\FreeRTOS\Src\croutine.c</FilePath>
+            </File>
+            <File>
+              <FileName>event_groups.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\FreeRTOS\Src\event_groups.c</FilePath>
+            </File>
+            <File>
+              <FileName>list.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\FreeRTOS\Src\list.c</FilePath>
+            </File>
+            <File>
+              <FileName>queue.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\FreeRTOS\Src\queue.c</FilePath>
+            </File>
+            <File>
+              <FileName>tasks.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\FreeRTOS\Src\tasks.c</FilePath>
+            </File>
+            <File>
+              <FileName>timers.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\FreeRTOS\Src\timers.c</FilePath>
             </File>
           </Files>
         </Group>
