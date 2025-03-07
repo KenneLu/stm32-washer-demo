@@ -336,7 +336,7 @@
               <MiscControls>--no-multibyte-chars</MiscControls>
               <Define>USE_STDPERIPH_DRIVER,STM32F10X_MD</Define>
               <Undefine></Undefine>
-              <IncludePath>..\Library;..\Library\Startup;..\User;..\User\App;..\User\App\Menu;..\User\Driver;..\User\Driver\Base;..\User\Driver\OLED;..\User\Driver\System;..\FreeRTOS\Inc;..\FreeRTOS\Port\MemMang;..\FreeRTOS\Port\RVDS\ARM_CM3;..\FreeRTOS\Src</IncludePath>
+              <IncludePath>..\Library;..\Library\Startup;..\User;..\User\App;..\User\App\Menu;..\User\App\Washer;..\User\Driver;..\User\Driver\Base;..\User\Driver\OLED;..\User\Driver\System;..\FreeRTOS\Inc;..\FreeRTOS\Port\MemMang;..\FreeRTOS\Port\RVDS\ARM_CM3;..\FreeRTOS\Src</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -681,16 +681,6 @@
           <GroupName>User/App</GroupName>
           <Files>
             <File>
-              <FileName>Washer.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\User\App\Washer.c</FilePath>
-            </File>
-            <File>
-              <FileName>Washer.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>..\User\App\Washer.h</FilePath>
-            </File>
-            <File>
               <FileName>Task_Manager.h</FileName>
               <FileType>5</FileType>
               <FilePath>..\User\App\Task_Manager.h</FilePath>
@@ -734,6 +724,31 @@
               <FileName>Menu_Washer.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\User\App\Menu\Menu_Washer.c</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>User/App/Washer</GroupName>
+          <Files>
+            <File>
+              <FileName>Washer.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\User\App\Washer\Washer.c</FilePath>
+            </File>
+            <File>
+              <FileName>Washer.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\User\App\Washer\Washer.h</FilePath>
+            </File>
+            <File>
+              <FileName>Washer_Data.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\User\App\Washer\Washer_Data.c</FilePath>
+            </File>
+            <File>
+              <FileName>Washer_Data.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\User\App\Washer\Washer_Data.h</FilePath>
             </File>
           </Files>
         </Group>

@@ -1,7 +1,9 @@
 #include "Task_Manager.h"
 #include "Drv_OLED.h"
-#include "Drv_Encoder.h"
 #include "Drv_Key.h"
+#include "Drv_Encoder.h"
+#include "Drv_W25Q64.h"
+#include "Washer_Data.h"
 #include "Menu.h"
 
 
@@ -12,6 +14,8 @@ static void Task_Start(void* pvParameters)
     OLED_Init();
     Drv_Key_Init();
     Dev_Encoder_Init();
+    Drv_W25Q64_Init();
+    Drv_Washer_Data_Init();
     Menu_Init();
 
     taskENTER_CRITICAL();
