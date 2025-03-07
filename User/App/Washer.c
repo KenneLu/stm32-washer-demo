@@ -30,7 +30,7 @@ static uint8_t g_Washer_Data[10] = { 0 };
 #define LED_GPIO_RCC RCC_APB2Periph_GPIOA
 #define LED_GPIO_x GPIOA
 #define LED_GPIO_PIN_R GPIO_Pin_3
-#define LED_GPIO_PIN_B GPIO_Pin_10
+#define LED_GPIO_PIN_B GPIO_Pin_2
 
 typedef enum {
 	LED_RED = 0,

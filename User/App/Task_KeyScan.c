@@ -22,11 +22,11 @@ void Do_Create_Task_KeyScan(void)
     xReturn = xTaskCreate(Task_KeyScan, "Task_KeyScan", 512, NULL, 5, &Task_KeyScan_Handle);
     if (pdPASS == xReturn)
     {
-        // printf("Create_Task_KeyScan Success! \r\n");
+        printf("Create_Task_KeyScan Success! \r\n");
     }
     else
     {
-        // printf("Error:Create_Task_KeyScan! \r\n");
+        printf("Error:Create_Task_KeyScan! \r\n");
     }
 }
 

@@ -20,11 +20,11 @@ void Do_Create_Task_MainMenu(void)
     xReturn = xTaskCreate(Task_MainMenu, "Task_MainMenu", 1024, NULL, 1, &Task_MainMenu_Handle);
     if (pdPASS == xReturn)
     {
-        // printf("Create_Task_MainMenu Success! \r\n");
+        printf("Create_Task_MainMenu Success! \r\n");
     }
     else
     {
-        // printf("Error:Create_Task_MainMenu! \r\n");
+        printf("Error:Create_Task_MainMenu! \r\n");
     }
 }
 

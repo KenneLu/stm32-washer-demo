@@ -836,6 +836,11 @@
           <GroupName>User/Driver/Base</GroupName>
           <Files>
             <File>
+              <FileName>Drv_Debug.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\User\Driver\Base\Drv_Debug.c</FilePath>
+            </File>
+            <File>
               <FileName>Drv_AD.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\User\Driver\Base\Drv_AD.c</FilePath>
@@ -874,6 +879,16 @@
               <FileName>Drv_SPI.h</FileName>
               <FileType>5</FileType>
               <FilePath>..\User\Driver\Base\Drv_SPI.h</FilePath>
+            </File>
+            <File>
+              <FileName>Drv_USART.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\User\Driver\Base\Drv_USART.c</FilePath>
+            </File>
+            <File>
+              <FileName>Drv_USART.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\User\Driver\Base\Drv_USART.h</FilePath>
             </File>
           </Files>
         </Group>

@@ -27,12 +27,12 @@ void Do_Create_Task_Start(void)
     xReturn = xTaskCreate(Task_Start, "Task_Start", 1024, NULL, 1, &Task_Start_Handle);
     if (pdPASS == xReturn)
     {
-        // printf("Do_Create_Task_Start Success! \r\n");
+        printf("Do_Create_Task_Start Success! \r\n");
         vTaskStartScheduler();
     }
     else
     {
-        // printf("Error:Do_Create_Task_Start! \r\n");
+        printf("Error:Do_Create_Task_Start! \r\n");
     }
 }
 

@@ -2,6 +2,8 @@
 #ifndef __TASK_MANAGER_H__
 #define __TASK_MANAGER_H__
 
+#include <stdio.h>
+
 #include "FreeRTOS.h"
 #include "task.h"
 #include "queue.h"
