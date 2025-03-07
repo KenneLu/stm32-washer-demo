@@ -7,10 +7,10 @@ static TaskHandle_t Task_MainMenu_Handle = NULL;
 static void Task_MainMenu(void* pvParameters)
 {
     Menu_Washer_Power_On();
+    Menu_Power_Off_CBRegister(Menu_Washer_Power_Off);
     while (1)
     {
-        Menu_Washer_Run();
-        Delay_ms(1);
+        Menu_Washer_Mode_Select(0);
     }
 }
 

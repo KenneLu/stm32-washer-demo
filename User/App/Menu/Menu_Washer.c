@@ -244,13 +244,6 @@ void Menu_Washer_Init(void)
 	Heat_Dry.Heat_Temp = List_Setting_Heat_Temp[1];
 }
 
-void Menu_Washer_Run(void)
-{
-	// Menu_Power_Event(); // 忽略复位的那一次按键事件
-	Menu_Power_Off_CBRegister(Menu_Washer_Power_Off);
-	Menu_Washer_Mode_Select(0);
-}
-
 //洗衣机的主菜单
 int8_t Menu_Washer_Mode_Select(void* Param)
 {

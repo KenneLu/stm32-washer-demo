@@ -32,7 +32,6 @@ int8_t Menu_Run(Option_Class* Option, int8_t Choose);
 
 int8_t Setting_Menu(void* Param);
 
-void Menu_Washer_Run(void);
 void Menu_Washer_Power_On(void);
 void Menu_Washer_Power_Off(void);
 int8_t Menu_Washer_Mode_Select(void* Param);
