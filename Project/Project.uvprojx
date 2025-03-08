@@ -681,11 +681,6 @@
           <GroupName>User/App</GroupName>
           <Files>
             <File>
-              <FileName>Task_Manager.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>..\User\App\Task_Manager.h</FilePath>
-            </File>
-            <File>
               <FileName>Task_KeyScan.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\User\App\Task_KeyScan.c</FilePath>
@@ -696,9 +691,49 @@
               <FilePath>..\User\App\Task_MainMenu.c</FilePath>
             </File>
             <File>
+              <FileName>Task_Manager.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\User\App\Task_Manager.h</FilePath>
+            </File>
+            <File>
               <FileName>Task_Start.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\User\App\Task_Start.c</FilePath>
+            </File>
+            <File>
+              <FileName>Task_Washer_Data.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\User\App\Task_Washer_Data.c</FilePath>
+            </File>
+            <File>
+              <FileName>Task_Washer_Error.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\User\App\Task_Washer_Error.c</FilePath>
+            </File>
+            <File>
+              <FileName>Task_Washer_Key.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\User\App\Task_Washer_Key.c</FilePath>
+            </File>
+            <File>
+              <FileName>Task_Washer_Pause.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\User\App\Task_Washer_Pause.c</FilePath>
+            </File>
+            <File>
+              <FileName>Task_Washer_Run.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\User\App\Task_Washer_Run.c</FilePath>
+            </File>
+            <File>
+              <FileName>Task_Washer_Safety.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\User\App\Task_Washer_Safety.c</FilePath>
+            </File>
+            <File>
+              <FileName>Task_Washer_Stop.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\User\App\Task_Washer_Stop.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -794,6 +829,16 @@
               <FileName>Drv_Key.h</FileName>
               <FileType>5</FileType>
               <FilePath>..\User\Driver\Drv_Key.h</FilePath>
+            </File>
+            <File>
+              <FileName>Drv_LED.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\User\Driver\Drv_LED.c</FilePath>
+            </File>
+            <File>
+              <FileName>Drv_LED.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\User\Driver\Drv_LED.h</FilePath>
             </File>
             <File>
               <FileName>Drv_MPU6050.c</FileName>

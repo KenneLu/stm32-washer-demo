@@ -1,7 +1,8 @@
 #include "stm32f10x.h"
-#include "Menu.h"
-#include "Washer.h"
-#include "Washer_Data.h"
+
+#include "FreeRTOS.h"
+#include "task.h"
+
 #include "Sys_Delay.h"
 #include "Drv_Key.h"
 #include "Drv_OLED.h"
@@ -12,12 +13,21 @@
 #include "Drv_MPU6050.h"
 #include "Drv_Buzzer.h"
 #include "Drv_W25Q64.h"
+#include "Drv_LED.h"
+
+#include "Menu.h"
+#include "Washer.h"
+#include "Washer_Data.h"
+#include "Task_Manager.h"
+
 
 static BUZZER_Device* g_pDev_Buzzer;
 static MPU6050_Device* g_pDev_MPU6050;
 static AD_Device* g_pDev_TCRT5000;
 static SERVOMOTOR_Device* g_pDev_ServoMotor;
 static TB6612_Device* g_pDev_TB6612;
+static LED_Device* g_pDev_LED_RED;
+static LED_Device* g_pDev_LED_BLUE;
 
 #define DISPLAY_DELAY_MS 500
 
@@ -30,10 +40,6 @@ static TB6612_Device* g_pDev_TB6612;
 #define LED_GPIO_PIN_R GPIO_Pin_3
 #define LED_GPIO_PIN_B GPIO_Pin_2
 
-typedef enum {
-	LED_RED = 0,
-	LED_BLUE,
-} LED_TYPE;
 
 
 // static Washer* g_pWDat;	// 指向当前的洗衣模式
@@ -42,13 +48,11 @@ static Washer_Errors g_Washer_Error_Last;	// 上次错误状态
 
 static uint32_t g_Loop_Cnt = 0;	// 循环计数器
 static uint32_t g_Wash_Cnt_Cur = 0;	// 当前洗衣次数
-static uint8_t g_Security_Monitor_On = 1;	// 安全监测开关
 static uint8_t g_OLED_Need_Refresh = 0;	// 刷新OLED标志位
 
 int8_t Washer_StartStop_Event(void); // 临时这样解决一下 warning，后续再优化
 int8_t Washer_Quit_Event(void); // 临时这样解决一下 warning，后续再优化
 int8_t Washer_Power_Event(void); // 临时这样解决一下 warning，后续再优化
-// void Washer_Save(void); // 记录当前状态变化，防止意外断电
 
 
 //--------------------------------------------
@@ -133,20 +137,6 @@ static void Washer_Key_DeInit(void)
 //--------------------------------------------
 
 
-void Washer_LED_On(int8_t on, LED_TYPE type)
-{
-	if (on) GPIO_SetBits(GPIOA, type == LED_RED ? LED_GPIO_PIN_R : LED_GPIO_PIN_B);
-	else GPIO_ResetBits(GPIOA, type == LED_RED ? LED_GPIO_PIN_R : LED_GPIO_PIN_B);
-}
-
-void Washer_LED_Revert(LED_TYPE type)
-{
-	if (GPIO_ReadInputDataBit(LED_GPIO_x, type == LED_RED ? LED_GPIO_PIN_R : LED_GPIO_PIN_B))
-		GPIO_ResetBits(LED_GPIO_x, type == LED_RED ? LED_GPIO_PIN_R : LED_GPIO_PIN_B);
-	else
-		GPIO_SetBits(LED_GPIO_x, type == LED_RED ? LED_GPIO_PIN_R : LED_GPIO_PIN_B);
-}
-
 void Washer_Door_UnLock()
 {
 	g_pDev_ServoMotor->SetAngle(g_pDev_ServoMotor, 0);
@@ -165,151 +155,252 @@ void Washer_OLED_Refresh()
 	OLED_ShowNum_Easy(4, 14, g_pWDat->Wash_Cnt, 1);
 }
 
-void Washer_Init(uint8_t Is_Restore)
+void Washer_Task_Init(void)
+{
+	if (*Get_Task_Washer_Stop_Handle() == 0)
+		Do_Create_Task_Washer_Stop();
+	else
+		vTaskResume(*Get_Task_Washer_Stop_Handle());
+
+	if (*Get_Task_Washer_Key_Handle() == 0)
+		Do_Create_Task_Washer_Key();
+	else
+		vTaskResume(*Get_Task_Washer_Key_Handle());
+
+	if (*Get_Task_Washer_Safety_Handle() == 0)
+		Do_Create_Task_Washer_Safety();
+	else
+		vTaskResume(*Get_Task_Washer_Safety_Handle());
+
+	if (*Get_Task_Washer_Pause_Handle() == 0)
+		Do_Create_Task_Washer_Pause();
+	else
+		vTaskResume(*Get_Task_Washer_Pause_Handle());
+
+	if (*Get_Task_Washer_Error_Handle() == 0)
+	{
+		Do_Create_Task_Washer_Error();
+		vTaskSuspend(*Get_Task_Washer_Error_Handle());
+	}
+
+	if (*Get_Task_Washer_Run_Handle() == 0)
+		Do_Create_Task_Washer_Run();
+	else
+		vTaskResume(*Get_Task_Washer_Run_Handle());
+}
+
+void Washer_Task_DeInit(void)
+{
+	if (*Get_Task_Washer_Stop_Handle())
+		vTaskSuspend(*Get_Task_Washer_Stop_Handle());
+
+	if (*Get_Task_Washer_Key_Handle())
+		vTaskSuspend(*Get_Task_Washer_Key_Handle());
+
+	if (*Get_Task_Washer_Safety_Handle())
+		vTaskSuspend(*Get_Task_Washer_Safety_Handle());
+
+	if (*Get_Task_Washer_Pause_Handle())
+		vTaskSuspend(*Get_Task_Washer_Pause_Handle());
+
+	if (*Get_Task_Washer_Error_Handle())
+		vTaskSuspend(*Get_Task_Washer_Error_Handle());
+
+	if (*Get_Task_Washer_Run_Handle())
+		vTaskSuspend(*Get_Task_Washer_Run_Handle());
+}
+
+void Washer_Init(void)
 {
 	g_Washer_Error_Cur = NO_ERROR;
 	g_Loop_Cnt = 0;
 	g_Wash_Cnt_Cur = 0;
-	g_Security_Monitor_On = 1;  // 启动安全监测
+	//g_Security_Monitor_On = 1;  // 启动安全监测
 	g_OLED_Need_Refresh = 1;	// 刷新OLED
 
 	// 显示初始化信息
 	Washer_OLED_Refresh();
 	OLED_ShowString_Easy(1, 1, "Init...        ");
 
-	// 初始化按键回调
-	Washer_Key_Init();
+	g_pDev_TB6612 = Drv_TB6612_GetDevice(TB6612); // 电机驱动
+	g_pDev_TCRT5000 = Drv_AD_GetDevice(AD_TCRT5000); // ADC, 用于检测门是否打开
+	g_pDev_ServoMotor = Drv_ServoMotor_GetDevice(SERVOMOTOR); // 舵机，用于锁门
+	g_pDev_MPU6050 = Drv_MPU6050_GetDevice(MPU6050); // MPU6050，用于姿态检测
+	g_pDev_Buzzer = Drv_Buzzer_GetDevice(BUZZER); // 化蜂鸣器，用于报警
+	g_pDev_LED_RED = Drv_LED_GetDevice(LED_RED); // 红灯
+	g_pDev_LED_BLUE = Drv_LED_GetDevice(LED_BLUE); // 蓝灯
 
-	// 初始化DHT11
-	Drv_DHT11_Init();
-
-	// 初始化电机驱动
-	Drv_TB6612_Init();
-	g_pDev_TB6612 = Drv_TB6612_GetDevice(TB6612);
-
-	// 初始化ADC, 用于检测门是否打开
-	Drv_AD_Init();
-	g_pDev_TCRT5000 = Drv_AD_GetDevice(AD_TCRT5000);
-
-	// 初始化舵机，用于锁门
-	Drv_ServoMotor_Init();
-	g_pDev_ServoMotor = Drv_ServoMotor_GetDevice(SERVOMOTOR);
+	Washer_Key_Init(); // 初始化按键回调
 	Washer_Door_Lock(); // 锁门
 
-	// 初始化MPU6050，用于姿态检测
-	Drv_MPU6050_Init();
-	g_pDev_MPU6050 = Drv_MPU6050_GetDevice(MPU6050);
+	Washer_Task_Init(); // 初始化任务
+}
 
-	// 初始化 LED
-	RCC_APB2PeriphClockCmd(LED_GPIO_RCC, ENABLE);
-	GPIO_InitTypeDef GPIO_InitStructure;
-	GPIO_InitStructure.GPIO_Pin = LED_GPIO_PIN_R | LED_GPIO_PIN_B;
-	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
-	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
-	GPIO_Init(LED_GPIO_x, &GPIO_InitStructure);
+void Washer_DeInit(void)
+{
+	Washer_Key_DeInit(); // 注销按键回调
+	Washer_Task_DeInit(); // 挂起任务
+}
 
-	// 初始化蜂鸣器
-	Drv_Buzzer_Init();
-	g_pDev_Buzzer = Drv_Buzzer_GetDevice(BUZZER);
+void Washer_Custom_Shutdown()
+{
+	TASK_WASHER_DATA_INIT;
+	g_pWDat->Shutdown_Type = CUSTOMER_SHUTDOWN;
+	TASK_WASHER_DATA_STORE;
+}
 
-	if (Is_Restore == 0)
+void Washer_Key()
+{
+	if (Washer_StartStop_Event())
 	{
-		// 根据模式选择状态机
-		switch (g_pWDat->Mode)
+		if (g_pWDat->Status_Cur == S_FINISH)
 		{
-		case M_FAST_WASH:
-			g_pWDat->Status_Next = S_HEAT_WATER;
-			break;
-		case M_STANDARD_WASH:
-			g_pWDat->Status_Next = S_HEAT_WATER;
-			break;
-		case M_HARD_WASH:
-			g_pWDat->Status_Next = S_HEAT_WATER;
-			break;
-		case M_SPIN_DRY:
-			g_pWDat->Status_Next = S_DRAIN_WATER;
-			break;
-		case M_HEAT_DRY:
-			g_pWDat->Status_Next = S_HEAT_DRY;
-			break;
-		default:
-			break;
+			//TODO: 完成洗衣，返回菜单
+			Washer_Stop();
+			Washer_Custom_Shutdown();
+			Menu_Washer_Init();
+			Washer_DeInit();
 		}
+		else
+		{
+			// 开始/暂停
+			TASK_WASHER_PAUSE_PAUSE;
+		}
+	}
+
+	if (Washer_Power_Event())
+	{
+		Washer_Stop();
+		Washer_Custom_Shutdown();
+		Menu_Washer_Power_Off();
+		Washer_DeInit();
+	}
+
+	if (Washer_Quit_Event())
+	{
+		Washer_Stop();
+		Washer_DeInit();
 	}
 }
 
-void Washer_Stop(uint8_t Custom_Shout_Down)
+void Washer_Stop()
 {
 	g_pDev_TB6612->SetSpeed(g_pDev_TB6612, 0);
 	Washer_Door_UnLock();
-	g_pDev_Buzzer->Off(g_pDev_Buzzer);
-	Washer_LED_On(0, LED_RED);
-	Washer_LED_On(0, LED_BLUE);
-	if (Custom_Shout_Down)
-	{
-		g_pWDat->DataInit(&g_pWDat);
-		g_pWDat->Shutdown_Type = CUSTOMER_SHUTDOWN;
-		g_pWDat->DataStore(g_pWDat);
-	}
+	g_pDev_Buzzer->Off_Buzzer(g_pDev_Buzzer);
+	g_pDev_LED_RED->Off_LED(g_pDev_LED_RED);
+	g_pDev_LED_BLUE->Off_LED(g_pDev_LED_BLUE);
 }
 
 void Washer_Pause()
 {
-	if (g_OLED_Need_Refresh)
-	{
-		g_OLED_Need_Refresh = 0;
-		Washer_OLED_Refresh();
-		OLED_Printf_Easy(3, 1, "pause...");
-		Washer_Stop(0);
-	}
-
-	if (Washer_StartStop_Event())	// 继续
-	{
-		Washer_Door_Lock(); // 门锁上锁
-		Washer_OLED_Refresh();
-		g_pWDat->Status_Next = g_pWDat->Status_Last;
-	}
+	Washer_OLED_Refresh();
+	OLED_Printf_Easy(3, 1, "pause...");
+	Washer_Stop();
 }
 
-void Washer_Error()
+void Washer_Resume()
 {
-	if (g_OLED_Need_Refresh)
-	{
-		g_OLED_Need_Refresh = 0;
-		Washer_OLED_Refresh();
-		OLED_Printf_Easy(1, 1, "ERROR!!!");
-		switch (g_Washer_Error_Cur)
-		{
-		case ERROR_TILT:
-			OLED_Printf_Easy(2, 1, "Washer Tilt!");
-			break;
-		case ERROR_SHAKE:
-			OLED_Printf_Easy(2, 1, "Washer Shake!");
-			break;
-		case ERROR_DOOR_OPEN:
-			OLED_Printf_Easy(2, 1, "Close The Door!");
-			break;
-		default:
-			break;
-		}
-		Washer_Stop(0);
-	}
-
-	Washer_LED_Revert(LED_RED);
-	g_pDev_Buzzer->Revert(g_pDev_Buzzer);
-	if (g_Washer_Error_Cur == NO_ERROR) //异常解除
-	{
-		Washer_LED_On(0, LED_RED);
-		g_pDev_Buzzer->Off(g_pDev_Buzzer);
-
-		Delay_ms(500);
-		Washer_OLED_Refresh();
-		OLED_Printf_Easy(1, 1, "ERROR Fixed!");
-		Delay_ms(500);
-		Washer_Door_Lock(); // 门锁上锁
-		g_pWDat->Status_Next = g_pWDat->Status_Last;
-	}
+	Washer_Door_Lock(); // 门锁上锁
+	Washer_OLED_Refresh();
+	g_pWDat->Status_Next = g_pWDat->Status_Last;
 }
+
+void Washer_Error_Occur()
+{
+	//刷新报错信息
+	Washer_OLED_Refresh();
+	OLED_Printf_Easy(1, 1, "ERROR!!!");
+	switch (g_Washer_Error_Cur)
+	{
+	case ERROR_TILT:
+		OLED_Printf_Easy(2, 1, "Washer Tilt!");
+		break;
+	case ERROR_SHAKE:
+		OLED_Printf_Easy(2, 1, "Washer Shake!");
+		break;
+	case ERROR_DOOR_OPEN:
+		OLED_Printf_Easy(2, 1, "Close The Door!");
+		break;
+	default:
+		break;
+	}
+	Washer_Stop();
+}
+
+void Washer_Error_Warning()
+{
+	//蜂鸣器与指示灯报警
+	g_pDev_LED_RED->Revert_LED(g_pDev_LED_RED);
+	g_pDev_Buzzer->Revert_Buzzer(g_pDev_Buzzer);
+	Delay_ms(500);
+}
+
+void Washer_Error_Fixed()
+{
+	g_pDev_LED_RED->Off_LED(g_pDev_LED_RED);
+	g_pDev_Buzzer->Off_Buzzer(g_pDev_Buzzer);
+
+	Washer_OLED_Refresh();
+	OLED_Printf_Easy(1, 1, "ERROR Fixed!");
+	Delay_ms(500);
+	TASK_WASHER_PAUSE_PAUSE;
+	if (*Get_Task_Washer_Error_Handle() == 0)
+		vTaskSuspend(*Get_Task_Washer_Error_Handle());
+}
+
+void Washer_Safety(void)
+{
+	// 安全异常监测
+	g_Washer_Error_Cur = NO_ERROR;
+
+	// 检测门是否打开
+	if (g_pDev_TCRT5000->GetValue(g_pDev_TCRT5000) > 400) // 大于1.5cm距离
+	{
+		g_Washer_Error_Cur = ERROR_DOOR_OPEN;
+	}
+
+	// 检测姿态是否倾斜
+	static int16_t AccX, AccY, AccZ, GyroX, GyroY, GyroZ;
+	static int16_t AccX_Abs, AccY_Abs;
+	static uint8_t Shake_Time = 0;
+	g_pDev_MPU6050->GetData(g_pDev_MPU6050, &AccX, &AccY, &AccZ, &GyroX, &GyroY, &GyroZ);
+	AccX_Abs = AccX > 0 ? AccX : -AccX;
+	AccY_Abs = AccY > 0 ? AccY : -AccY;
+	if (AccX_Abs > 50 || AccY_Abs > 50) // 瞬时加速度大于50
+	{
+		Shake_Time++;
+		if (Shake_Time == 200)	g_Washer_Error_Cur = ERROR_SHAKE; // 持续200ms
+		else if (Shake_Time > 200) g_Washer_Error_Cur = ERROR_TILT; // 持续时间大于200ms
+	}
+	else
+	{
+		Shake_Time = 0;
+	}
+
+
+	if (g_Washer_Error_Cur == NO_ERROR) // 无异常
+	{
+		if (g_Washer_Error_Last != NO_ERROR) // 异常解除
+		{
+			TASK_WASHER_ERROR_FIXED;
+			g_Washer_Error_Last = NO_ERROR;
+		}
+		return;
+	}
+
+	if (g_Washer_Error_Last != g_Washer_Error_Cur) // 异常发生
+	{
+		TASK_WASHER_ERROR_OCCUR;
+		if (*Get_Task_Washer_Error_Handle() == 0)
+			vTaskResume(*Get_Task_Washer_Error_Handle());
+		g_Washer_Error_Last = g_Washer_Error_Cur;
+	}
+
+	g_pWDat->Status_Last = g_pWDat->Status_Cur; // 保存异常前的状态机
+	TASK_WASHER_DATA_STORE;
+}
+
 
 void Washer_Heat_Water()
 {
@@ -328,7 +419,7 @@ void Washer_Heat_Water()
 		OLED_ShowString_Easy(3, 10, ".00");
 		OLED_ShowChinese_Easy(3, 13 / 2 + 1, "℃");	   // 中文是16x16的，所以要减半，并向上取整
 
-		Washer_LED_On(1, LED_RED);
+		g_pDev_LED_RED->On_LED(g_pDev_LED_RED);
 	}
 
 	//接收温度和湿度的数据
@@ -346,7 +437,7 @@ void Washer_Heat_Water()
 
 	if (DHT11_Data.Temp >= g_pWDat->Water_Temp) //烧水结束
 	{
-		Washer_LED_On(0, LED_RED);
+		g_pDev_LED_RED->Off_LED(g_pDev_LED_RED);
 		OLED_ShowString_Easy(1, 1, "heat water[DONE]");
 
 		g_Loop_Cnt = 0;
@@ -364,7 +455,7 @@ void Washer_Add_Water()
 		Washer_OLED_Refresh();
 		OLED_ShowString_Easy(1, 1, "add water[  /  ]");
 		OLED_ShowNum_Easy(1, 14, g_pWDat->Water_Volume, 2);
-		Washer_LED_On(1, LED_BLUE);
+		g_pDev_LED_BLUE->On_LED(g_pDev_LED_BLUE);
 	}
 
 	OLED_ShowNum_Easy(1, 11, (g_Loop_Cnt / 10), 2);
@@ -372,10 +463,10 @@ void Washer_Add_Water()
 	g_Loop_Cnt++;
 	if (WASHER_CNT_S >= g_pWDat->Water_Volume) //加水结束（1s加一升）
 	{
-		Washer_LED_On(0, LED_BLUE);
+		g_pDev_LED_BLUE->Off_LED(g_pDev_LED_BLUE);
 		OLED_ShowNum_Easy(1, 11, (g_Loop_Cnt / 10), 2);
 		OLED_ShowString_Easy(2, 1, "add water[DONE]");
-		Washer_LED_On(0, LED_RED);
+		g_pDev_LED_RED->Off_LED(g_pDev_LED_RED);
 		Delay_ms(DISPLAY_DELAY_MS);
 
 		g_Loop_Cnt = 0;
@@ -499,12 +590,12 @@ void Washer_Drain_Water()
 	}
 
 	OLED_ShowNum_Easy(1, 11, (g_Loop_Cnt / 10), 2);
-	Washer_LED_Revert(LED_BLUE);
+	g_pDev_LED_BLUE->Revert_LED(g_pDev_LED_BLUE);
 
 	g_Loop_Cnt++;
 	if (WASHER_CNT_S >= g_pWDat->Water_Volume) //排水结束（1s排一升）
 	{
-		Washer_LED_On(0, LED_BLUE);
+		g_pDev_LED_BLUE->Off_LED(g_pDev_LED_BLUE);
 		OLED_ShowNum_Easy(1, 11, (g_Loop_Cnt / 10), 2);
 		OLED_ShowString_Easy(2, 1, "draing[DONE]");
 		Delay_ms(DISPLAY_DELAY_MS);
@@ -607,7 +698,7 @@ void Washer_Heat_Dry()
 		OLED_ShowString_Easy(3, 10, ".00");
 		OLED_ShowChinese_Easy(3, 13 / 2 + 1, "％");	   //中文是16x16的，所以要减半，并向上取整
 
-		Washer_LED_On(1, LED_RED);
+		g_pDev_LED_RED->On_LED(g_pDev_LED_RED);
 	}
 
 	//接收温度和湿度的数据
@@ -628,11 +719,10 @@ void Washer_Heat_Dry()
 		g_Loop_Cnt = 0;
 		g_pWDat->Status_Next = S_FINISH;
 
-		Washer_LED_On(0, LED_RED);
+		g_pDev_LED_RED->Off_LED(g_pDev_LED_RED);
 		OLED_ShowString_Easy(1, 1, "heat dry[DONE]");
 		Delay_ms(DISPLAY_DELAY_MS);
 	}
-
 }
 
 void Washer_Wash_Cnt()
@@ -666,31 +756,28 @@ void Washer_Finish()
 	{
 		OLED_Clear();
 		OLED_ShowString_Easy(1, 1, "WASH FINISH!");
-		g_Security_Monitor_On = 0; // 关闭安全监测
-	}
 
-	if (Washer_StartStop_Event())
-	{
-		g_pWDat->Status_Next = S_QUIT;
+		// 关闭安全监测
+		if (*Get_Task_Washer_Safety_Handle())
+			vTaskSuspend(*Get_Task_Washer_Safety_Handle());
+
+		if (*Get_Task_Washer_Pause_Handle())
+			vTaskSuspend(*Get_Task_Washer_Pause_Handle());
+
+		if (*Get_Task_Washer_Error_Handle())
+			vTaskSuspend(*Get_Task_Washer_Error_Handle());
 	}
 }
 
-int8_t Washer_Run(void* Param)
+// 状态机运行函数
+void Washer_Run(void)
 {
 	while (1)
 	{
 		switch (g_pWDat->Status_Next)
 		{
 		case S_INIT:
-			Washer_Init(0);
-			break;
-
-		case S_PAUSE:
-			Washer_Pause();
-			break;
-
-		case S_ERROR:
-			Washer_Error();
+			Washer_Init();
 			break;
 
 		case S_HEAT_WATER:
@@ -725,11 +812,8 @@ int8_t Washer_Run(void* Param)
 			Washer_Finish();
 			break;
 
-		case S_QUIT:
-			Washer_Stop(1);
-			return -1; // 退出运行，返回模式选择
-
 		default:
+			Washer_Init();
 			break;
 		}
 
@@ -740,77 +824,7 @@ int8_t Washer_Run(void* Param)
 			g_pWDat->Status_Cur = g_pWDat->Status_Next;
 			g_OLED_Need_Refresh = 1; // 状态切换，刷新OLED
 
-			g_pWDat->DataStore(g_pWDat);
-		}
-
-		// 安全异常监测
-		if (g_Security_Monitor_On)
-		{
-			g_Washer_Error_Cur = NO_ERROR;
-
-			// 检测门是否打开
-			if (g_pDev_TCRT5000->GetValue(g_pDev_TCRT5000) > 400) // 大于1.5cm距离
-			{
-				g_Washer_Error_Cur = ERROR_DOOR_OPEN;
-			}
-
-			// 检测姿态是否倾斜
-			static int16_t AccX, AccY, AccZ, GyroX, GyroY, GyroZ;
-			static int16_t AccX_Abs, AccY_Abs;
-			static uint8_t Shake_Time = 0;
-			g_pDev_MPU6050->GetData(g_pDev_MPU6050, &AccX, &AccY, &AccZ, &GyroX, &GyroY, &GyroZ);
-			AccX_Abs = AccX > 0 ? AccX : -AccX;
-			AccY_Abs = AccY > 0 ? AccY : -AccY;
-			if (AccX_Abs > 50 || AccY_Abs > 50) // 瞬时加速度大于50
-			{
-				Shake_Time++;
-				if (Shake_Time == 2)	g_Washer_Error_Cur = ERROR_SHAKE; // 持续200ms
-				else if (Shake_Time > 2) g_Washer_Error_Cur = ERROR_TILT; // 持续时间大于200ms
-			}
-			else
-			{
-				Shake_Time = 0;
-			}
-
-			// 异常处理
-			if (g_Washer_Error_Cur != NO_ERROR && g_pWDat->Status_Cur != S_ERROR && g_pWDat->Status_Cur != S_WASH_CNT)
-			{
-				g_pWDat->Status_Next = S_ERROR;
-				g_OLED_Need_Refresh = 1; // 状态切换，刷新OLED
-				if (g_pWDat->Status_Cur != S_PAUSE) // 异常解除后，直接继续原状态机，取消暂停
-				{
-					g_pWDat->Status_Last = g_pWDat->Status_Cur; // 保存异常前的状态机
-				}
-				g_pWDat->Status_Cur = S_ERROR;
-				g_pWDat->DataStore(g_pWDat);
-			}
-
-			if (g_Washer_Error_Cur != NO_ERROR && g_Washer_Error_Cur != g_Washer_Error_Last)
-			{
-				g_OLED_Need_Refresh = 1; // ERROR 状态机里发生状态切换，刷新OLED
-				g_Washer_Error_Last = g_Washer_Error_Cur;
-			}
-		}
-
-		// 暂停捕获，ERROR 状态下不暂停
-		if (Washer_StartStop_Event() && g_pWDat->Status_Cur != S_ERROR && g_pWDat->Status_Cur != S_WASH_CNT)
-		{
-			g_pWDat->Status_Next = S_PAUSE;
-		}
-
-		if (Washer_Power_Event())
-		{
-			Washer_Stop(1);
-			Washer_Key_DeInit();
-			Menu_Washer_Power_Off();
-			return -1;
-		}
-
-		if (Washer_Quit_Event())
-		{
-			Washer_Stop(1);
-			Washer_Key_DeInit();
-			return -1;
+			TASK_WASHER_DATA_STORE;
 		}
 
 		// 轮询周期为延时100ms

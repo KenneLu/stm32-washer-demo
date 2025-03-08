@@ -1,14 +1,21 @@
 #include "stm32f10x.h"                  // Device header
+
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include "Washer_Data.h"
-#include "Washer.h"
-#include "Menu.h"
+
+#include "FreeRTOS.h"
+#include "task.h"
+
 #include "Sys_Delay.h"
 #include "Drv_OLED.h"
 #include "Drv_Encoder.h"
 #include "Drv_W25Q64.h"
+
+#include "Washer_Data.h"
+#include "Washer.h"
+#include "Menu.h"
+#include "Task_Manager.h"
 
 
 char* Uchar2Str(int Num);
@@ -16,6 +23,7 @@ void DexNum_2_Str(char** Str, int DexNum);
 void StrNum_2_Str(char** Str, char* Val, uint8_t Len);
 void Insert_SubString(char** Str, char* SubStr, int Index);
 uint8_t GetIndex(uint8_t* List, uint8_t Val, uint8_t ListSize);
+int8_t Menu_Washer_Start_Washer(void* Param);
 
 
 //List
@@ -47,7 +55,7 @@ Option_Class Opt_Mode_Select[] = {
 };
 
 Option_Class Opt_Detail_Wash[] = {
-		{ "开始运行", Washer_Run, 0},
+		{ "开始运行", Menu_Washer_Start_Washer, 0},
 		{ "设置次数[次]", Menu_Washer_Mode_Setting, &Opt_Set_Wash_Cnt},
 		{ "设置时长[分]", Menu_Washer_Mode_Setting, &Opt_Set_Wash_Time},
 		{ "设置脱水[分]", Menu_Washer_Mode_Setting, &Opt_Set_Spin_Dry_Time},
@@ -58,20 +66,53 @@ Option_Class Opt_Detail_Wash[] = {
 Option_Class Opt_Detail_Wash_Cur[sizeof(Opt_Detail_Wash)];
 
 Option_Class Opt_Detail_Spin[] = {
-		{ "开始运行", Washer_Run, 0},
+		{ "开始运行", Menu_Washer_Start_Washer, 0},
 		{ "脱水时长[分]", Menu_Washer_Mode_Setting, &Opt_Set_Spin_Dry_Time},
 		{ ".." }
 };
 Option_Class Opt_Detail_Spin_Cur[sizeof(Opt_Detail_Spin)];
 
 Option_Class Opt_Detail_Heat[] = {
-		{ "开始运行", Washer_Run, 0},
+		{ "开始运行", Menu_Washer_Start_Washer, 0},
 		{ "烘干温度[℃]", Menu_Washer_Mode_Setting, &Opt_Set_Heat_Temp},
 		{ ".." }
 };
 Option_Class Opt_Detail_Heat_Cur[sizeof(Opt_Detail_Heat)];
 
-uint8_t Wash_Opt_Inited = 0;
+
+void Menu_Washer_Task_Init(void)
+{
+	if (*Get_Task_MainMenu_Handle() == NULL)
+		Do_Create_Task_MainMenu();
+	else
+		vTaskResume(*Get_Task_MainMenu_Handle());
+}
+
+void Menu_Washer_Task_DeInit(void)
+{
+	if (*Get_Task_MainMenu_Handle())
+		vTaskSuspend(*Get_Task_MainMenu_Handle());
+}
+
+void Menu_Washer_Init(void)
+{
+	Menu_Washer_Task_Init();
+}
+
+void Menu_Washer_DeInit(void)
+{
+	Menu_Washer_Task_DeInit();
+}
+
+int8_t Menu_Washer_Start_Washer(void* Param)
+{
+	taskENTER_CRITICAL();
+	Washer_Init();
+	Menu_Washer_DeInit();
+	taskEXIT_CRITICAL();
+
+	return -1;
+}
 
 void Menu_Washer_Power_On(void)
 {
@@ -86,35 +127,40 @@ void Menu_Washer_Power_On(void)
 	Delay_ms(200);
 	OLED_ShowString_Easy(1, 1, "Power On ....");
 	Delay_ms(200);
+
+	//等待 Task_Start 完成初始化
+	ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
+
+	// //意外掉电重启
+	// if (g_pWDat->Shutdown_Type == ACCIDENT_SHUTDOWN)
+	// {
+	// 	OLED_ShowString_Easy(1, 1, "Restore Last");
+	// 	Delay_ms(200);
+	// 	OLED_ShowString_Easy(1, 1, "Restore Last .");
+	// 	Delay_ms(200);
+	// 	OLED_ShowString_Easy(1, 1, "Restore Last ..");
+	// 	Delay_ms(200);
+	// 	OLED_ShowString_Easy(1, 1, "Restore Last ...");
+	// 	Delay_ms(200);
+	// 	Menu_Washer_Start_Washer(0);
+	// }
+	// else
+	// {
+	// 	//正常启动
+	// 	TASK_WASHER_DATA_INIT;
+	// 	TASK_WASHER_DATA_STORE;
+	// 	OLED_Clear_Easy();
+	// }
+
+	//正常启动
+	TASK_WASHER_DATA_INIT;
+	TASK_WASHER_DATA_STORE;
 	OLED_Clear_Easy();
-
-	g_pWDat->DataRestore(&g_pWDat);
-	if (g_pWDat->Shutdown_Type == ACCIDENT_SHUTDOWN)
-	{
-		g_pWDat->Status_Cur = g_pWDat->Status_Last;
-		OLED_ShowString_Easy(1, 1, "Restore Last");
-		Delay_ms(200);
-		OLED_ShowString_Easy(1, 1, "Restore Last .");
-		Delay_ms(200);
-		OLED_ShowString_Easy(1, 1, "Restore Last ..");
-		Delay_ms(200);
-		OLED_ShowString_Easy(1, 1, "Restore Last ...");
-		Delay_ms(200);
-
-		Washer_Init(1);
-		Washer_Run(0);
-	}
-	g_pWDat->DataInit(&g_pWDat);
-	g_pWDat->DataStore(g_pWDat);
 }
 
 void Menu_Washer_Power_Off(void)
 {
 	// 客户主动关机
-	g_pWDat->DataInit(&g_pWDat);
-	g_pWDat->Shutdown_Type = CUSTOMER_SHUTDOWN;
-	g_pWDat->DataStore(g_pWDat);
-
 	OLED_Clear_Easy();
 	OLED_ShowString_Easy(1, 1, "Power Off");
 	Delay_ms(200);
@@ -137,7 +183,9 @@ void Menu_Washer_Power_Off(void)
 //按模式初始化Washer
 void Wahser_Data_Set(WASHER_MODE Mode)
 {
-	g_pWDat->DataInit(&g_pWDat);
+	// g_pWDat->DataInit(&g_pWDat);
+	TASK_WASHER_DATA_INIT;
+
 	if (Mode == M_FAST_WASH)
 	{
 		g_pWDat->Mode = M_FAST_WASH;
@@ -209,84 +257,80 @@ void Wahser_Data_Set(WASHER_MODE Mode)
 	}
 }
 
-void Menu_Washer_Init(void)
+void Menu_Washer_Param_Init(void)
 {
-	if (Wash_Opt_Inited == 0)
+	//初始化设置
+	int i;
+	for (i = 0; i < sizeof(List_Set_Wash_Cnt); i++)
 	{
-		//初始化设置
-		int i;
-		for (i = 0; i < sizeof(List_Set_Wash_Cnt); i++)
-		{
-			DexNum_2_Str(&Opt_Set_Wash_Cnt[i].Name, List_Set_Wash_Cnt[i]);
-		}
-		StrNum_2_Str(&Opt_Set_Wash_Cnt[i].Name, "..", 2); // 结尾标志,方便自动计算数量
+		DexNum_2_Str(&Opt_Set_Wash_Cnt[i].Name, List_Set_Wash_Cnt[i]);
+	}
+	StrNum_2_Str(&Opt_Set_Wash_Cnt[i].Name, "..", 2); // 结尾标志,方便自动计算数量
 
-		for (i = 0; i < sizeof(List_Set_Wash_Time); i++)
-		{
-			DexNum_2_Str(&Opt_Set_Wash_Time[i].Name, List_Set_Wash_Time[i]);
-		}
-		StrNum_2_Str(&Opt_Set_Wash_Time[i].Name, "..", 2); // 结尾标志,方便自动计算数量
+	for (i = 0; i < sizeof(List_Set_Wash_Time); i++)
+	{
+		DexNum_2_Str(&Opt_Set_Wash_Time[i].Name, List_Set_Wash_Time[i]);
+	}
+	StrNum_2_Str(&Opt_Set_Wash_Time[i].Name, "..", 2); // 结尾标志,方便自动计算数量
 
-		for (i = 0; i < sizeof(List_Set_Spin_Dry_Time); i++)
-		{
-			DexNum_2_Str(&Opt_Set_Spin_Dry_Time[i].Name, List_Set_Spin_Dry_Time[i]);
-		}
-		StrNum_2_Str(&Opt_Set_Spin_Dry_Time[i].Name, "..", 2); // 结尾标志,方便自动计算数量
+	for (i = 0; i < sizeof(List_Set_Spin_Dry_Time); i++)
+	{
+		DexNum_2_Str(&Opt_Set_Spin_Dry_Time[i].Name, List_Set_Spin_Dry_Time[i]);
+	}
+	StrNum_2_Str(&Opt_Set_Spin_Dry_Time[i].Name, "..", 2); // 结尾标志,方便自动计算数量
 
-		for (i = 0; i < sizeof(List_Set_Water_Volume); i++)
-		{
-			DexNum_2_Str(&Opt_Set_Water_Volume[i].Name, List_Set_Water_Volume[i]);
-		}
-		StrNum_2_Str(&Opt_Set_Water_Volume[i].Name, "..", 2); // 结尾标志,方便自动计算数量
+	for (i = 0; i < sizeof(List_Set_Water_Volume); i++)
+	{
+		DexNum_2_Str(&Opt_Set_Water_Volume[i].Name, List_Set_Water_Volume[i]);
+	}
+	StrNum_2_Str(&Opt_Set_Water_Volume[i].Name, "..", 2); // 结尾标志,方便自动计算数量
 
-		for (i = 0; i < sizeof(List_Set_Water_Temp); i++)
-		{
-			DexNum_2_Str(&Opt_Set_Water_Temp[i].Name, List_Set_Water_Temp[i]);
-		}
-		StrNum_2_Str(&Opt_Set_Water_Temp[i].Name, "..", 2); // 结尾标志,方便自动计算数量
+	for (i = 0; i < sizeof(List_Set_Water_Temp); i++)
+	{
+		DexNum_2_Str(&Opt_Set_Water_Temp[i].Name, List_Set_Water_Temp[i]);
+	}
+	StrNum_2_Str(&Opt_Set_Water_Temp[i].Name, "..", 2); // 结尾标志,方便自动计算数量
 
-		for (i = 0; i < sizeof(List_Set_Heat_Temp); i++)
-		{
-			DexNum_2_Str(&Opt_Set_Heat_Temp[i].Name, List_Set_Heat_Temp[i]);
-		}
-		StrNum_2_Str(&Opt_Set_Heat_Temp[i].Name, "..", 2); // 结尾标志,方便自动计算数量
+	for (i = 0; i < sizeof(List_Set_Heat_Temp); i++)
+	{
+		DexNum_2_Str(&Opt_Set_Heat_Temp[i].Name, List_Set_Heat_Temp[i]);
+	}
+	StrNum_2_Str(&Opt_Set_Heat_Temp[i].Name, "..", 2); // 结尾标志,方便自动计算数量
 
 
-		//初始化详细
-		for (i = 0; i < sizeof(Opt_Detail_Wash) / sizeof(Option_Class); i++)
-		{
-			Opt_Detail_Wash_Cur[i].Name = malloc(strlen(Opt_Detail_Wash[i].Name) * sizeof(char));
-			if (Opt_Detail_Wash_Cur[i].Name == NULL) while (1) OLED_ShowString_Easy(1, 1, "NULLLLL1");
-			strcpy(Opt_Detail_Wash_Cur[i].Name, Opt_Detail_Wash[i].Name);
-			Opt_Detail_Wash_Cur[i].Func = Opt_Detail_Wash[i].Func;
-			Opt_Detail_Wash_Cur[i].pFuncParam = Opt_Detail_Wash[i].pFuncParam;
-		}
+	//初始化详细
+	for (i = 0; i < sizeof(Opt_Detail_Wash) / sizeof(Option_Class); i++)
+	{
+		Opt_Detail_Wash_Cur[i].Name = malloc(strlen(Opt_Detail_Wash[i].Name) * sizeof(char));
+		if (Opt_Detail_Wash_Cur[i].Name == NULL) while (1) OLED_ShowString_Easy(1, 1, "NULLLLL1");
+		strcpy(Opt_Detail_Wash_Cur[i].Name, Opt_Detail_Wash[i].Name);
+		Opt_Detail_Wash_Cur[i].Func = Opt_Detail_Wash[i].Func;
+		Opt_Detail_Wash_Cur[i].pFuncParam = Opt_Detail_Wash[i].pFuncParam;
+	}
 
-		for (i = 0; i < sizeof(Opt_Detail_Spin) / sizeof(Option_Class); i++)
-		{
-			Opt_Detail_Spin_Cur[i].Name = malloc(strlen(Opt_Detail_Spin[i].Name) * sizeof(char) + 1);
-			if (Opt_Detail_Spin_Cur[i].Name == NULL) while (1) OLED_ShowString_Easy(1, 1, "NULLLLL2");
-			strcpy(Opt_Detail_Spin_Cur[i].Name, Opt_Detail_Spin[i].Name);
-			Opt_Detail_Spin_Cur[i].Func = Opt_Detail_Spin[i].Func;
-			Opt_Detail_Spin_Cur[i].pFuncParam = Opt_Detail_Spin[i].pFuncParam;
-		}
+	for (i = 0; i < sizeof(Opt_Detail_Spin) / sizeof(Option_Class); i++)
+	{
+		Opt_Detail_Spin_Cur[i].Name = malloc(strlen(Opt_Detail_Spin[i].Name) * sizeof(char) + 1);
+		if (Opt_Detail_Spin_Cur[i].Name == NULL) while (1) OLED_ShowString_Easy(1, 1, "NULLLLL2");
+		strcpy(Opt_Detail_Spin_Cur[i].Name, Opt_Detail_Spin[i].Name);
+		Opt_Detail_Spin_Cur[i].Func = Opt_Detail_Spin[i].Func;
+		Opt_Detail_Spin_Cur[i].pFuncParam = Opt_Detail_Spin[i].pFuncParam;
+	}
 
-		for (i = 0; i < sizeof(Opt_Detail_Heat) / sizeof(Option_Class); i++)
-		{
-			Opt_Detail_Heat_Cur[i].Name = malloc(strlen(Opt_Detail_Heat[i].Name) * sizeof(char) + 1);
-			if (Opt_Detail_Heat_Cur[i].Name == NULL) while (1) OLED_ShowString_Easy(1, 1, "NULLLLL3");
-			strcpy(Opt_Detail_Heat_Cur[i].Name, Opt_Detail_Heat[i].Name);
-			Opt_Detail_Heat_Cur[i].Func = Opt_Detail_Heat[i].Func;
-			Opt_Detail_Heat_Cur[i].pFuncParam = Opt_Detail_Heat[i].pFuncParam;
-		}
-		Wash_Opt_Inited = 1;
+	for (i = 0; i < sizeof(Opt_Detail_Heat) / sizeof(Option_Class); i++)
+	{
+		Opt_Detail_Heat_Cur[i].Name = malloc(strlen(Opt_Detail_Heat[i].Name) * sizeof(char) + 1);
+		if (Opt_Detail_Heat_Cur[i].Name == NULL) while (1) OLED_ShowString_Easy(1, 1, "NULLLLL3");
+		strcpy(Opt_Detail_Heat_Cur[i].Name, Opt_Detail_Heat[i].Name);
+		Opt_Detail_Heat_Cur[i].Func = Opt_Detail_Heat[i].Func;
+		Opt_Detail_Heat_Cur[i].pFuncParam = Opt_Detail_Heat[i].pFuncParam;
 	}
 }
 
 //洗衣机的主菜单
 int8_t Menu_Washer_Mode_Select(void* Param)
 {
-	Menu_Washer_Init();
+	Menu_Washer_Param_Init();
 	return  Menu_Run(Opt_Mode_Select, 0);
 }
 

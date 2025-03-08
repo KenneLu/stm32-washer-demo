@@ -19,7 +19,7 @@ static void Task_KeyScan(void* pvParameters)
 void Do_Create_Task_KeyScan(void)
 {
     BaseType_t xReturn = pdPASS;
-    xReturn = xTaskCreate(Task_KeyScan, "Task_KeyScan", 512, NULL, 5, &Task_KeyScan_Handle);
+    xReturn = xTaskCreate(Task_KeyScan, "Task_KeyScan", 128, NULL, 5, &Task_KeyScan_Handle);
     if (pdPASS == xReturn)
     {
         printf("Create_Task_KeyScan Success! \r\n");

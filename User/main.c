@@ -9,6 +9,7 @@ int main(void)
 
 	//创建任务
 	Do_Create_Task_Start();
+	vTaskStartScheduler();
 
 	while (1) {}; /* 正常不会执行到这里 */
 }

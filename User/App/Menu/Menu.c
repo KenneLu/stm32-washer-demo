@@ -121,7 +121,6 @@ int8_t Menu_Back_Event(void);
 int8_t Menu_Power_Event(void);
 uint8_t Get_NameLen(char* String);
 
-
 /**
   * 函    数：菜单初始化
   * 参    数：无
@@ -130,8 +129,14 @@ uint8_t Get_NameLen(char* String);
   */
 void Menu_Init(void)
 {
-	Menu_Key_Init();
 	g_pDev_Encoder = Drv_Encoder_GetDevice(ENCODER);
+	Menu_Key_Init();
+	Menu_Power_Off_CBRegister(Menu_Washer_Power_Off);
+}
+
+void Menu_DeInit(void)
+{
+	Menu_Key_DeInit();
 }
 
 /**

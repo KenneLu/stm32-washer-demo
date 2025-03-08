@@ -13,8 +13,18 @@ typedef enum
 } Washer_Errors;
 
 
-void Washer_Init(uint8_t Is_Restore);
-int8_t Washer_Run(void* Param);
+void Washer_Init(void);
+void Washer_DeInit(void);
+void Washer_Run(void);
+void Washer_Stop(void);
+void Washer_Key(void);
+void Washer_Pause(void);
+void Washer_Resume(void);
+void Washer_Safety(void);
+
+void Washer_Error_Occur(void);
+void Washer_Error_Warning(void);
+void Washer_Error_Fixed(void);
 
 
 #endif

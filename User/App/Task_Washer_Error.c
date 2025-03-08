@@ -1,0 +1,51 @@
+#include "Task_Manager.h"
+#include "Washer.h"
+#include "Washer_Data.h"
+
+
+static TaskHandle_t Task_Washer_Error_Handle = NULL;
+
+static void Task_Washer_Error(void* pvParameters)
+{
+    while (1)
+    {
+        //等待被其他任务唤醒
+        uint32_t Value = 0;
+        xTaskNotifyWait(pdTRUE, pdFALSE, &Value, portMAX_DELAY);
+        switch ((Washer_Error_Logic)Value)
+        {
+        case W_E_OCCUR:
+            if (*Get_Task_Washer_Run_Handle() == NULL)
+                vTaskSuspend(*Get_Task_Washer_Run_Handle());
+            Washer_Error_Occur();
+            break;
+
+        case W_E_FIXED:
+            Washer_Error_Fixed();
+            break;
+
+        default:
+            break;
+        }
+        Washer_Error_Warning();
+    }
+}
+
+void Do_Create_Task_Washer_Error(void)
+{
+    BaseType_t xReturn = pdPASS;
+    xReturn = xTaskCreate(Task_Washer_Error, "Task_Washer_Error", 128, NULL, 1, &Task_Washer_Error_Handle);
+    if (pdPASS == xReturn)
+    {
+        printf("Create_Task_Washer_Error Success! \r\n");
+    }
+    else
+    {
+        printf("Error:Create_Task_Washer_Error! \r\n");
+    }
+}
+
+TaskHandle_t* Get_Task_Washer_Error_Handle(void)
+{
+    return &Task_Washer_Error_Handle;
+}

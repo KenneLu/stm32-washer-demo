@@ -24,10 +24,10 @@ typedef struct {
 	BUZZER_HARDWARE HW;
 } BUZZER_Data;
 
-void On(BUZZER_Device* pDev);
-void Off(BUZZER_Device* pDev);
-void Revert(BUZZER_Device* pDev);
-uint8_t Is_On(BUZZER_Device* pDev);
+void On_Buzzer(BUZZER_Device* pDev);
+void Off_Buzzer(BUZZER_Device* pDev);
+void Revert_Buzzer(BUZZER_Device* pDev);
+uint8_t Is_On_Buzzer(BUZZER_Device* pDev);
 
 
 //--------------------------------------------------
@@ -81,10 +81,10 @@ void Drv_Buzzer_Init(void)
 		g_Buzzer_Datas[i].HW = hw;
 
 		// Device Init
-		g_Buzzer_Devs[i].On = On;
-		g_Buzzer_Devs[i].Off = Off;
-		g_Buzzer_Devs[i].Revert = Revert;
-		g_Buzzer_Devs[i].Is_On = Is_On;
+		g_Buzzer_Devs[i].On_Buzzer = On_Buzzer;
+		g_Buzzer_Devs[i].Off_Buzzer = Off_Buzzer;
+		g_Buzzer_Devs[i].Revert_Buzzer = Revert_Buzzer;
+		g_Buzzer_Devs[i].Is_On_Buzzer = Is_On_Buzzer;
 		g_Buzzer_Devs[i].Priv_Data = (void*)&g_Buzzer_Datas[i];
 
 		// Hardware Init
@@ -96,7 +96,7 @@ void Drv_Buzzer_Init(void)
 		GPIO_Init(hw.PORT, &GPIO_InitStructure);
 
 		// Buzzer Off
-		Off((BUZZER_Device*)&g_Buzzer_Devs[i]);
+		Off_Buzzer((BUZZER_Device*)&g_Buzzer_Devs[i]);
 	}
 }
 
@@ -104,7 +104,7 @@ void Drv_Buzzer_Init(void)
 //--------------------------------------------------
 
 
-void On(BUZZER_Device* pDev)
+void On_Buzzer(BUZZER_Device* pDev)
 {
 	BUZZER_Data* pData = (BUZZER_Data*)pDev->Priv_Data;
 	if (pData == 0) return;
@@ -115,7 +115,7 @@ void On(BUZZER_Device* pDev)
 		GPIO_ResetBits(pData->HW.PORT, pData->HW.PIN);
 }
 
-void Off(BUZZER_Device* pDev)
+void Off_Buzzer(BUZZER_Device* pDev)
 {
 	BUZZER_Data* pData = (BUZZER_Data*)pDev->Priv_Data;
 	if (pData == 0) return;
@@ -127,7 +127,7 @@ void Off(BUZZER_Device* pDev)
 
 }
 
-void Revert(BUZZER_Device* pDev)
+void Revert_Buzzer(BUZZER_Device* pDev)
 {
 	BUZZER_Data* pData = (BUZZER_Data*)pDev->Priv_Data;
 	if (pData == 0) return;
@@ -139,7 +139,7 @@ void Revert(BUZZER_Device* pDev)
 
 }
 
-uint8_t Is_On(BUZZER_Device* pDev)
+uint8_t Is_On_Buzzer(BUZZER_Device* pDev)
 {
 	BUZZER_Data* pData = (BUZZER_Data*)pDev->Priv_Data;
 	if (pData == 0) return 0;

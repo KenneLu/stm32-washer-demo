@@ -28,10 +28,14 @@ typedef void (*MenuPowerOffCallBack) (void);
 uint8_t Menu_Power_Off_CBRegister(MenuPowerOffCallBack CB);
 
 void Menu_Init(void);
+void Menu_DeInit(void);
 int8_t Menu_Run(Option_Class* Option, int8_t Choose);
 
 int8_t Setting_Menu(void* Param);
 
+void Menu_Washer_Param_Init(void);
+void Menu_Washer_Init(void);
+void Menu_Washer_DeInit(void);
 void Menu_Washer_Power_On(void);
 void Menu_Washer_Power_Off(void);
 int8_t Menu_Washer_Mode_Select(void* Param);

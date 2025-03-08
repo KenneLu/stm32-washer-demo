@@ -39,8 +39,8 @@ uint8_t Data_Init(Washer_Data** pData)
     (*pData)->Status_Next = S_INIT;
     (*pData)->Status_Cur = S_INIT;
     (*pData)->Status_Last = S_INIT;
-	
-	return 1;
+
+    return 1;
 }
 
 uint8_t DataStore(Washer_Data* pData)

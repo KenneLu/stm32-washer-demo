@@ -6,8 +6,7 @@ static TaskHandle_t Task_MainMenu_Handle = NULL;
 
 static void Task_MainMenu(void* pvParameters)
 {
-    Menu_Washer_Power_On();
-    Menu_Power_Off_CBRegister(Menu_Washer_Power_Off);
+    Menu_Washer_Power_On(); // 可能进入掉电恢复模式
     while (1)
     {
         Menu_Washer_Mode_Select(0);
