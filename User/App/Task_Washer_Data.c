@@ -8,6 +8,10 @@ static void Task_Washer_Data(void* pvParameters)
 {
     while (1)
     {
+        vTaskSuspendAll();	//关调度器
+        printf("Task_Washer_Data Running! \r\n");
+        xTaskResumeAll();	//开调度器
+        
         //任务通知阻塞
         uint32_t Value = 0;
         xTaskNotifyWait(pdTRUE, pdFALSE, &Value, portMAX_DELAY);

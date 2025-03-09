@@ -8,11 +8,13 @@ static void Task_Washer_Safety(void* pvParameters)
 {
     while (1)
     {
+        // vTaskSuspendAll();	//关调度器
+        // printf("Task_Washer_Safety Running! \r\n");
+        // xTaskResumeAll();	//开调度器
+
         Washer_Safety();
 
-        static TickType_t xLastWakeTime;
-        xLastWakeTime = xTaskGetTickCount();
-        Delay_Until_ms(&xLastWakeTime, 1);
+        Delay_ms(100); //每100ms做一次安全检查
     }
 }
 

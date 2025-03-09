@@ -9,6 +9,10 @@ static void Task_Washer_Pause(void* pvParameters)
 {
     while (1)
     {
+        vTaskSuspendAll();	//关调度器
+        printf("Task_Washer_Pause Running!\r\n");
+        xTaskResumeAll();	//开调度器
+        
         //等待被其他任务唤醒
         uint32_t Value = 0;
         xTaskNotifyWait(pdTRUE, pdFALSE, &Value, portMAX_DELAY);

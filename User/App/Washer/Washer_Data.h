@@ -25,7 +25,6 @@ typedef enum {
 typedef enum {
     S_INIT,         /*初始化状态*/
     S_PAUSE,        /*暂停状态*/
-    S_ERROR,        /*异常状态*/
     S_HEAT_WATER,   /*烧水状态*/
     S_ADD_WATER,    /*加水状态*/
     S_WASH,         /*清洗状态*/

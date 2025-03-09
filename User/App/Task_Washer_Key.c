@@ -8,6 +8,10 @@ static void Task_Washer_Key(void* pvParameters)
 {
     while (1)
     {
+        // vTaskSuspendAll();	//关调度器
+        // printf("Task_Washer_Key Running! \r\n");
+        // xTaskResumeAll();	//开调度器
+
         Washer_Key();
 
         static TickType_t xLastWakeTime;

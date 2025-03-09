@@ -19,10 +19,15 @@
   */
 
 #include "stm32f10x.h"
+
+#include "FreeRTOS.h"
+#include "task.h"
+
 #include <string.h>
 #include <math.h>
 #include <stdio.h>
 #include <stdarg.h>
+
 #include "Drv_OLED.h"
 
   /**
@@ -413,6 +418,8 @@ uint8_t OLED_IsInAngle(int16_t X, int16_t Y, int16_t StartAngle, int16_t EndAngl
   */
 void OLED_Update(void)
 {
+	vTaskSuspendAll();	//关调度器
+
 	//{OLED_Printf(128-6*6, 0, 6,"FPS %d", Get_FPS());	}	//显示帧率;解除注释开启
 
 	uint8_t j;
@@ -424,6 +431,8 @@ void OLED_Update(void)
 		/*连续写入128个数据，将显存数组的数据写入到OLED硬件*/
 		OLED_WriteData(OLED_DisplayBuf[j], 128);
 	}
+
+	xTaskResumeAll();	//开调度器
 }
 
 /**

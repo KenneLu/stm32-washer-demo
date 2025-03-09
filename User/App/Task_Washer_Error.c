@@ -9,18 +9,24 @@ static void Task_Washer_Error(void* pvParameters)
 {
     while (1)
     {
+        vTaskSuspendAll();	//关调度器
+        printf("Task_Washer_Error Running! \r\n");
+        xTaskResumeAll();	//开调度器
+
         //等待被其他任务唤醒
         uint32_t Value = 0;
-        xTaskNotifyWait(pdTRUE, pdFALSE, &Value, portMAX_DELAY);
+        xTaskNotifyWait(pdTRUE, pdFALSE, &Value, 0);
         switch ((Washer_Error_Logic)Value)
         {
         case W_E_OCCUR:
-            if (*Get_Task_Washer_Run_Handle() == NULL)
+            printf("W_E_OCCUR\r\n");
+            if (*Get_Task_Washer_Run_Handle())
                 vTaskSuspend(*Get_Task_Washer_Run_Handle());
             Washer_Error_Occur();
             break;
 
         case W_E_FIXED:
+            printf("W_E_FIXED\r\n");
             Washer_Error_Fixed();
             break;
 
@@ -28,6 +34,7 @@ static void Task_Washer_Error(void* pvParameters)
             break;
         }
         Washer_Error_Warning();
+        printf("Washer_Error_Warning\r\n");
     }
 }
 

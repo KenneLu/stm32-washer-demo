@@ -106,10 +106,8 @@ void Menu_Washer_DeInit(void)
 
 int8_t Menu_Washer_Start_Washer(void* Param)
 {
-	taskENTER_CRITICAL();
 	Washer_Init();
 	Menu_Washer_DeInit();
-	taskEXIT_CRITICAL();
 
 	return -1;
 }
@@ -330,7 +328,6 @@ void Menu_Washer_Param_Init(void)
 //洗衣机的主菜单
 int8_t Menu_Washer_Mode_Select(void* Param)
 {
-	Menu_Washer_Param_Init();
 	return  Menu_Run(Opt_Mode_Select, 0);
 }
 
