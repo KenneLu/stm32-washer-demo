@@ -435,6 +435,21 @@ void OLED_Update(void)
 	xTaskResumeAll();	//开调度器
 }
 
+void OLED_Update_Pure(void)
+{
+	//{OLED_Printf(128-6*6, 0, 6,"FPS %d", Get_FPS());	}	//显示帧率;解除注释开启
+
+	uint8_t j;
+	/*遍历每一页*/
+	for (j = 0; j < 8; j++)
+	{
+		/*设置光标位置为每一页的第一列*/
+		OLED_SetCursor(j, 0);
+		/*连续写入128个数据，将显存数组的数据写入到OLED硬件*/
+		OLED_WriteData(OLED_DisplayBuf[j], 128);
+	}
+}
+
 /**
   * 函    数：将OLED显存数组部分更新到OLED屏幕
   * 参    数：X 指定区域左上角的横坐标，范围：0~127

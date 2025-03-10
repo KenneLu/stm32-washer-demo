@@ -68,7 +68,7 @@ static void Key_Confirm_Active(void)
 	g_Menu_Keys.Confirm = 1;
 }
 
-static void Key_Quit_Active(void)
+static void Key_Back_Active(void)
 {
 	g_Menu_Keys.Back = 1;
 }
@@ -86,7 +86,7 @@ static void Menu_Key_Init(void)
 	if (pDev_KeyEncoder)
 	{
 		pDev_KeyEncoder->CBRegister_R(pDev_KeyEncoder, Key_Confirm_Active);
-		pDev_KeyEncoder->CBRegister_LP(pDev_KeyEncoder, Key_Quit_Active);
+		pDev_KeyEncoder->CBRegister_LP(pDev_KeyEncoder, Key_Back_Active);
 	}
 	pDev_KeyPower = Drv_Key_GetDevice(KEY_POWER);
 	if (pDev_KeyPower)
@@ -103,7 +103,7 @@ static void Menu_Key_DeInit(void)
 	if (pDev_KeyEncoder)
 	{
 		pDev_KeyEncoder->CBUnregister_R(pDev_KeyEncoder, Key_Confirm_Active);
-		pDev_KeyEncoder->CBUnregister_LP(pDev_KeyEncoder, Key_Quit_Active);
+		pDev_KeyEncoder->CBUnregister_LP(pDev_KeyEncoder, Key_Back_Active);
 	}
 	pDev_KeyPower = Drv_Key_GetDevice(KEY_POWER);
 	if (pDev_KeyPower)
@@ -249,7 +249,7 @@ int8_t Menu_Run(Option_Class* Option, int8_t Choose)
 		}
 
 		OLED_ShowNum(116, 56, Catch_i + 1, 2, OLED_6X8);						//右下角显示选中下标;
-		OLED_Update();
+		OLED_Update_Pure();
 		//int delay = 1000000; while(delay--);
 	/**********************************************************/
 

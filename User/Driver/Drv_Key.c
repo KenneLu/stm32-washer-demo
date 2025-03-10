@@ -7,7 +7,7 @@
 #define KEY_SCANTIME                SYS_MS * 20     // 20ms
 
 //连续长按时间
-#define KEY_PRESS_LONG_TIME         SYS_MS * 800    // 0.5s
+#define KEY_PRESS_LONG_TIME         SYS_MS * 700    // 0.7s
 
 //持续长按间隔时间
 #define KEY_PRESS_CONTINUE_TIME     SYS_MS * 150    // 150ms

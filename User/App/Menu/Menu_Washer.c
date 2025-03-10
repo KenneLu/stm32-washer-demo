@@ -149,16 +149,17 @@ void Menu_Washer_Power_On(void)
 		TASK_WASHER_DATA_STORE;
 		OLED_Clear_Easy();
 	}
-
-	// //正常启动
-	// TASK_WASHER_DATA_INIT;
-	// TASK_WASHER_DATA_STORE;
-	// OLED_Clear_Easy();
 }
 
 void Menu_Washer_Power_Off(void)
 {
 	// 客户主动关机
+	TASK_WASHER_DATA_INIT;
+	vTaskDelay(10);
+	g_pWDat->Shutdown_Type = CUSTOMER_SHUTDOWN;
+	TASK_WASHER_DATA_STORE;
+	vTaskDelay(10);
+
 	OLED_Clear_Easy();
 	OLED_ShowString_Easy(1, 1, "Power Off");
 	Delay_ms(200);

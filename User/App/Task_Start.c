@@ -61,7 +61,7 @@ static void Task_Start(void* pvParameters)
 void Do_Create_Task_Start(void)
 {
     BaseType_t xReturn = pdPASS;
-    xReturn = xTaskCreate(Task_Start, "Task_Start", 128, NULL, 1, &Task_Start_Handle);
+    xReturn = xTaskCreate(Task_Start, "Task_Start", 128, NULL, 0, &Task_Start_Handle);
     if (pdPASS == xReturn)
     {
         printf("Do_Create_Task_Start Success! \r\n");

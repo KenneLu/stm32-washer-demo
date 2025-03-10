@@ -201,8 +201,6 @@ void Washer_Init(void)
 	g_Washer_Error_Cur = NO_ERROR;
 	g_Loop_Cnt = 0;
 	g_Wash_Cnt_Cur = 0;
-	//g_Security_Monitor_On = 1;  // 启动安全监测
-	g_OLED_Need_Refresh = 1;	// 刷新OLED
 
 	// 显示初始化信息
 	Washer_OLED_Refresh();
@@ -219,15 +217,11 @@ void Washer_Init(void)
 	Washer_Key_Init(); // 初始化按键回调
 	Washer_Door_Lock(); // 锁门
 
-	Washer_Task_Init(); // 初始化任务
-
 	if (g_pWDat->State_Next == S_INIT)
-	{
 		g_pWDat->State_Next = S_HEAT_WATER;
-		Washer_State_Refresh(); // 状态切换，刷新OLED
-	}
+	Washer_State_Refresh(); // 状态切换，刷新OLED
 
-	g_OLED_Need_Refresh = 1; // 状态切换，刷新OLED
+	Washer_Task_Init(); // 初始化任务
 }
 
 void Washer_Back_To_Menu(void)
@@ -277,11 +271,6 @@ void Washer_Shutdown(void)
 		vTaskDelete(*Get_Task_Washer_Run_Handle());
 	xTaskResumeAll();
 
-	TASK_WASHER_DATA_INIT;
-	vTaskDelay(10);
-	g_pWDat->Shutdown_Type = CUSTOMER_SHUTDOWN;
-	TASK_WASHER_DATA_STORE;
-	vTaskDelay(10);
 	Menu_Washer_Power_Off();
 
 	// Task Delete

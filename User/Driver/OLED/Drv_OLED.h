@@ -27,6 +27,7 @@ void OLED_Init(void);
 
 /*更新函数*/
 void OLED_Update(void);
+void OLED_Update_Pure(void); // FreeRTOSMenu专用，不关闭调度器
 void OLED_UpdateArea(uint8_t X, uint8_t Y, uint8_t Width, uint8_t Height);
 
 /*显存控制函数*/
