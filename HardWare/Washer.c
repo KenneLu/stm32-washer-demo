@@ -24,7 +24,7 @@ uint8_t Washer_Data[10] = { 0 };
 #define LED_GPIO_RCC RCC_APB2Periph_GPIOA
 #define LED_GPIO_x GPIOA
 #define LED_GPIO_PIN_R GPIO_Pin_3
-#define LED_GPIO_PIN_B GPIO_Pin_10
+#define LED_GPIO_PIN_B GPIO_Pin_2
 
 typedef enum {
 	LED_RED = 0,
@@ -748,7 +748,7 @@ int8_t Washer_Run(void* Param)
 			MPU6050_GetData(&AccX, &AccY, &AccZ, &GyroX, &GyroY, &GyroZ);
 			AccX_Abs = AccX > 0 ? AccX : -AccX;
 			AccY_Abs = AccY > 0 ? AccY : -AccY;
-			if (AccX_Abs > 50 || AccY_Abs > 50) // 瞬时加速度大于50
+			if (AccX_Abs > 100 || AccY_Abs > 50) // 瞬时加速度大于50
 			{
 				Shake_Time++;
 				if (Shake_Time == 2)	g_Washer_Error_Cur = ERROR_SHAKE; // 持续200ms

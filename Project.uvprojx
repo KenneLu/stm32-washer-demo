@@ -711,6 +711,21 @@
               <FilePath>.\HardWare\DHT11.h</FilePath>
             </File>
             <File>
+              <FileName>Drv_Debug.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\HardWare\Drv_Debug.c</FilePath>
+            </File>
+            <File>
+              <FileName>Drv_USART.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\HardWare\Drv_USART.c</FilePath>
+            </File>
+            <File>
+              <FileName>Drv_USART.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\HardWare\Drv_USART.h</FilePath>
+            </File>
+            <File>
               <FileName>Encoder.c</FileName>
               <FileType>1</FileType>
               <FilePath>.\HardWare\Encoder.c</FilePath>
