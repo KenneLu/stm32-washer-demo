@@ -34,9 +34,9 @@ typedef enum
     W_DAT_STORE = 11,
     W_DAT_RESTORE = 12,
 } Washer_Data_Logic;
-#define TASK_WASHER_DATA_INIT   xTaskNotify(*Get_Task_Washer_Data_Handle(), W_DAT_INIT, eSetValueWithoutOverwrite);
-#define TASK_WASHER_DATA_STORE   xTaskNotify(*Get_Task_Washer_Data_Handle(), W_DAT_STORE, eSetValueWithoutOverwrite);
-#define TASK_WASHER_DATA_RESTORE   xTaskNotify(*Get_Task_Washer_Data_Handle(), W_DAT_RESTORE, eSetValueWithoutOverwrite);
+#define TASK_WASHER_DATA_INIT   xTaskNotify(*Get_Task_Washer_Data_Handle(), W_DAT_INIT, eSetValueWithOverwrite);
+#define TASK_WASHER_DATA_STORE   xTaskNotify(*Get_Task_Washer_Data_Handle(), W_DAT_STORE, eSetValueWithOverwrite);
+#define TASK_WASHER_DATA_RESTORE   xTaskNotify(*Get_Task_Washer_Data_Handle(), W_DAT_RESTORE, eSetValueWithOverwrite);
 
 
 //Task_Washer_Stop.c
@@ -62,8 +62,8 @@ typedef enum
     W_P_PAUSE = 10,
     W_P_CONTINUE = 11,
 } Washer_Pause_Logic;
-#define TASK_WASHER_PAUSE_PAUSE   xTaskNotify(*Get_Task_Washer_Pause_Handle(), W_P_PAUSE, eSetValueWithoutOverwrite);
-#define TASK_WASHER_PAUSE_CONTINUE   xTaskNotify(*Get_Task_Washer_Pause_Handle(), W_P_CONTINUE, eSetValueWithoutOverwrite);
+#define TASK_WASHER_PAUSE_PAUSE   xTaskNotify(*Get_Task_Washer_Pause_Handle(), W_P_PAUSE, eSetValueWithOverwrite);
+#define TASK_WASHER_PAUSE_CONTINUE   xTaskNotify(*Get_Task_Washer_Pause_Handle(), W_P_CONTINUE, eSetValueWithOverwrite);
 
 
 //Task_Washer_Error.c
@@ -74,8 +74,8 @@ typedef enum
     W_E_OCCUR = 10,
     W_E_FIXED = 11,
 } Washer_Error_Logic;
-#define TASK_WASHER_ERROR_OCCUR   xTaskNotify(*Get_Task_Washer_Error_Handle(), W_E_OCCUR, eSetValueWithoutOverwrite);
-#define TASK_WASHER_ERROR_FIXED   xTaskNotify(*Get_Task_Washer_Error_Handle(), W_E_FIXED, eSetValueWithoutOverwrite);
+#define TASK_WASHER_ERROR_OCCUR   xTaskNotify(*Get_Task_Washer_Error_Handle(), W_E_OCCUR, eSetValueWithOverwrite);
+#define TASK_WASHER_ERROR_FIXED   xTaskNotify(*Get_Task_Washer_Error_Handle(), W_E_FIXED, eSetValueWithOverwrite);
 
 
 //Task_Washer_Run.c

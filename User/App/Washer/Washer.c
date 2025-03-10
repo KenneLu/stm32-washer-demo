@@ -157,6 +157,8 @@ void Washer_OLED_Refresh()
 
 void Washer_Task_Init(void)
 {
+	vTaskSuspendAll();
+
 	if (*Get_Task_Washer_Stop_Handle() == 0)
 	{
 		Do_Create_Task_Washer_Stop();
@@ -189,10 +191,14 @@ void Washer_Task_Init(void)
 		Do_Create_Task_Washer_Run();
 	else
 		vTaskResume(*Get_Task_Washer_Run_Handle());
+
+	xTaskResumeAll();
 }
 
 void Washer_Task_DeInit(void)
 {
+	vTaskSuspendAll();
+
 	// if (*Get_Task_Washer_Stop_Handle())
 	// 	vTaskSuspend(*Get_Task_Washer_Stop_Handle());
 
@@ -205,11 +211,13 @@ void Washer_Task_DeInit(void)
 	// if (*Get_Task_Washer_Pause_Handle())
 	// 	vTaskSuspend(*Get_Task_Washer_Pause_Handle());
 
-	// if (*Get_Task_Washer_Error_Handle())
-	// 	vTaskSuspend(*Get_Task_Washer_Error_Handle());
+	if (*Get_Task_Washer_Error_Handle())
+		vTaskSuspend(*Get_Task_Washer_Error_Handle());
 
 	if (*Get_Task_Washer_Run_Handle())
 		vTaskSuspend(*Get_Task_Washer_Run_Handle());
+
+	xTaskResumeAll();
 }
 
 void Washer_Init(void)
@@ -309,11 +317,15 @@ void Washer_Stop()
 
 void Washer_Pause()
 {
+	if (g_pWDat->Status_Cur == S_ERROR)
+		return;
 	Washer_Stop();
 	Washer_OLED_Refresh();
 	OLED_Printf_Easy(3, 1, "pause...");
 	g_pWDat->Status_Cur = S_PAUSE;
 	TASK_WASHER_DATA_STORE;
+	if (*Get_Task_Washer_Run_Handle())
+		vTaskSuspend(*Get_Task_Washer_Run_Handle());
 }
 
 void Washer_Resume()
@@ -322,28 +334,35 @@ void Washer_Resume()
 	Washer_OLED_Refresh();
 	g_pWDat->Status_Cur = g_pWDat->Status_Next;
 	g_OLED_Need_Refresh = 1;
+	if (*Get_Task_Washer_Run_Handle())
+		vTaskResume(*Get_Task_Washer_Run_Handle());
 }
 
 void Washer_Error_Occur()
 {
-	//刷新报错信息
-	Washer_OLED_Refresh();
-	OLED_Printf_Easy(1, 1, "ERROR!!!");
-	switch (g_Washer_Error_Cur)
+	if (g_OLED_Need_Refresh)
 	{
-	case ERROR_TILT:
-		OLED_Printf_Easy(2, 1, "Washer Tilt!");
-		break;
-	case ERROR_SHAKE:
-		OLED_Printf_Easy(2, 1, "Washer Shake!");
-		break;
-	case ERROR_DOOR_OPEN:
-		OLED_Printf_Easy(2, 1, "Close The Door!");
-		break;
-	default:
-		break;
+		Washer_Stop();
+		g_OLED_Need_Refresh = 0; // 必须先立即清零，否则后面更新的ERROR无法显示
+
+		//刷新报错信息
+		Washer_OLED_Refresh();
+		OLED_Printf_Easy(1, 1, "ERROR!!!");
+		switch (g_Washer_Error_Cur)
+		{
+		case ERROR_TILT:
+			OLED_Printf_Easy(2, 1, "Washer Tilt!");
+			break;
+		case ERROR_SHAKE:
+			OLED_Printf_Easy(2, 1, "Washer Shake!");
+			break;
+		case ERROR_DOOR_OPEN:
+			OLED_Printf_Easy(2, 1, "Close The Door!");
+			break;
+		default:
+			break;
+		}
 	}
-	Washer_Stop();
 }
 
 void Washer_Error_Warning()
@@ -363,7 +382,7 @@ void Washer_Error_Fixed()
 	OLED_Printf_Easy(1, 1, "ERROR Fixed!");
 	Delay_ms(500);
 	TASK_WASHER_PAUSE_PAUSE;
-	if (*Get_Task_Washer_Error_Handle() == 0)
+	if (*Get_Task_Washer_Error_Handle())
 		vTaskSuspend(*Get_Task_Washer_Error_Handle());
 }
 
@@ -411,29 +430,31 @@ void Washer_Safety(void)
 		Shake_Time = 0;
 	}
 
-
 	if (g_Washer_Error_Cur == NO_ERROR) // 无异常
 	{
 		if (g_Washer_Error_Last != NO_ERROR) // 异常解除
 		{
-			TASK_WASHER_ERROR_FIXED;
 			g_Washer_Error_Last = NO_ERROR;
+			g_pWDat->Status_Cur = g_pWDat->Status_Next;
+			TASK_WASHER_ERROR_FIXED;
 		}
+		printf("NO_ERROR\r\n");
 		return;
 	}
 
 	// 异常发生，同步错误信息
 	if (g_Washer_Error_Last != g_Washer_Error_Cur)
 	{
-
-
+		g_pWDat->Status_Cur = S_ERROR;
+		g_OLED_Need_Refresh = 1;
+		// printf("g_OLED_Need_Refresh\r\n");
 		g_Washer_Error_Last = g_Washer_Error_Cur;
+		// 异常发生，报警
+		TASK_WASHER_ERROR_OCCUR;
+		if (*Get_Task_Washer_Error_Handle())
+			vTaskResume(*Get_Task_Washer_Error_Handle());
 	}
 
-	// 异常发生，报警
-	if (*Get_Task_Washer_Error_Handle() == 0)
-		vTaskResume(*Get_Task_Washer_Error_Handle());
-	TASK_WASHER_ERROR_OCCUR;
 }
 
 

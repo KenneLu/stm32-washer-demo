@@ -12,7 +12,7 @@ static void Task_Washer_Pause(void* pvParameters)
         vTaskSuspendAll();	//关调度器
         printf("Task_Washer_Pause Running!\r\n");
         xTaskResumeAll();	//开调度器
-        
+
         //等待被其他任务唤醒
         uint32_t Value = 0;
         xTaskNotifyWait(pdTRUE, pdFALSE, &Value, portMAX_DELAY);
@@ -20,14 +20,10 @@ static void Task_Washer_Pause(void* pvParameters)
         {
         case W_P_PAUSE:
             Washer_Pause();
-            if (*Get_Task_Washer_Run_Handle() != NULL)
-                vTaskSuspend(*Get_Task_Washer_Run_Handle());
             break;
 
         case W_P_CONTINUE:
             Washer_Resume();
-            if (*Get_Task_Washer_Run_Handle() != NULL)
-                vTaskResume(*Get_Task_Washer_Run_Handle());
             break;
 
         default:
