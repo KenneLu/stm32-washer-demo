@@ -11,7 +11,7 @@ typedef enum {
     S_WASH_RIGHT_SPEED_UP_15,    /*右转低速状态*/
     S_WASH_RIGHT_SPEED_UP_40,    /*右转中速状态*/
     S_WASH_RIGHT_SPEED_DOWN_15,  /*右转降速状态*/
-} WASH_STATUS;
+} WASH_STATE;
 
 typedef enum {
     S_SPIN_STOP,        	     /*停机状态*/
@@ -20,7 +20,7 @@ typedef enum {
     S_SPIN_LEFT_SPEED_UP_60,     /*左传中速状态*/
     S_SPIN_LEFT_SPEED_DOWN_40,   /*左传低中速状态*/
     S_SPIN_LEFT_SPEED_DOWN_20,   /*左传低速状态*/
-} SPIN_DRY_STATUS;
+} SPIN_DRY_STATE;
 
 typedef enum {
     S_INIT,         /*初始化状态*/
@@ -36,7 +36,7 @@ typedef enum {
     S_FINISH,       /*完成状态*/
     S_QUIT,         /*退出运行*/
     S_NUM,          /*状态总数(无效状态)*/
-} WASHER_STATUS;
+} WASHER_STATE;
 
 typedef enum {
     ACCIDENT_SHUTDOWN = 1,
@@ -64,9 +64,9 @@ typedef struct Washer_Data
     uint8_t Heat_Temp;		        //烘干温度（℃）
     uint8_t Total_Time;		        //洗衣时间总和（小时-分）
     SHUTDOWN_TYPE Shutdown_Type;	//关机类型
-    WASHER_STATUS Status_Next;      //下一个状态
-    WASHER_STATUS Status_Cur;       //当前状态
-    WASHER_STATUS Status_Last;      //上一个状态
+    WASHER_STATE State_Next;      //下一个状态
+    WASHER_STATE State_Cur;       //当前状态
+    WASHER_STATE State_Last;      //上一个状态
     uint8_t(*DataInit)(struct Washer_Data** pData);
     uint8_t(*DataStore)(struct Washer_Data* pData);
     uint8_t(*DataRestore)(struct Washer_Data** pData);

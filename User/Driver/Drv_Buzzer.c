@@ -81,10 +81,10 @@ void Drv_Buzzer_Init(void)
 		g_Buzzer_Datas[i].HW = hw;
 
 		// Device Init
-		g_Buzzer_Devs[i].On_Buzzer = On_Buzzer;
-		g_Buzzer_Devs[i].Off_Buzzer = Off_Buzzer;
-		g_Buzzer_Devs[i].Revert_Buzzer = Revert_Buzzer;
-		g_Buzzer_Devs[i].Is_On_Buzzer = Is_On_Buzzer;
+		g_Buzzer_Devs[i].On = On_Buzzer;
+		g_Buzzer_Devs[i].Off = Off_Buzzer;
+		g_Buzzer_Devs[i].Revert = Revert_Buzzer;
+		g_Buzzer_Devs[i].Is_On = Is_On_Buzzer;
 		g_Buzzer_Devs[i].Priv_Data = (void*)&g_Buzzer_Datas[i];
 
 		// Hardware Init

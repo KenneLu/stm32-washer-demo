@@ -8,11 +8,11 @@ static void Task_Washer_Run(void* pvParameters)
 {
     while (1)
     {
-        vTaskSuspendAll();	//关调度器
-        printf("Task_Washer_Run Running! \r\n");
-        xTaskResumeAll();	//开调度器
-        
-        Washer_Run();
+        // vTaskSuspendAll();	//关调度器
+        // printf("Task_Washer_Run Running! \r\n");
+        // xTaskResumeAll();	//开调度器
+
+        Washer_State_Machine();
     }
 }
 

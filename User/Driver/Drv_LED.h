@@ -10,10 +10,10 @@ typedef enum
 } LED_ID;
 
 typedef struct LED_Device {
-    void(*On_LED)(struct LED_Device* pDev);
-    void(*Off_LED)(struct LED_Device* pDev);
-    void(*Revert_LED)(struct LED_Device* pDev);
-    uint8_t(*Is_On_LED)(struct LED_Device* pDev);
+    void(*On)(struct LED_Device* pDev);
+    void(*Off)(struct LED_Device* pDev);
+    void(*Revert)(struct LED_Device* pDev);
+    uint8_t(*Is_On)(struct LED_Device* pDev);
     void* Priv_Data;
 } LED_Device;
 

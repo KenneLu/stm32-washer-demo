@@ -129,31 +129,31 @@ void Menu_Washer_Power_On(void)
 	//等待 Task_Start 完成初始化
 	ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
 
-	// //意外掉电重启
-	// if (g_pWDat->Shutdown_Type == ACCIDENT_SHUTDOWN)
-	// {
-	// 	OLED_ShowString_Easy(1, 1, "Restore Last");
-	// 	Delay_ms(200);
-	// 	OLED_ShowString_Easy(1, 1, "Restore Last .");
-	// 	Delay_ms(200);
-	// 	OLED_ShowString_Easy(1, 1, "Restore Last ..");
-	// 	Delay_ms(200);
-	// 	OLED_ShowString_Easy(1, 1, "Restore Last ...");
-	// 	Delay_ms(200);
-	// 	Menu_Washer_Start_Washer(0);
-	// }
-	// else
-	// {
-	// 	//正常启动
-	// 	TASK_WASHER_DATA_INIT;
-	// 	TASK_WASHER_DATA_STORE;
-	// 	OLED_Clear_Easy();
-	// }
+	//意外掉电重启
+	if (g_pWDat->Shutdown_Type == ACCIDENT_SHUTDOWN)
+	{
+		OLED_ShowString_Easy(1, 1, "Restore Last");
+		Delay_ms(200);
+		OLED_ShowString_Easy(1, 1, "Restore Last .");
+		Delay_ms(200);
+		OLED_ShowString_Easy(1, 1, "Restore Last ..");
+		Delay_ms(200);
+		OLED_ShowString_Easy(1, 1, "Restore Last ...");
+		Delay_ms(200);
+		Menu_Washer_Start_Washer(0);
+	}
+	else
+	{
+		//正常启动
+		TASK_WASHER_DATA_INIT;
+		TASK_WASHER_DATA_STORE;
+		OLED_Clear_Easy();
+	}
 
-	//正常启动
-	TASK_WASHER_DATA_INIT;
-	TASK_WASHER_DATA_STORE;
-	OLED_Clear_Easy();
+	// //正常启动
+	// TASK_WASHER_DATA_INIT;
+	// TASK_WASHER_DATA_STORE;
+	// OLED_Clear_Easy();
 }
 
 void Menu_Washer_Power_Off(void)
@@ -300,7 +300,11 @@ void Menu_Washer_Param_Init(void)
 	for (i = 0; i < sizeof(Opt_Detail_Wash) / sizeof(Option_Class); i++)
 	{
 		Opt_Detail_Wash_Cur[i].Name = malloc(strlen(Opt_Detail_Wash[i].Name) * sizeof(char));
-		if (Opt_Detail_Wash_Cur[i].Name == NULL) while (1) OLED_ShowString_Easy(1, 1, "NULLLLL1");
+		if (Opt_Detail_Wash_Cur[i].Name == NULL)
+		{
+			printf("malloc Opt_Detail_Wash_Cur[%d].Name failed\r\n", i);
+			while (1) OLED_ShowString_Easy(1, 1, "NULL1");
+		}
 		strcpy(Opt_Detail_Wash_Cur[i].Name, Opt_Detail_Wash[i].Name);
 		Opt_Detail_Wash_Cur[i].Func = Opt_Detail_Wash[i].Func;
 		Opt_Detail_Wash_Cur[i].pFuncParam = Opt_Detail_Wash[i].pFuncParam;
@@ -309,7 +313,11 @@ void Menu_Washer_Param_Init(void)
 	for (i = 0; i < sizeof(Opt_Detail_Spin) / sizeof(Option_Class); i++)
 	{
 		Opt_Detail_Spin_Cur[i].Name = malloc(strlen(Opt_Detail_Spin[i].Name) * sizeof(char) + 1);
-		if (Opt_Detail_Spin_Cur[i].Name == NULL) while (1) OLED_ShowString_Easy(1, 1, "NULLLLL2");
+		if (Opt_Detail_Spin_Cur[i].Name == NULL)
+		{
+			printf("malloc Opt_Detail_Spin_Cur[%d].Name failed\r\n", i);
+			while (1) OLED_ShowString_Easy(1, 1, "NULL2");
+		}
 		strcpy(Opt_Detail_Spin_Cur[i].Name, Opt_Detail_Spin[i].Name);
 		Opt_Detail_Spin_Cur[i].Func = Opt_Detail_Spin[i].Func;
 		Opt_Detail_Spin_Cur[i].pFuncParam = Opt_Detail_Spin[i].pFuncParam;
@@ -318,7 +326,11 @@ void Menu_Washer_Param_Init(void)
 	for (i = 0; i < sizeof(Opt_Detail_Heat) / sizeof(Option_Class); i++)
 	{
 		Opt_Detail_Heat_Cur[i].Name = malloc(strlen(Opt_Detail_Heat[i].Name) * sizeof(char) + 1);
-		if (Opt_Detail_Heat_Cur[i].Name == NULL) while (1) OLED_ShowString_Easy(1, 1, "NULLLLL3");
+		if (Opt_Detail_Heat_Cur[i].Name == NULL)
+		{
+			printf("malloc Opt_Detail_Heat_Cur[%d].Name failed\r\n", i);
+			while (1) OLED_ShowString_Easy(1, 1, "NULL3");
+		}
 		strcpy(Opt_Detail_Heat_Cur[i].Name, Opt_Detail_Heat[i].Name);
 		Opt_Detail_Heat_Cur[i].Func = Opt_Detail_Heat[i].Func;
 		Opt_Detail_Heat_Cur[i].pFuncParam = Opt_Detail_Heat[i].pFuncParam;
@@ -476,7 +488,11 @@ void Insert_SubString(char** Str, char* SubStr, int Index)
 
 	// 为新字符串分配内存
 	char* NewStr = (char*)malloc(NewStrLen + 1 * sizeof(char)); // +1 for null terminator
-	if (NewStr == NULL) while (1) OLED_ShowString_Easy(1, 1, "NULLLLLL0");
+	if (NewStr == NULL)
+	{
+		printf("malloc NewStr failed\r\n");
+		while (1) OLED_ShowString_Easy(1, 1, "NULL4");
+	}
 
 	strncpy(NewStr, *Str, Index);	// 复制原始字符串的前半部分到新字符串中
 	NewStr[Index] = '\0'; 			// 确保前半部分以null结尾

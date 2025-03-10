@@ -14,8 +14,7 @@ typedef enum
 
 
 void Washer_Init(void);
-void Washer_DeInit(void);
-void Washer_Run(void);
+void Washer_State_Machine(void);
 void Washer_Stop(void);
 void Washer_Key(void);
 void Washer_Pause(void);

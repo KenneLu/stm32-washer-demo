@@ -11,19 +11,22 @@ static void Task_Washer_Data(void* pvParameters)
         vTaskSuspendAll();	//关调度器
         printf("Task_Washer_Data Running! \r\n");
         xTaskResumeAll();	//开调度器
-        
+
         //任务通知阻塞
         uint32_t Value = 0;
         xTaskNotifyWait(pdTRUE, pdFALSE, &Value, portMAX_DELAY);
         switch (Value)
         {
         case W_DAT_INIT:
+            printf("W_DAT_INIT\r\n");
             g_pWDat->DataInit(&g_pWDat);
             break;
         case W_DAT_STORE:
+            printf("W_DAT_INIT\r\n");
             g_pWDat->DataStore(g_pWDat);
             break;
         case W_DAT_RESTORE:
+            printf("W_DAT_INIT\r\n");
             g_pWDat->DataRestore(&g_pWDat);
             break;
         default:

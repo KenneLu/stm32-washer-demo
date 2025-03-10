@@ -89,10 +89,10 @@ void Drv_LED_Init(void)
         g_LED_Datas[i].HW = hw;
 
         // Device Init
-        g_LED_Devs[i].On_LED = On_LED;
-        g_LED_Devs[i].Off_LED = Off_LED;
-        g_LED_Devs[i].Revert_LED = Revert_LED;
-        g_LED_Devs[i].Is_On_LED = Is_On_LED;
+        g_LED_Devs[i].On = On_LED;
+        g_LED_Devs[i].Off = Off_LED;
+        g_LED_Devs[i].Revert = Revert_LED;
+        g_LED_Devs[i].Is_On = Is_On_LED;
         g_LED_Devs[i].Priv_Data = (void*)&g_LED_Datas[i];
 
         // Hardware Init
