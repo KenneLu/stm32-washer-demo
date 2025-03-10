@@ -821,6 +821,11 @@
               <FilePath>..\User\Driver\Base\Drv_AD.h</FilePath>
             </File>
             <File>
+              <FileName>Drv_Debug.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\User\Driver\Base\Drv_Debug.c</FilePath>
+            </File>
+            <File>
               <FileName>Drv_I2C_HW.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\User\Driver\Base\Drv_I2C_HW.c</FilePath>
@@ -849,6 +854,16 @@
               <FileName>Drv_SPI.h</FileName>
               <FileType>5</FileType>
               <FilePath>..\User\Driver\Base\Drv_SPI.h</FilePath>
+            </File>
+            <File>
+              <FileName>Drv_USART.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\User\Driver\Base\Drv_USART.c</FilePath>
+            </File>
+            <File>
+              <FileName>Drv_USART.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\User\Driver\Base\Drv_USART.h</FilePath>
             </File>
           </Files>
         </Group>
