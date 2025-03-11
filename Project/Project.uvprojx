@@ -696,6 +696,11 @@
               <FilePath>..\User\App\Task_Manager.h</FilePath>
             </File>
             <File>
+              <FileName>Task_OLED.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\User\App\Task_OLED.c</FilePath>
+            </File>
+            <File>
               <FileName>Task_Start.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\User\App\Task_Start.c</FilePath>
@@ -994,6 +999,11 @@
               <FileName>Drv_OLED_Data_Image.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\User\Driver\OLED\Drv_OLED_Data_Image.c</FilePath>
+            </File>
+            <File>
+              <FileName>Drv_OLED_Data_Queue.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\User\Driver\OLED\Drv_OLED_Data_Queue.c</FilePath>
             </File>
             <File>
               <FileName>Drv_OLED_Patch_byAdam.c</FileName>

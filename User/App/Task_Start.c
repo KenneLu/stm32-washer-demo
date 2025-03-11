@@ -25,6 +25,7 @@ static void Task_Start(void* pvParameters)
 {
     //显示、控制初始化
     OLED_Init();
+    Do_Create_Task_OLED();
     Drv_Key_Init();
     Dev_Encoder_Init();
     Do_Create_Task_KeyScan();

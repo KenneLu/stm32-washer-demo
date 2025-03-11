@@ -51,10 +51,10 @@ void OLED_Printf(uint8_t X, uint8_t Y, uint8_t FontSize, char* format, ...);
 /*显示函数简化版*/
 void OLED_Clear_Easy(void);
 void OLED_ShowChar_Easy(uint8_t Line, uint8_t Column, char Chare);
-void OLED_ShowString_Easy(uint8_t Line, uint8_t Column, char* Stringe);
-void OLED_ShowNum_Easy(uint8_t Line, uint8_t Column, uint32_t Number, uint8_t Lengthe);
-void OLED_ShowSignedNum_Easy(uint8_t Line, uint8_t Column, int32_t Number, uint8_t Lengthe);
-void OLED_ShowHexNum_Easy(uint8_t Line, uint8_t Column, uint32_t Number, uint8_t Lengthe);
+void OLED_ShowString_Easy(uint8_t Line, uint8_t Column, char* String);
+void OLED_ShowNum_Easy(uint8_t Line, uint8_t Column, uint32_t Number, uint8_t Length);
+void OLED_ShowSignedNum_Easy(uint8_t Line, uint8_t Column, int32_t Number, uint8_t Length);
+void OLED_ShowHexNum_Easy(uint8_t Line, uint8_t Column, uint32_t Number, uint8_t Length);
 void OLED_ShowBinNum_Easy(uint8_t Line, uint8_t Column, uint32_t Number, uint8_t Length);
 void OLED_ShowFloatNum_Easy(uint8_t Line, uint8_t Column, double Number, uint8_t IntLength, uint8_t FraLengthe);
 void OLED_ShowChinese_Easy(uint8_t Line, uint8_t Column, char* Chinese);

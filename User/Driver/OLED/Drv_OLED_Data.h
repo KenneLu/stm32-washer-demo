@@ -1,6 +1,8 @@
 #ifndef __OLED_DATA_H
 #define __OLED_DATA_H
 
+/*****************江协科技|版权所有****************/
+/*****************jiangxiekeji.com*****************/
 #include <stdint.h>
 
 /*中文字符字节宽度*/
@@ -26,11 +28,48 @@ extern const uint8_t Diode[];
 extern const uint8_t Cursor[];
 extern const uint8_t goutou[];
 extern const uint8_t Wallpaper[];
-
-//...
-
-#endif
-
-
 /*****************江协科技|版权所有****************/
 /*****************jiangxiekeji.com*****************/
+
+
+
+/*****************Kenneth****************/
+// Data_Queue 相关结构体
+
+#define OLED_UPDATE OLED_Send((OLED_DATA_DISPLAY) { .Cmd = OLED_CMD_UPDATE });
+#define OLED_CLEAR OLED_Send((OLED_DATA_DISPLAY) { .Cmd = OLED_CMD_CLEAR });
+
+typedef enum {
+	OLED_CMD_PUSH,
+	OLED_CMD_UPDATE,
+	OLED_CMD_CLEAR,
+} OLED_DATA_CMD;
+
+typedef enum {
+	OLED_NUM,
+	OLED_STR,
+	OLED_RECT,
+	OLED_NUM_E,
+	OLED_STR_E,
+	OLED_CN_E,
+} OLED_DATDA_TYPE;
+
+typedef struct {
+	OLED_DATA_CMD Cmd;
+	OLED_DATDA_TYPE Type;
+	union {
+		struct { uint8_t Line; uint8_t Column; uint32_t Number; uint8_t Length; } Num;
+		struct { uint8_t Line; uint8_t Column; char* String; } Str;
+		struct { uint8_t Line; uint8_t Column; char* Chinese; } CN;
+		struct { uint8_t X; uint8_t Y; uint8_t Width; uint8_t Height; uint8_t IsFilled; } Rect;
+	} Union;
+} OLED_DATA_DISPLAY;
+
+
+void Drv_OLED_Data_Queue_Init(void);
+void OLED_Send(OLED_DATA_DISPLAY Display);
+void OLED_Display(void);
+/*****************Kenneth****************/
+
+
+#endif

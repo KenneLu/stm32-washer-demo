@@ -19,7 +19,7 @@ static void Task_Washer_Run(void* pvParameters)
 void Do_Create_Task_Washer_Run(void)
 {
     BaseType_t xReturn = pdPASS;
-    xReturn = xTaskCreate(Task_Washer_Run, "Task_Washer_Run", 512, NULL, 0, &Task_Washer_Run_Handle);
+    xReturn = xTaskCreate(Task_Washer_Run, "Task_Washer_Run", 128, NULL, 0, &Task_Washer_Run_Handle);
     if (pdPASS == xReturn)
     {
         printf("Create [Task_Washer_Run] Success!\r\n");

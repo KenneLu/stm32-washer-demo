@@ -112,6 +112,7 @@ static void Menu_Key_DeInit(void)
 	}
 }
 
+
 //--------------------------------------------
 
 
@@ -167,13 +168,14 @@ int8_t Menu_Run(Option_Class* Option, int8_t Choose)
 
 	int8_t Show_d = 0, Show_i_temp = Max;				//显示动画相关;
 
-	int Init_Flag = 1;	// 首次运行更新一下，以显示指定位置
+	int Is_Init = 0;	// 首次运行更新一下，以显示指定位置
 	while (1)
 	{
-		OLED_Clear();
+		// OLED_Clear();
+		OLED_CLEAR;
 
 		Roll_Event = Menu_Roll_Event();				//获取滚动事件
-		if (Init_Flag || Roll_Event)				//如果有按键事件;
+		if (Is_Init == 0 || Roll_Event)
 		{
 			Cursor_i += Roll_Event;					//更新下标
 			Catch_i += Roll_Event;
@@ -185,7 +187,7 @@ int8_t Menu_Run(Option_Class* Option, int8_t Choose)
 			if (Cursor_i > 3) { Cursor_i = 3; }
 			if (Cursor_i > Max) { Cursor_i = Max; }
 
-			Init_Flag = 0;
+			Is_Init = 1;
 		}
 
 		/**********************************************************/
@@ -210,7 +212,14 @@ int8_t Menu_Run(Option_Class* Option, int8_t Choose)
 		for (int8_t i = 0; i < 5; i++)				//遍历显示选项名
 		{
 			if (Show_i + i > Max) { break; }
-			OLED_ShowString(2, (i * WORD_H) + Show_d, Option[Show_i + i].Name, OLED_8X16);
+			// OLED_ShowString(2, (i * WORD_H) + Show_d, Option[Show_i + i].Name, OLED_8X16);
+			OLED_Send((OLED_DATA_DISPLAY) {
+				.Cmd = OLED_CMD_PUSH,
+					.Type = OLED_STR,
+					.Union.Str.Line = 2,
+					.Union.Str.Column = ((i * WORD_H) + Show_d),
+					.Union.Str.String = Option[Show_i + i].Name,
+			});
 		}
 
 		/**********************************************************/
@@ -245,11 +254,31 @@ int8_t Menu_Run(Option_Class* Option, int8_t Choose)
 		}
 		if (CurStyle == frame)
 		{
-			OLED_DrawRectangle(0, Cursor_i_d0, Cursor_len_d0, WORD_H, 0);		//矩形光标
+			// OLED_DrawRectangle(0, Cursor_i_d0, Cursor_len_d0, WORD_H, 0);		//矩形光标
+			OLED_Send((OLED_DATA_DISPLAY) {
+				.Cmd = OLED_CMD_PUSH,
+					.Type = OLED_RECT,
+					.Union.Rect.X = 0,
+					.Union.Rect.Y = Cursor_i_d0 + 1,
+					.Union.Rect.Width = Cursor_len_d0,
+					.Union.Rect.Height = WORD_H,
+					.Union.Rect.IsFilled = 0,
+			});
 		}
 
-		OLED_ShowNum(116, 56, Catch_i + 1, 2, OLED_6X8);						//右下角显示选中下标;
-		OLED_Update_Pure();
+		// OLED_ShowNum(116, 56, Catch_i + 1, 2, OLED_6X8);						//右下角显示选中下标;
+		OLED_Send((OLED_DATA_DISPLAY) {
+			.Cmd = OLED_CMD_PUSH,
+				.Type = OLED_NUM,
+				.Union.Num.Line = 116,
+				.Union.Num.Column = 56,
+				.Union.Num.Number = Catch_i + 1,
+				.Union.Num.Length = 2,
+		});
+
+		// OLED_Update_Pure();
+		OLED_UPDATE;
+
 		//int delay = 1000000; while(delay--);
 	/**********************************************************/
 
@@ -302,4 +331,3 @@ uint8_t Get_NameLen(char* String)
 	}
 	return len;
 }
-

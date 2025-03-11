@@ -83,7 +83,9 @@ extern void Do_Create_Task_Washer_Run(void);
 extern TaskHandle_t* Get_Task_Washer_Run_Handle(void);
 
 
-
+//Task_OLED.c
+extern void Do_Create_Task_OLED(void);
+extern TaskHandle_t* Get_Task_OLED_Handle(void);
 
 
 #endif

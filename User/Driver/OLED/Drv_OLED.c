@@ -184,6 +184,8 @@ void OLED_WriteData(uint8_t* Data, uint8_t Count)
   */
 void OLED_Init(void)
 {
+	Drv_OLED_Data_Queue_Init();	//初始化数据队列
+
 	OLED_I2C_Init();			//先调用底层的端口初始化
 
 	/*写入一系列的命令，对OLED进行初始化配置*/
@@ -835,14 +837,14 @@ void OLED_ShowChar_Easy(uint8_t Line, uint8_t Column, char Chare)
 	OLED_ShowChar(--Column * 8, --Line * 16, Chare, OLED_8X16);
 	OLED_Update();
 }
-void OLED_ShowString_Easy(uint8_t Line, uint8_t Column, char* Stringe)
+void OLED_ShowString_Easy(uint8_t Line, uint8_t Column, char* String)
 {
-	OLED_ShowString(--Column * 8, --Line * 16, Stringe, OLED_8X16);
+	OLED_ShowString(--Column * 8, --Line * 16, String, OLED_8X16);
 	OLED_Update();
 }
-void OLED_ShowNum_Easy(uint8_t Line, uint8_t Column, uint32_t Number, uint8_t Lengthe)
+void OLED_ShowNum_Easy(uint8_t Line, uint8_t Column, uint32_t Number, uint8_t Length)
 {
-	OLED_ShowNum(--Column * 8, --Line * 16, Number, Lengthe, OLED_8X16);
+	OLED_ShowNum(--Column * 8, --Line * 16, Number, Length, OLED_8X16);
 	OLED_Update();
 }
 void OLED_ShowSignedNum_Easy(uint8_t Line, uint8_t Column, int32_t Number, uint8_t Length)
@@ -850,9 +852,9 @@ void OLED_ShowSignedNum_Easy(uint8_t Line, uint8_t Column, int32_t Number, uint8
 	OLED_ShowSignedNum(--Column * 8, --Line * 16, Number, Length, OLED_8X16);
 	OLED_Update();
 }
-void OLED_ShowHexNum_Easy(uint8_t Line, uint8_t Column, uint32_t Number, uint8_t Lengthe)
+void OLED_ShowHexNum_Easy(uint8_t Line, uint8_t Column, uint32_t Number, uint8_t Length)
 {
-	OLED_ShowHexNum(--Column * 8, --Line * 16, Number, Lengthe, OLED_8X16);
+	OLED_ShowHexNum(--Column * 8, --Line * 16, Number, Length, OLED_8X16);
 	OLED_Update();
 }
 void OLED_ShowBinNum_Easy(uint8_t Line, uint8_t Column, uint32_t Number, uint8_t Length)
