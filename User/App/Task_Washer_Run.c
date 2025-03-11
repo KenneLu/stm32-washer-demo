@@ -22,11 +22,11 @@ void Do_Create_Task_Washer_Run(void)
     xReturn = xTaskCreate(Task_Washer_Run, "Task_Washer_Run", 512, NULL, 0, &Task_Washer_Run_Handle);
     if (pdPASS == xReturn)
     {
-        printf("Create_Task_Washer_Run Success! \r\n");
+        printf("Create [Task_Washer_Run] Success!\r\n");
     }
     else
     {
-        printf("Error:Create_Task_Washer_Run! \r\n");
+        printf("Create [Task_Washer_Run] Failed!\r\n");
     }
 }
 

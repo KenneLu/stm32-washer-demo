@@ -26,11 +26,11 @@ void Do_Create_Task_Washer_Key(void)
     xReturn = xTaskCreate(Task_Washer_Key, "Task_Washer_Key", 128, NULL, 2, &Task_Washer_Key_Handle);
     if (pdPASS == xReturn)
     {
-        printf("Create_Task_Washer_Key Success! \r\n");
+        printf("Create [Task_Washer_Key] Success!\r\n");
     }
     else
     {
-        printf("Key:Create_Task_Washer_Key! \r\n");
+        printf("Create [Task_Washer_Key] Failed!r\n");
     }
 }
 

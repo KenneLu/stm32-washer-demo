@@ -38,11 +38,11 @@ void Do_Create_Task_Washer_Pause(void)
     xReturn = xTaskCreate(Task_Washer_Pause, "Task_Washer_Pause", 128, NULL, 1, &Task_Washer_Pause_Handle);
     if (pdPASS == xReturn)
     {
-        printf("Create_Task_Washer_Pause Success! \r\n");
+        printf("Create [Task_Washer_Pause] Success!\r\n");
     }
     else
     {
-        printf("Error:Create_Task_Washer_Pause! \r\n");
+        printf("Create [Task_Washer_Pause] Failed!\r\n");
     }
 }
 

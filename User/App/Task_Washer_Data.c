@@ -41,11 +41,11 @@ void Do_Create_Task_Washer_Data(void)
     xReturn = xTaskCreate(Task_Washer_Data, "Task_Washer_Data", 128, NULL, 2, &Task_Washer_Data_Handle);
     if (pdPASS == xReturn)
     {
-        printf("Create_Task_Washer_Data Success! \r\n");
+        printf("Create [Task_Washer_Data] Success!\r\n");
     }
     else
     {
-        printf("Error:Create_Task_Washer_Data! \r\n");
+        printf("Create [Task_Washer_Data] Failed!\r\n");
     }
 }
 

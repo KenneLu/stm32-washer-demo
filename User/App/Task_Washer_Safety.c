@@ -24,11 +24,11 @@ void Do_Create_Task_Washer_Safety(void)
     xReturn = xTaskCreate(Task_Washer_Safety, "Task_Washer_Safety", 128, NULL, 2, &Task_Washer_Safety_Handle);
     if (pdPASS == xReturn)
     {
-        printf("Create_Task_Washer_Safety Success! \r\n");
+        printf("Create [Task_Washer_Safety] Success!\r\n");
     }
     else
     {
-        printf("Safety:Create_Task_Washer_Safety! \r\n");
+        printf("Create [Task_Washer_Safety] Failed!\r\n");
     }
 }
 

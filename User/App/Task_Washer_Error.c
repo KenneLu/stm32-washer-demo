@@ -44,11 +44,11 @@ void Do_Create_Task_Washer_Error(void)
     xReturn = xTaskCreate(Task_Washer_Error, "Task_Washer_Error", 128, NULL, 1, &Task_Washer_Error_Handle);
     if (pdPASS == xReturn)
     {
-        printf("Create_Task_Washer_Error Success! \r\n");
+        printf("Create [Task_Washer_Error] Success!\r\n");
     }
     else
     {
-        printf("Error:Create_Task_Washer_Error! \r\n");
+        printf("Create [Task_Washer_Error] Failed!\r\n");
     }
 }
 

@@ -64,11 +64,11 @@ void Do_Create_Task_Start(void)
     xReturn = xTaskCreate(Task_Start, "Task_Start", 128, NULL, 0, &Task_Start_Handle);
     if (pdPASS == xReturn)
     {
-        printf("Do_Create_Task_Start Success! \r\n");
+        printf("Create [Task_Start] Success!\r\n");
     }
     else
     {
-        printf("Error:Do_Create_Task_Start! \r\n");
+        printf("Create [Task_Start] Failed!\r\n");
     }
 }
 
