@@ -1,5 +1,5 @@
-#ifndef __I2C_H
-#define __I2C_H
+#ifndef __I2C_HW_H
+#define __I2C_HW_H
 
 #include "stm32f10x.h"                  // Device header
 
