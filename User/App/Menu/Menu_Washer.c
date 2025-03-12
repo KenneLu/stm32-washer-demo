@@ -109,7 +109,7 @@ int8_t Menu_Washer_Start_Washer(void* Param)
 
 void Menu_Washer_Power_On(void)
 {
-	OLED_CLEAR;
+	OLED_CLEAR_UPDATE;
 	OLED_SHOW_STR_E(1, 1, "Power On");
 	Delay_ms(200);
 	OLED_SHOW_STR_E(1, 1, "Power On .");
@@ -145,7 +145,7 @@ void Menu_Washer_Power_On(void)
 		//正常启动
 		TASK_WASHER_DATA_INIT;
 		TASK_WASHER_DATA_STORE;
-		OLED_CLEAR;
+		OLED_CLEAR_UPDATE;
 	}
 }
 
@@ -184,8 +184,9 @@ void Wahser_Data_Set(WASHER_MODE Mode)
 	// g_pWDat->DataInit(&g_pWDat);
 	TASK_WASHER_DATA_INIT;
 
-	if (Mode == M_FAST_WASH)
+	switch (Mode)
 	{
+	case M_FAST_WASH:
 		g_pWDat->Mode = M_FAST_WASH;
 		g_pWDat->Wash_Cnt = List_Set_Wash_Cnt[1];
 		g_pWDat->Wash_Time = List_Set_Wash_Time[1];
@@ -198,10 +199,9 @@ void Wahser_Data_Set(WASHER_MODE Mode)
 				g_pWDat->Spin_Dry_Time +
 				g_pWDat->Spin_Dry_Time
 				);
-	}
+		break;
 
-	if (Mode == M_STANDARD_WASH)
-	{
+	case M_STANDARD_WASH:
 		g_pWDat->Mode = M_STANDARD_WASH;
 		g_pWDat->Wash_Cnt = List_Set_Wash_Cnt[2];
 		g_pWDat->Wash_Time = List_Set_Wash_Time[2];
@@ -214,10 +214,9 @@ void Wahser_Data_Set(WASHER_MODE Mode)
 				g_pWDat->Spin_Dry_Time +
 				g_pWDat->Spin_Dry_Time
 				);
-	}
+		break;
 
-	if (Mode == M_HARD_WASH)
-	{
+	case M_HARD_WASH:
 		g_pWDat->Mode = M_HARD_WASH;
 		g_pWDat->Wash_Cnt = List_Set_Wash_Cnt[3];
 		g_pWDat->Wash_Time = List_Set_Wash_Time[3];
@@ -230,10 +229,9 @@ void Wahser_Data_Set(WASHER_MODE Mode)
 				g_pWDat->Spin_Dry_Time +
 				g_pWDat->Spin_Dry_Time
 				);
-	}
+		break;
 
-	if (Mode == M_SPIN_DRY)
-	{
+	case M_SPIN_DRY:
 		g_pWDat->Mode = M_SPIN_DRY;
 		g_pWDat->Wash_Cnt = 0;
 		g_pWDat->Wash_Time = 0;
@@ -241,10 +239,9 @@ void Wahser_Data_Set(WASHER_MODE Mode)
 		g_pWDat->Water_Volume = 0;
 		g_pWDat->Water_Temp = 0;
 		g_pWDat->Total_Time = g_pWDat->Spin_Dry_Time;
-	}
+		break;
 
-	if (Mode == M_HEAT_DRY)
-	{
+	case M_HEAT_DRY:
 		g_pWDat->Mode = M_HEAT_DRY;
 		g_pWDat->Wash_Cnt = 0;
 		g_pWDat->Wash_Time = 0;
@@ -252,6 +249,10 @@ void Wahser_Data_Set(WASHER_MODE Mode)
 		g_pWDat->Water_Volume = 0;
 		g_pWDat->Heat_Temp = List_Set_Heat_Temp[1];
 		g_pWDat->Total_Time = 0;
+		break;
+
+	default:
+		break;
 	}
 }
 

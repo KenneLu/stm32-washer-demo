@@ -8,6 +8,7 @@ typedef struct
     uint8_t Humi_Dec;
     uint8_t Temp;
     uint8_t Temp_Dec;
+    uint8_t TimeOut;
 } DHT11_HumiTemp;
 
 typedef enum

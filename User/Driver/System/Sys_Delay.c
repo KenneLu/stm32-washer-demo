@@ -21,7 +21,7 @@ void Delay_us(uint32_t xus)
 	uint32_t tnow, tcnt = 0;
 
 	/* 挂起调度器[可选,会导致高优先级任务无法抢占当前任务，但能够提高当前任务时间的精确性] */
-	vTaskSuspendAll();
+	// vTaskSuspendAll();
 
 	while (1)
 	{
@@ -44,7 +44,7 @@ void Delay_us(uint32_t xus)
 	}
 
 	/* 恢复调度器[可选] */
-	xTaskResumeAll();
+	// xTaskResumeAll();
 
 #else	//SysTick的延时函数
 

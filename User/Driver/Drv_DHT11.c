@@ -1,7 +1,10 @@
 #include "stm32f10x.h"                  // Device header
+#include <stdio.h>
+
 #include "Sys_Delay.h"
 #include "Drv_DHT11.h"
 
+#define TIMEOUT 1000000
 
 #define DHT11_HIGH(PORT, PIN) GPIO_SetBits(PORT, PIN)
 #define DHT11_LOW(PORT, PIN) GPIO_ResetBits(PORT, PIN)
@@ -79,7 +82,6 @@ void Drv_DHT11_Init(void)
 		// Device Init
 		g_DHT11_Devs[i].Get_HumiTemp = Get_HumiTemp;
 		g_DHT11_Devs[i].Priv_Data = (void*)&g_DHT11_Datas[i];
-
 		Get_HumiTemp(&g_DHT11_Devs[i]);	// 第一次读取数据，初始化GPIO
 	}
 	Delay_ms(500);	// 读取响应需要时间，延时500ms
@@ -133,7 +135,7 @@ void DHT11_Start(DHT11_Device* pDev)
 	DHT11_HIGH(port, pin);	// 先拉高
 	Delay_us(30);
 
-	DHT11_LOW(port, pin);	// 拉低电平至少18us
+	DHT11_LOW(port, pin);	// 拉低电平至少18ms
 	Delay_ms(20);
 
 	DHT11_HIGH(port, pin);	// 拉高电平20~40us
@@ -142,13 +144,24 @@ void DHT11_Start(DHT11_Device* pDev)
 	DHT11_GPIO_Init_In(pDev);	// 输入模式，准备接收HDT11返回的数据
 }
 
-uint8_t DHT11_Recive_Byte(GPIO_TypeDef* port, uint16_t pin)
+uint8_t DHT11_Recive_Byte(GPIO_TypeDef* port, uint16_t pin, uint32_t* IsTimeOut)
 {
+	*IsTimeOut = 0;
 	uint8_t ReciveData;
 
 	for (uint8_t i = 0; i < 8; i++)				//1个数据就是1个字节byte，1个字节byte有8位bit
 	{
-		while (DHT11_READ(port, pin) == 0);		//从1bit开始，低电平变高电平，等待低电平结束
+		uint32_t Timeout = TIMEOUT; // 随便填的，实际项目需要严格一些
+		while (DHT11_READ(port, pin) == 0)		//从1bit开始，低电平变高电平，等待低电平结束
+		{
+			Timeout--;
+			if (Timeout == 0)
+			{
+				printf("DHT11_Recive_Byte Timeout_1\r\n");
+				*IsTimeOut = 1;
+				return 0;
+			}
+		}
 		Delay_us(30);							//延迟30us是为了区别数据0和数据1，0只有26~28us
 
 		ReciveData <<= 1;						//左移
@@ -158,7 +171,17 @@ uint8_t DHT11_Recive_Byte(GPIO_TypeDef* port, uint16_t pin)
 			ReciveData |= 1;					//数据+1
 		}
 
-		while (DHT11_READ(port, pin) == 1);		//高电平变低电平，等待高电平结束
+		Timeout = TIMEOUT;
+		while (DHT11_READ(port, pin) == 1)		//高电平变低电平，等待高电平结束
+		{
+			Timeout--;
+			if (Timeout == 0)
+			{
+				printf("DHT11_Recive_Byte Timeout_2\r\n");
+				*IsTimeOut = 1;
+				return 0;
+			}
+		}
 	}
 
 	return ReciveData;
@@ -179,20 +202,49 @@ void DHT11_Recive_Data(DHT11_Device* pDev, DHT11_HumiTemp* Out)
 
 	if (DHT11_READ(port, pin) == 0)	// 判断DHT11是否响应
 	{
-		while (DHT11_READ(port, pin) == 0); // 低电平变高电平，等待低电平结束
-		while (DHT11_READ(port, pin) == 1); // 高电平变低电平，等待高电平结束
+		// while (DHT11_READ(port, pin) == 0); // 低电平变高电平，等待低电平结束
+		// while (DHT11_READ(port, pin) == 1); // 高电平变低电平，等待高电平结束
+
+		uint32_t Timeout = TIMEOUT; // 随便填的，实际项目需要严格一些
+		while (DHT11_READ(port, pin) == 0)		//从1bit开始，低电平变高电平，等待低电平结束
+		{
+			Timeout--;
+			if (Timeout == 0)
+			{
+				printf("DHT11_Recive_Byte Timeout_1\r\n");
+				Out->TimeOut = 1;
+				return;
+			}
+		}
+		Timeout = TIMEOUT;
+		while (DHT11_READ(port, pin) == 1)		//高电平变低电平，等待高电平结束
+		{
+			Timeout--;
+			if (Timeout == 0)
+			{
+				printf("DHT11_Recive_Byte Timeout_2\r\n");
+				Out->TimeOut = 1;
+				return;
+			}
+		}
 
 		//接收数据及校验位
-		Out->Humi = DHT11_Recive_Byte(port, pin);
-		Out->Humi_Dec = DHT11_Recive_Byte(port, pin);
-		Out->Temp = DHT11_Recive_Byte(port, pin);
-		Out->Temp_Dec = DHT11_Recive_Byte(port, pin);
-		CHECK = DHT11_Recive_Byte(port, pin);
+		uint32_t ReciveByteTimeOut = 0;
+		Out->Humi = DHT11_Recive_Byte(port, pin, &ReciveByteTimeOut);
+		Out->Humi_Dec = DHT11_Recive_Byte(port, pin, &ReciveByteTimeOut);
+		Out->Temp = DHT11_Recive_Byte(port, pin, &ReciveByteTimeOut);
+		Out->Temp_Dec = DHT11_Recive_Byte(port, pin, &ReciveByteTimeOut);
+		CHECK = DHT11_Recive_Byte(port, pin, &ReciveByteTimeOut);
 
 		DHT11_LOW(port, pin);	// 当最后一bit数据传送完毕后，DHT11拉低总线 50us
 		Delay_us(55);			// 这里延时55us
 		DHT11_HIGH(port, pin); 	// 随后总线由上拉电阻拉高进入空闲状态。
 
+		if (ReciveByteTimeOut)
+		{
+			Out->TimeOut = 1;
+			return;
+		}
 		//和检验位对比，判断校验接收到的数据是否正确，如果不正确则返回0
 		if (Out->Humi + Out->Humi_Dec + Out->Temp + Out->Temp_Dec != CHECK)
 		{
@@ -207,6 +259,7 @@ void DHT11_Recive_Data(DHT11_Device* pDev, DHT11_HumiTemp* Out)
 DHT11_HumiTemp Get_HumiTemp(DHT11_Device* pDev)
 {
 	DHT11_HumiTemp Out;
+	Out.TimeOut = 0;	// 初始化超时标志位
 	DHT11_Recive_Data(pDev, &Out);
 	return Out;
 }

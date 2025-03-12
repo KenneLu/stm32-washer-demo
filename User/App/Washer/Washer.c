@@ -196,34 +196,6 @@ void Washer_Task_Init(void)
 	xTaskResumeAll();
 }
 
-void Washer_Init(void)
-{
-	g_Washer_Error_Cur = NO_ERROR;
-	g_Loop_Cnt = 0;
-	g_Wash_Cnt_Cur = 0;
-
-	// 显示初始化信息
-	Washer_OLED_Refresh();
-	OLED_SHOW_STR_E(1, 1, "Init...        ");
-
-	g_pDev_TB6612 = Drv_TB6612_GetDevice(TB6612); // 电机驱动
-	g_pDev_TCRT5000 = Drv_AD_GetDevice(AD_TCRT5000); // ADC, 用于检测门是否打开
-	g_pDev_ServoMotor = Drv_ServoMotor_GetDevice(SERVOMOTOR); // 舵机，用于锁门
-	g_pDev_MPU6050 = Drv_MPU6050_GetDevice(MPU6050); // MPU6050，用于姿态检测
-	g_pDev_Buzzer = Drv_Buzzer_GetDevice(BUZZER); // 化蜂鸣器，用于报警
-	g_pDev_LED_RED = Drv_LED_GetDevice(LED_RED); // 红灯
-	g_pDev_LED_BLUE = Drv_LED_GetDevice(LED_BLUE); // 蓝灯
-
-	Washer_Key_Init(); // 初始化按键回调
-	Washer_Door_Lock(); // 锁门
-
-	if (g_pWDat->State_Next == S_INIT)
-		g_pWDat->State_Next = S_HEAT_WATER;
-	Washer_State_Refresh(); // 状态切换，刷新OLED
-
-	Washer_Task_Init(); // 初始化任务
-}
-
 void Washer_Back_To_Menu(void)
 {
 	Washer_Stop();
@@ -236,7 +208,10 @@ void Washer_Back_To_Menu(void)
 	if (*Get_Task_Washer_Error_Handle())	// Washer_Error
 		vTaskSuspend(*Get_Task_Washer_Error_Handle());
 	if (*Get_Task_Washer_Run_Handle())		// Washer_Run
-		vTaskSuspend(*Get_Task_Washer_Run_Handle());
+	{
+		vTaskDelete(*Get_Task_Washer_Run_Handle());
+		*Get_Task_Washer_Run_Handle() = 0;
+	}
 	xTaskResumeAll();
 
 	g_pWDat->State_Next = S_INIT;
@@ -385,6 +360,8 @@ void Washer_Error_Warning()
 
 void Washer_Error_Fixed()
 {
+	g_OLED_Need_Refresh = 1;
+
 	g_pDev_LED_RED->Off(g_pDev_LED_RED);
 	g_pDev_Buzzer->Off(g_pDev_Buzzer);
 
@@ -423,7 +400,7 @@ void Washer_Safety(void)
 
 	AccX_Abs = AccX > 0 ? AccX : -AccX;
 	AccY_Abs = AccY > 0 ? AccY : -AccY;
-	if (AccX_Abs > 100 || AccY_Abs > 50) // 瞬时加速度大于阈值
+	if (AccX_Abs > 150 || AccY_Abs > 50) // 瞬时加速度大于阈值
 	{
 		Shake_Time++; // 100ms轮询检测一次
 		if (Shake_Time == 2) // 持续200ms
@@ -463,11 +440,49 @@ void Washer_Safety(void)
 		// printf("g_OLED_Need_Refresh\r\n");
 		g_Washer_Error_Last = g_Washer_Error_Cur;
 		// 异常发生，报警
-		TASK_WASHER_ERROR_OCCUR;
 		if (*Get_Task_Washer_Error_Handle())
 			vTaskResume(*Get_Task_Washer_Error_Handle());
+		TASK_WASHER_ERROR_OCCUR;
 	}
 
+}
+
+void Washer_Init(void)
+{
+	g_Washer_Error_Cur = NO_ERROR;
+	g_Loop_Cnt = 0;
+	g_Wash_Cnt_Cur = 0;
+
+	// 显示初始化信息
+	Washer_OLED_Refresh();
+	OLED_SHOW_STR_E(1, 1, "Init...        ");
+
+	g_pDev_TB6612 = Drv_TB6612_GetDevice(TB6612); // 电机驱动
+	g_pDev_TCRT5000 = Drv_AD_GetDevice(AD_TCRT5000); // ADC, 用于检测门是否打开
+	g_pDev_ServoMotor = Drv_ServoMotor_GetDevice(SERVOMOTOR); // 舵机，用于锁门
+	g_pDev_MPU6050 = Drv_MPU6050_GetDevice(MPU6050); // MPU6050，用于姿态检测
+	g_pDev_Buzzer = Drv_Buzzer_GetDevice(BUZZER); // 化蜂鸣器，用于报警
+	g_pDev_LED_RED = Drv_LED_GetDevice(LED_RED); // 红灯
+	g_pDev_LED_BLUE = Drv_LED_GetDevice(LED_BLUE); // 蓝灯
+
+	Washer_Key_Init(); // 初始化按键回调
+	Washer_Door_Lock(); // 锁门
+
+	if (g_pWDat->Mode == M_SPIN_DRY)
+	{
+		g_pWDat->State_Next = S_DRAIN_WATER;
+	}
+	else if (g_pWDat->Mode == M_HEAT_DRY)
+	{
+		g_pWDat->State_Next = S_HEAT_DRY;
+	}
+	else // M_FAST_WASH, M_STANDARD_WASH, M_HARD_WASH
+	{
+		g_pWDat->State_Next = S_HEAT_WATER;
+	}
+	Washer_State_Refresh(); // 状态切换，刷新OLED
+
+	Washer_Task_Init(); // 初始化任务
 }
 
 void Washer_Heat_Water()
@@ -494,46 +509,33 @@ void Washer_Heat_Water()
 	DHT11_HumiTemp DHT11_Data;
 	DHT11_Device* pDev_DHT11 = Drv_DHT11_GetDevice(DHT11);
 
-	vTaskSuspendAll();
 	if (pDev_DHT11)
 		DHT11_Data = pDev_DHT11->Get_HumiTemp(pDev_DHT11);
-	xTaskResumeAll();
 
-	// 读取响应需要时间，延时500ms
-	Delay_ms(500);
-
-	// Delay期间可能触发暂停，暂停后恢复需要刷新OLED
-	if (g_OLED_Need_Refresh)
+	if (DHT11_Data.TimeOut)
 	{
-		Washer_OLED_Refresh();
-		OLED_SHOW_STR_E(1, 1, "heat water...");
-
-		OLED_SHOW_STR_E(2, 1, "Temp:");	// 温度
-		OLED_SHOW_STR_E(2, 8, ".");
-		OLED_SHOW_CN_E(2, 11 / 2 + 1, "℃");	   // 中文是16x16的，所以要减半，并向上取整
-
-		OLED_SHOW_STR_E(3, 1, "Target:");	// 目标温度
-		OLED_SHOW_NUM_E(3, 8, (uint32_t)g_pWDat->Water_Temp, 2);
-		OLED_SHOW_STR_E(3, 10, ".00");
-		OLED_SHOW_CN_E(3, 13 / 2 + 1, "℃");	   // 中文是16x16的，所以要减半，并向上取整
-
-		g_pDev_LED_RED->On(g_pDev_LED_RED);
+		printf("DHT11 TimeOut!\r\n");
 	}
-
-	// 显示新数值
-	OLED_SHOW_NUM_E(2, 6, (uint32_t)DHT11_Data.Temp, 2);
-	OLED_SHOW_NUM_E(2, 9, (uint32_t)DHT11_Data.Temp_Dec, 2);
-
-	if (DHT11_Data.Temp >= g_pWDat->Water_Temp) //烧水结束
+	else
 	{
-		g_pDev_LED_RED->Off(g_pDev_LED_RED);
-		OLED_SHOW_STR_E(1, 1, "heat water[DONE]");
+		// 读取响应需要时间，延时500ms
+		Delay_ms(500);
 
-		g_Loop_Cnt = 0;
-		g_pWDat->State_Next = S_ADD_WATER;
-		Washer_State_Refresh(); // 状态切换，刷新OLED
+		// 显示新数值
+		OLED_SHOW_NUM_E(2, 6, (uint32_t)DHT11_Data.Temp, 2);
+		OLED_SHOW_NUM_E(2, 9, (uint32_t)DHT11_Data.Temp_Dec, 2);
 
-		Delay_ms(DISPLAY_DELAY_MS);
+		if (DHT11_Data.Temp >= g_pWDat->Water_Temp) //烧水结束
+		{
+			g_pDev_LED_RED->Off(g_pDev_LED_RED);
+			OLED_SHOW_STR_E(1, 1, "heat water[DONE]");
+
+			g_Loop_Cnt = 0;
+			g_pWDat->State_Next = S_ADD_WATER;
+			Washer_State_Refresh(); // 状态切换，刷新OLED
+
+			Delay_ms(DISPLAY_DELAY_MS);
+		}
 	}
 }
 
@@ -800,23 +802,29 @@ void Washer_Heat_Dry()
 	DHT11_Device* pDev_DHT11 = Drv_DHT11_GetDevice(DHT11);
 	if (pDev_DHT11)
 		DHT11_Data = pDev_DHT11->Get_HumiTemp(pDev_DHT11);
-
-	// 读取响应需要时间，延时500ms
-	Delay_ms(500);
-
-	// 显示新数值
-	OLED_SHOW_NUM_E(2, 6, (uint32_t)DHT11_Data.Humi, 2);
-	OLED_SHOW_NUM_E(2, 9, (uint32_t)DHT11_Data.Humi_Dec, 2);
-
-	if (DHT11_Data.Humi < Dry_Relative_Humidity) //烘干结束
+	if (DHT11_Data.TimeOut)
 	{
-		g_Loop_Cnt = 0;
-		g_pWDat->State_Next = S_FINISH;
-		Washer_State_Refresh(); // 状态切换，刷新OLED
+		printf("DHT11 TimeOut!\r\n");
+	}
+	else
+	{
+		// 读取响应需要时间，延时500ms
+		Delay_ms(1000);
 
-		g_pDev_LED_RED->Off(g_pDev_LED_RED);
-		OLED_SHOW_STR_E(1, 1, "heat dry[DONE]");
-		Delay_ms(DISPLAY_DELAY_MS);
+		// 显示新数值
+		OLED_SHOW_NUM_E(2, 6, (uint32_t)DHT11_Data.Humi, 2);
+		OLED_SHOW_NUM_E(2, 9, (uint32_t)DHT11_Data.Humi_Dec, 2);
+
+		if (DHT11_Data.Humi < Dry_Relative_Humidity) //烘干结束
+		{
+			g_Loop_Cnt = 0;
+			g_pWDat->State_Next = S_FINISH;
+			Washer_State_Refresh(); // 状态切换，刷新OLED
+
+			g_pDev_LED_RED->Off(g_pDev_LED_RED);
+			OLED_SHOW_STR_E(1, 1, "heat dry[DONE]");
+			Delay_ms(DISPLAY_DELAY_MS);
+		}
 	}
 }
 
@@ -869,7 +877,7 @@ void Washer_Finish()
 void Washer_State_Refresh(void)
 {
 	// 状态机更新
-	printf("Washer State: %d -> %d\r\n", g_pWDat->State_Last, g_pWDat->State_Cur);
+	printf("Washer State: %d -> %d\r\n", g_pWDat->State_Cur, g_pWDat->State_Next);
 	g_pWDat->State_Last = g_pWDat->State_Cur;
 	g_pWDat->State_Cur = g_pWDat->State_Next;
 	g_OLED_Need_Refresh = 1; // 状态切换，刷新OLED
@@ -879,45 +887,56 @@ void Washer_State_Refresh(void)
 // 状态机运行函数
 void Washer_State_Machine(void)
 {
+	printf("Washer_State_Machine is Running\r\n");
 	switch (g_pWDat->State_Next)
 	{
 	case S_INIT:
+		printf("S_INIT\r\n");
 		Washer_Init();
 		break;
 
 	case S_HEAT_WATER:
+		printf("S_HEAT_WATER\r\n");
 		Washer_Heat_Water();
 		break;
 
 	case S_ADD_WATER:
+		printf("S_ADD_WATER\r\n");
 		Washer_Add_Water();
 		break;
 
 	case S_WASH:
+		printf("S_WASH\r\n");
 		Washer_Wash();
 		break;
 
 	case S_DRAIN_WATER:
+		printf("S_DRAIN_WATER\r\n");
 		Washer_Drain_Water();
 		break;
 
 	case S_SPIN_DRY:
+		printf("S_SPIN_DRY\r\n");
 		Washer_Spin_Dry();
 		break;
 
 	case S_HEAT_DRY:
+		printf("S_HEAT_DRY\r\n");
 		Washer_Heat_Dry();
 		break;
 
 	case S_WASH_CNT:
+		printf("S_WASH_CNT\r\n");
 		Washer_Wash_Cnt();
 		break;
 
 	case S_FINISH:
+		printf("S_FINISH\r\n");
 		Washer_Finish();
 		break;
 
 	default:
+		printf("Unknown State\r\n");
 		Washer_Init();
 		break;
 	}
