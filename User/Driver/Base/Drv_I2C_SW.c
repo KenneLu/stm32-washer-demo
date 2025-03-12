@@ -1,6 +1,11 @@
 #include "stm32f10x.h"                  // Device header
+
+#include "FreeRTOS.h"
+#include "semphr.h"
+
 #include "Sys_Delay.h"
 #include "Drv_I2C_SW.h"
+
 
 
 typedef struct
@@ -15,6 +20,7 @@ typedef struct
 typedef struct {
     I2C_SW_ID ID;
     I2C_SW_HARDWARE SW;
+    SemaphoreHandle_t LOCK;
 } I2C_SW_Data;
 
 void W_SCL(I2C_SW_Data* pData, uint8_t BitValue);
@@ -28,7 +34,8 @@ uint8_t I2C_SW_RecieveAck(I2C_SW_Device* Dev);
 uint8_t I2C_SW_RecieveByte(I2C_SW_Device* Dev);
 void I2C_SW_WriteI2C(I2C_SW_Device* Dev, uint8_t SlaveAddr, uint8_t RegAddr, uint8_t Data);
 uint8_t I2C_SW_ReadI2C(I2C_SW_Device* Dev, uint8_t SlaveAddr, uint8_t Addr);
-
+void I2C_SW_Lock(I2C_SW_Device* Dev);
+void I2C_SW_UnLock(I2C_SW_Device* Dev);
 
 
 //--------------------------------------------------
@@ -78,6 +85,7 @@ void Drv_I2C_SW_Init(void)
         // Data Init
         g_I2C_SW_Datas[i].ID = (I2C_SW_ID)i;
         g_I2C_SW_Datas[i].SW = hw;
+        g_I2C_SW_Datas[i].LOCK = xSemaphoreCreateRecursiveMutex();
 
         // Device Init
         g_I2C_SW_Devs[i].Start = I2C_SW_Start;
@@ -88,6 +96,8 @@ void Drv_I2C_SW_Init(void)
         g_I2C_SW_Devs[i].RecieveByte = I2C_SW_RecieveByte;
         g_I2C_SW_Devs[i].WriteI2C = I2C_SW_WriteI2C;
         g_I2C_SW_Devs[i].ReadI2C = I2C_SW_ReadI2C;
+        g_I2C_SW_Devs[i].Lock = I2C_SW_Lock;
+        g_I2C_SW_Devs[i].UnLock = I2C_SW_UnLock;
 
         g_I2C_SW_Devs[i].Priv_Data = (void*)&g_I2C_SW_Datas[i];
 
@@ -252,4 +262,25 @@ uint8_t I2C_SW_ReadI2C(I2C_SW_Device* Dev, uint8_t SlaveAddr, uint8_t Addr)
     Data = I2C_SW_RecieveByte(Dev);
     I2C_SW_Stop(Dev);
     return Data;
+}
+
+void I2C_SW_Lock(I2C_SW_Device* Dev)
+{
+    I2C_SW_Data* pData = (I2C_SW_Data*)Dev->Priv_Data;
+    if (pData == 0)
+        return;
+    const char* pcTaskName = pcTaskGetName(NULL); // 获取当前任务的名称
+    // printf("[%s] I2C_SW_Lock\r\n", pcTaskName);
+    xSemaphoreTakeRecursive(pData->LOCK, portMAX_DELAY);
+}
+
+void I2C_SW_UnLock(I2C_SW_Device* Dev)
+{
+    I2C_SW_Data* pData = (I2C_SW_Data*)Dev->Priv_Data;
+    if (pData == 0)
+        return;
+
+    const char* pcTaskName = pcTaskGetName(NULL); // 获取当前任务的名称
+    // printf("[%s] I2C_SW_UnLock\r\n", pcTaskName);
+    xSemaphoreGiveRecursive(pData->LOCK);
 }

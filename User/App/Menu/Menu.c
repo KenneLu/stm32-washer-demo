@@ -133,6 +133,7 @@ void Menu_Init(void)
 	g_pDev_Encoder = Drv_Encoder_GetDevice(ENCODER);
 	Menu_Key_Init();
 	Menu_Power_Off_CBRegister(Menu_Washer_Power_Off);
+	Menu_Power_Event(); //消耗一次按键事件,防止菜单初始化时按键被误触发
 }
 
 void Menu_DeInit(void)
@@ -276,7 +277,7 @@ int8_t Menu_Run(Option_Class* Option, int8_t Choose)
 				.Union.Num.Length = 2,
 		});
 
-		// OLED_Update_Pure();
+		// OLED_Update();
 		OLED_UPDATE;
 
 		//int delay = 1000000; while(delay--);

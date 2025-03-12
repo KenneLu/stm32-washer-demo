@@ -37,12 +37,42 @@ extern const uint8_t Wallpaper[];
 // Data_Queue 相关结构体
 
 #define OLED_UPDATE OLED_Send((OLED_DATA_DISPLAY) { .Cmd = OLED_CMD_UPDATE });
+
 #define OLED_CLEAR OLED_Send((OLED_DATA_DISPLAY) { .Cmd = OLED_CMD_CLEAR });
 
+#define OLED_CLEAR_UPDATE OLED_Send((OLED_DATA_DISPLAY) { .Cmd = OLED_CMD_CLEAR_UPDATE });
+
+#define OLED_SHOW_NUM_E(Line, Column, Number, Length) 	\
+{															\
+	OLED_Send((OLED_DATA_DISPLAY) { 						\
+		.Cmd = OLED_CMD_PUSH_UPDATE, 						\
+		.Type = OLED_NUM_E,									\
+		.Union.Num = { Line, Column, Number, Length } });	\
+}
+
+#define OLED_SHOW_STR_E(Line, Column, String) 	\
+{													\
+	OLED_Send((OLED_DATA_DISPLAY) { 				\
+		.Cmd = OLED_CMD_PUSH_UPDATE, 				\
+		.Type = OLED_STR_E,							\
+		.Union.Str = { Line, Column, String } });	\
+}
+
+#define OLED_SHOW_CN_E(Line, Column, String) 	\
+{														\
+	OLED_Send((OLED_DATA_DISPLAY) { 					\
+		.Cmd = OLED_CMD_PUSH_UPDATE, 					\
+		.Type = OLED_CN_E,								\
+		.Union.CN = { Line, Column, String } });		\
+}
+
+
 typedef enum {
-	OLED_CMD_PUSH,
 	OLED_CMD_UPDATE,
+	OLED_CMD_PUSH,
+	OLED_CMD_PUSH_UPDATE,
 	OLED_CMD_CLEAR,
+	OLED_CMD_CLEAR_UPDATE,
 } OLED_DATA_CMD;
 
 typedef enum {

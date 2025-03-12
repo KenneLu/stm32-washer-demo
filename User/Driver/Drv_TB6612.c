@@ -132,13 +132,13 @@ void SetSpeed(TB6612_Device* pDev, int8_t Speed)
 // int8_t MotorBreath[] = { 0, 20, 30, 40, 30, 20, 0, -20, -30, -40, -30, -20 };	// 定义转动速度数组
 // void TB6612_Motor_Breathe(void)
 // {
-//     OLED_ShowString_Easy(1, 1, "Speed:+000");
-//     OLED_ShowString_Easy(2, 1, "PWM:");
+//     OLED_SHOW_STR_E(1, 1, "Speed:+000");
+//     OLED_SHOW_STR_E(2, 1, "PWM:");
 //     for (uint8_t i = 0; i < sizeof(MotorBreath) / sizeof(MotorBreath[0]); i++)
 //     {
 //         TB6612_Motor_SetSpeed(MotorBreath[i]);  // 设置直流电机的速度为速度变量
 //         OLED_ShowSignedNum_Easy(1, 7, MotorBreath[i], 3);	    // OLED显示速度变量
-//         OLED_ShowNum_Easy(2, 5, Speed2PWM(MotorBreath[i]), 5);	//OLED显示角度变量
+//         OLED_SHOW_NUM_E(2, 5, Speed2PWM(MotorBreath[i]), 5);	//OLED显示角度变量
 //         Delay_s(1);
 //     }
 // }

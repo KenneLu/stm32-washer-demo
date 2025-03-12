@@ -2,7 +2,16 @@
 #include <stdio.h>
 #include "Drv_MPU6050_Reg.h"
 #include "Drv_MPU6050.h"
+
+
+#define IS_I2C_SW	0 //1表示使用软件I2C，0表示使用硬件I2C
+
+
+#if IS_I2C_SW
+#include "Drv_I2C_SW.h"
+#else
 #include "Drv_I2C_HW.h"
+#endif /* IS_I2C_SW */
 
 
 typedef struct
@@ -21,27 +30,37 @@ typedef struct {
 	MPU6050_HARDWARE HW;
 } MPU6050_Data;
 
-void MPU6050_WriteReg(MPU6050_Device* pDev, uint8_t RegAddress, uint8_t Data);
-uint8_t MPU6050_ReadReg(MPU6050_Device* pDev, uint8_t RegAddress);
 uint8_t GetID(MPU6050_Device* pDev);
 void GetData(MPU6050_Device* pDev,
 	int16_t* AccX, int16_t* AccY, int16_t* AccZ,
 	int16_t* GyroX, int16_t* GyroY, int16_t* GyroZ);
+void MPU6050_WriteReg(MPU6050_Device* pDev, uint8_t RegAddress, uint8_t Data);
+uint8_t MPU6050_ReadReg(MPU6050_Device* pDev, uint8_t RegAddress);
 
 
 //--------------------------------------------------
 
 
-I2C_HW_Device* g_pDev_I2C_HW;
+#if IS_I2C_SW
+static I2C_SW_Device* g_pDev_I2C_SW;
+#else
+static I2C_HW_Device* g_pDev_I2C_HW;
+#endif /* IS_I2C_SW */
 
 static MPU6050_HARDWARE g_MPU6050_HWs[MPU6050_NUM] = {
 	{
 		.ID = MPU6050,
 		.ADDRESS = 0xD0,
 		.PORT = GPIOB,
+#if IS_I2C_SW
+		.PIN_SCL = GPIO_Pin_8,
+		.PIN_SDA = GPIO_Pin_9,
+		.MODE = GPIO_Mode_Out_OD,
+#else
 		.PIN_SCL = GPIO_Pin_10,
 		.PIN_SDA = GPIO_Pin_11,
 		.MODE = GPIO_Mode_AF_OD,
+#endif /* IS_I2C_SW */
 		._RCC = RCC_APB2Periph_GPIOB,
 	},
 };
@@ -67,8 +86,13 @@ MPU6050_Device* Drv_MPU6050_GetDevice(MPU6050_ID ID)
 
 void Drv_MPU6050_Init(void)
 {
+#if IS_I2C_SW
+	Drv_I2C_SW_Init();
+	g_pDev_I2C_SW = Drv_I2C_SW_GetDevice(I2C_SW);
+#else
 	Drv_I2C_HW_Init();
 	g_pDev_I2C_HW = Drv_I2C_HW_GetDevice(I2C_HW);
+#endif /* IS_I2C_SW */
 
 	for (uint8_t i = 0; i < MPU6050_NUM; i++)
 	{
@@ -97,6 +121,11 @@ void Drv_MPU6050_Init(void)
 		GPIO_InitStructure.GPIO_Mode = hw.MODE;
 		GPIO_Init(hw.PORT, &GPIO_InitStructure);
 
+
+#if IS_I2C_SW
+		g_pDev_I2C_SW->Lock(g_pDev_I2C_SW);
+#endif /* IS_I2C_SW */
+
 		// MPU6050 Init
 		MPU6050_WriteReg(&g_MPU6050_Devs[i], MPU6050_PWR_MGMT_1, 0x01); // 解除休眠状态，选择陀螺仪时钟
 		MPU6050_WriteReg(&g_MPU6050_Devs[i], MPU6050_PWR_MGMT_2, 0x00); // 无需循环唤醒，无需待机
@@ -104,6 +133,11 @@ void Drv_MPU6050_Init(void)
 		MPU6050_WriteReg(&g_MPU6050_Devs[i], MPU6050_CONFIG, 0x06); // 无需外部同步，低通滤波器模式设为最平滑
 		MPU6050_WriteReg(&g_MPU6050_Devs[i], MPU6050_GYRO_CONFIG, 0x18); // 无需自测，最大量程
 		MPU6050_WriteReg(&g_MPU6050_Devs[i], MPU6050_ACCEL_CONFIG, 0x18); // 无需自测，最大量程
+
+#if IS_I2C_SW
+		g_pDev_I2C_SW->UnLock(g_pDev_I2C_SW);
+#endif /* IS_I2C_SW */
+
 	}
 }
 
@@ -113,7 +147,19 @@ void Drv_MPU6050_Init(void)
 
 uint8_t GetID(MPU6050_Device* pDev)
 {
-	return MPU6050_ReadReg(pDev, MPU6050_WHO_AM_I);
+	uint8_t ID = 0;
+
+#if IS_I2C_SW
+	g_pDev_I2C_SW->Lock(g_pDev_I2C_SW);
+#endif /* IS_I2C_SW */
+
+	ID = MPU6050_ReadReg(pDev, MPU6050_WHO_AM_I);
+
+#if IS_I2C_SW
+	g_pDev_I2C_SW->UnLock(g_pDev_I2C_SW);
+#endif /* IS_I2C_SW */
+
+	return ID;
 }
 
 void GetData(MPU6050_Device* pDev,
@@ -121,6 +167,10 @@ void GetData(MPU6050_Device* pDev,
 	int16_t* GyroX, int16_t* GyroY, int16_t* GyroZ)
 {
 	uint8_t DataH, DataL;
+
+#if IS_I2C_SW
+	g_pDev_I2C_SW->Lock(g_pDev_I2C_SW);
+#endif /* IS_I2C_SW */
 
 	DataH = MPU6050_ReadReg(pDev, MPU6050_ACCEL_XOUT_H);
 	DataL = MPU6050_ReadReg(pDev, MPU6050_ACCEL_XOUT_L);
@@ -145,8 +195,32 @@ void GetData(MPU6050_Device* pDev,
 	DataH = MPU6050_ReadReg(pDev, MPU6050_GYRO_ZOUT_H);
 	DataL = MPU6050_ReadReg(pDev, MPU6050_GYRO_ZOUT_L);
 	*GyroZ = (DataH << 8) | DataL;
+
+#if IS_I2C_SW
+	g_pDev_I2C_SW->UnLock(g_pDev_I2C_SW);
+#endif /* IS_I2C_SW */
+
 }
 
+#if IS_I2C_SW
+void MPU6050_WriteReg(MPU6050_Device* pDev, uint8_t RegAddress, uint8_t Data)
+{
+	MPU6050_Data* pData = (MPU6050_Data*)pDev->Priv_Data;
+	if (pData == 0)
+		return;
+
+	g_pDev_I2C_SW->WriteI2C(g_pDev_I2C_SW, pData->HW.ADDRESS, RegAddress, Data);
+}
+
+uint8_t MPU6050_ReadReg(MPU6050_Device* pDev, uint8_t RegAddress)
+{
+	MPU6050_Data* pData = (MPU6050_Data*)pDev->Priv_Data;
+	if (pData == 0)
+		return 0;
+
+	return g_pDev_I2C_SW->ReadI2C(g_pDev_I2C_SW, pData->HW.ADDRESS, RegAddress);
+}
+#else
 void MPU6050_WaitEvent(uint32_t I2C_EVENT)
 {
 	uint32_t Timeout;
@@ -165,7 +239,8 @@ void MPU6050_WaitEvent(uint32_t I2C_EVENT)
 void MPU6050_WriteReg(MPU6050_Device* pDev, uint8_t RegAddress, uint8_t Data)
 {
 	MPU6050_Data* pData = (MPU6050_Data*)pDev->Priv_Data;
-	if (pData == 0) return;
+	if (pData == 0)
+		return;
 
 	g_pDev_I2C_HW->GenerateSTART(g_pDev_I2C_HW, ENABLE); // START
 	MPU6050_WaitEvent(I2C_EVENT_MASTER_MODE_SELECT); // EV5
@@ -186,7 +261,8 @@ void MPU6050_WriteReg(MPU6050_Device* pDev, uint8_t RegAddress, uint8_t Data)
 uint8_t MPU6050_ReadReg(MPU6050_Device* pDev, uint8_t RegAddress)
 {
 	MPU6050_Data* pData = (MPU6050_Data*)pDev->Priv_Data;
-	if (pData == 0) return 0;
+	if (pData == 0)
+		return 0;
 
 	g_pDev_I2C_HW->GenerateSTART(g_pDev_I2C_HW, ENABLE); // START
 	MPU6050_WaitEvent(I2C_EVENT_MASTER_MODE_SELECT); // EV5
@@ -213,3 +289,4 @@ uint8_t MPU6050_ReadReg(MPU6050_Device* pDev, uint8_t RegAddress)
 
 	return Data;
 }
+#endif /* IS_I2C_SW */

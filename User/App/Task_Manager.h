@@ -13,6 +13,7 @@
 
 //Task_Start.c
 extern void Do_Create_Task_Start(void);
+extern TaskHandle_t* Get_Task_Start_Handle(void);
 
 
 //Task_KeyScan.c

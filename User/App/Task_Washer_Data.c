@@ -8,9 +8,7 @@ static void Task_Washer_Data(void* pvParameters)
 {
     while (1)
     {
-        vTaskSuspendAll();	//关调度器
         printf("Task_Washer_Data Running! \r\n");
-        xTaskResumeAll();	//开调度器
 
         //任务通知阻塞
         uint32_t Value = 0;
@@ -22,11 +20,11 @@ static void Task_Washer_Data(void* pvParameters)
             g_pWDat->DataInit(&g_pWDat);
             break;
         case W_DAT_STORE:
-            printf("W_DAT_INIT\r\n");
+            printf("W_DAT_STORE\r\n");
             g_pWDat->DataStore(g_pWDat);
             break;
         case W_DAT_RESTORE:
-            printf("W_DAT_INIT\r\n");
+            printf("W_DAT_RESTORE\r\n");
             g_pWDat->DataRestore(&g_pWDat);
             break;
         default:

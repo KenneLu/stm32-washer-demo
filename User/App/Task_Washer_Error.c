@@ -9,9 +9,7 @@ static void Task_Washer_Error(void* pvParameters)
 {
     while (1)
     {
-        vTaskSuspendAll();	//关调度器
         printf("Task_Washer_Error Running! \r\n");
-        xTaskResumeAll();	//开调度器
 
         //等待被其他任务唤醒
         uint32_t Value = 0;

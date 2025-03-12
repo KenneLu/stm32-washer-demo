@@ -916,6 +916,11 @@
               <FilePath>..\User\Driver\Base\Drv_Debug.c</FilePath>
             </File>
             <File>
+              <FileName>Drv_Debug.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\User\Driver\Base\Drv_Debug.h</FilePath>
+            </File>
+            <File>
               <FileName>Drv_I2C_HW.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\User\Driver\Base\Drv_I2C_HW.c</FilePath>

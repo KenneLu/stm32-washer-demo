@@ -8,9 +8,7 @@ static void Task_Washer_Safety(void* pvParameters)
 {
     while (1)
     {
-        // vTaskSuspendAll();	//关调度器
         // printf("Task_Washer_Safety Running! \r\n");
-        // xTaskResumeAll();	//开调度器
 
         Washer_Safety();
 
@@ -21,7 +19,7 @@ static void Task_Washer_Safety(void* pvParameters)
 void Do_Create_Task_Washer_Safety(void)
 {
     BaseType_t xReturn = pdPASS;
-    xReturn = xTaskCreate(Task_Washer_Safety, "Task_Washer_Safety", 128, NULL, 2, &Task_Washer_Safety_Handle);
+    xReturn = xTaskCreate(Task_Washer_Safety, "Task_Washer_Safety", 256, NULL, 2, &Task_Washer_Safety_Handle);
     if (pdPASS == xReturn)
     {
         printf("Create [Task_Washer_Safety] Success!\r\n");

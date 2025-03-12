@@ -94,11 +94,6 @@ void Menu_Washer_Task_DeInit(void)
 		vTaskSuspend(*Get_Task_MainMenu_Handle());
 }
 
-void Menu_Washer_Init(void)
-{
-	Menu_Washer_Task_Init();
-}
-
 void Menu_Washer_DeInit(void)
 {
 	Menu_Washer_Task_DeInit();
@@ -114,31 +109,34 @@ int8_t Menu_Washer_Start_Washer(void* Param)
 
 void Menu_Washer_Power_On(void)
 {
-	OLED_Clear_Easy();
-	OLED_ShowString_Easy(1, 1, "Power On");
+	OLED_CLEAR;
+	OLED_SHOW_STR_E(1, 1, "Power On");
 	Delay_ms(200);
-	OLED_ShowString_Easy(1, 1, "Power On .");
+	OLED_SHOW_STR_E(1, 1, "Power On .");
 	Delay_ms(200);
-	OLED_ShowString_Easy(1, 1, "Power On ..");
+	OLED_SHOW_STR_E(1, 1, "Power On ..");
 	Delay_ms(200);
-	OLED_ShowString_Easy(1, 1, "Power On ...");
+	OLED_SHOW_STR_E(1, 1, "Power On ...");
 	Delay_ms(200);
-	OLED_ShowString_Easy(1, 1, "Power On ....");
+	OLED_SHOW_STR_E(1, 1, "Power On ....");
 	Delay_ms(200);
 
 	//等待 Task_Start 完成初始化
 	ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
 
+	//挂起 Task_Start
+	vTaskSuspend(*Get_Task_Start_Handle());
+
 	//意外掉电重启
 	if (g_pWDat->Shutdown_Type == ACCIDENT_SHUTDOWN)
 	{
-		OLED_ShowString_Easy(1, 1, "Restore Last");
+		OLED_SHOW_STR_E(1, 1, "Restore Last");
 		Delay_ms(200);
-		OLED_ShowString_Easy(1, 1, "Restore Last .");
+		OLED_SHOW_STR_E(1, 1, "Restore Last .");
 		Delay_ms(200);
-		OLED_ShowString_Easy(1, 1, "Restore Last ..");
+		OLED_SHOW_STR_E(1, 1, "Restore Last ..");
 		Delay_ms(200);
-		OLED_ShowString_Easy(1, 1, "Restore Last ...");
+		OLED_SHOW_STR_E(1, 1, "Restore Last ...");
 		Delay_ms(200);
 		Menu_Washer_Start_Washer(0);
 	}
@@ -147,7 +145,7 @@ void Menu_Washer_Power_On(void)
 		//正常启动
 		TASK_WASHER_DATA_INIT;
 		TASK_WASHER_DATA_STORE;
-		OLED_Clear_Easy();
+		OLED_CLEAR;
 	}
 }
 
@@ -160,18 +158,19 @@ void Menu_Washer_Power_Off(void)
 	TASK_WASHER_DATA_STORE;
 	vTaskDelay(10);
 
-	OLED_Clear_Easy();
-	OLED_ShowString_Easy(1, 1, "Power Off");
+	OLED_CLEAR_UPDATE;
+	OLED_SHOW_STR_E(1, 1, "Power Off");
 	Delay_ms(200);
-	OLED_ShowString_Easy(1, 1, "Power Off .");
+	OLED_SHOW_STR_E(1, 1, "Power Off .");
 	Delay_ms(200);
-	OLED_ShowString_Easy(1, 1, "Power Off ..");
+	OLED_SHOW_STR_E(1, 1, "Power Off ..");
 	Delay_ms(200);
-	OLED_ShowString_Easy(1, 1, "Power Off ...");
+	OLED_SHOW_STR_E(1, 1, "Power Off ...");
 	Delay_ms(200);
-	OLED_ShowString_Easy(1, 1, "Power Off ....");
+	OLED_SHOW_STR_E(1, 1, "Power Off ....");
 	Delay_ms(200);
-	OLED_Clear_Easy();
+	OLED_CLEAR_UPDATE;
+	Delay_ms(200);
 
 	// 开始待机
 	RCC_APB1PeriphClockCmd(RCC_APB1Periph_PWR, ENABLE);    //使能PWR外设时钟
@@ -304,7 +303,7 @@ void Menu_Washer_Param_Init(void)
 		if (Opt_Detail_Wash_Cur[i].Name == NULL)
 		{
 			printf("malloc Opt_Detail_Wash_Cur[%d].Name failed\r\n", i);
-			while (1) OLED_ShowString_Easy(1, 1, "NULL1");
+			while (1) OLED_SHOW_STR_E(1, 1, "NULL1");
 		}
 		strcpy(Opt_Detail_Wash_Cur[i].Name, Opt_Detail_Wash[i].Name);
 		Opt_Detail_Wash_Cur[i].Func = Opt_Detail_Wash[i].Func;
@@ -317,7 +316,7 @@ void Menu_Washer_Param_Init(void)
 		if (Opt_Detail_Spin_Cur[i].Name == NULL)
 		{
 			printf("malloc Opt_Detail_Spin_Cur[%d].Name failed\r\n", i);
-			while (1) OLED_ShowString_Easy(1, 1, "NULL2");
+			while (1) OLED_SHOW_STR_E(1, 1, "NULL2");
 		}
 		strcpy(Opt_Detail_Spin_Cur[i].Name, Opt_Detail_Spin[i].Name);
 		Opt_Detail_Spin_Cur[i].Func = Opt_Detail_Spin[i].Func;
@@ -330,7 +329,7 @@ void Menu_Washer_Param_Init(void)
 		if (Opt_Detail_Heat_Cur[i].Name == NULL)
 		{
 			printf("malloc Opt_Detail_Heat_Cur[%d].Name failed\r\n", i);
-			while (1) OLED_ShowString_Easy(1, 1, "NULL3");
+			while (1) OLED_SHOW_STR_E(1, 1, "NULL3");
 		}
 		strcpy(Opt_Detail_Heat_Cur[i].Name, Opt_Detail_Heat[i].Name);
 		Opt_Detail_Heat_Cur[i].Func = Opt_Detail_Heat[i].Func;
@@ -492,7 +491,7 @@ void Insert_SubString(char** Str, char* SubStr, int Index)
 	if (NewStr == NULL)
 	{
 		printf("malloc NewStr failed\r\n");
-		while (1) OLED_ShowString_Easy(1, 1, "NULL4");
+		while (1) OLED_SHOW_STR_E(1, 1, "NULL4");
 	}
 
 	strncpy(NewStr, *Str, Index);	// 复制原始字符串的前半部分到新字符串中

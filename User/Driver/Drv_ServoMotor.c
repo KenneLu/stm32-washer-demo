@@ -97,13 +97,13 @@ void SetAngle(SERVOMOTOR_Device* pDev, float Angle)
 // float ServoBreath[] = { 0, 30, 60, 90, 120, 150, 180 };	// 定义转动速度数组
 // void Servo_Motorr_Breathe(void)
 // {
-//     OLED_ShowString_Easy(3, 1, "Angle:");
-//     OLED_ShowString_Easy(4, 1, "PWM:");
+//     OLED_SHOW_STR_E(3, 1, "Angle:");
+//     OLED_SHOW_STR_E(4, 1, "PWM:");
 //     for (int i = 0; i < sizeof(ServoBreath) / sizeof(ServoBreath[0]); i++)
 //     {
 //         Servo_Motor_SetAngle(ServoBreath[i]);  // 设置直流电机的速度为速度变量
 //         OLED_ShowSignedNum_Easy(3, 7, ServoBreath[i], 3);	    // OLED显示速度变量
-//         OLED_ShowNum_Easy(4, 5, Angle2PWM(ServoBreath[i]), 5);	//OLED显示角度变量
+//         OLED_SHOW_NUM_E(4, 5, Angle2PWM(ServoBreath[i]), 5);	//OLED显示角度变量
 //         Delay_s(1);
 //     }
 // }

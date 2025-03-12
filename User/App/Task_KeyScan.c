@@ -8,9 +8,7 @@ static void Task_KeyScan(void* pvParameters)
 {
     while (1)
     {
-        // vTaskSuspendAll();	//关调度器
         // printf("Task_KeyScan Running! \r\n");
-        // xTaskResumeAll();	//开调度器
 
         Drv_Key_Scan();
 

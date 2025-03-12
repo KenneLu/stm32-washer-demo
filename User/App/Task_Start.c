@@ -36,9 +36,8 @@ static void Task_Start(void* pvParameters)
     Do_Create_Task_Washer_Data();
     TASK_WASHER_DATA_RESTORE;
 
-    //菜单初始化
-    Menu_Init();
-    Menu_Washer_Init();
+    //运行菜单
+    Do_Create_Task_MainMenu();
 
     //洗衣机硬件初始化
     Drv_DHT11_Init();
@@ -56,7 +55,7 @@ static void Task_Start(void* pvParameters)
         xReturn = xTaskNotifyGive(*Get_Task_MainMenu_Handle());
     }
 
-    vTaskDelete(Task_Start_Handle);
+    while (1); // 由 Task_MainMenu 执行管理（挂起）
 }
 
 void Do_Create_Task_Start(void)

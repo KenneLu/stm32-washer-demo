@@ -86,7 +86,7 @@
 	 * 才会将显存数组的数据发送到OLED硬件，进行显示
 	*/
 uint8_t OLED_DisplayBuf[8][128];
-I2C_SW_Device* g_pDev_I2C_SW = 0;
+static I2C_SW_Device* g_pDev_I2C_SW = 0;
 
 
 
@@ -145,10 +145,17 @@ void OLED_I2C_SendByte(uint8_t Byte)
   */
 void OLED_WriteCommand(uint8_t Command)
 {
+	// const char* pcTaskName = pcTaskGetName(NULL); // 获取当前任务的名称
+	// printf("[%s] OLED_WriteCommand Lock\r\n", pcTaskName);
+	g_pDev_I2C_SW->Lock(g_pDev_I2C_SW);
+
 	g_pDev_I2C_SW->WriteI2C(g_pDev_I2C_SW,
 		0x78, //发送OLED的I2C从机地址
 		0x00, //控制字节，给0x00，表示即将写命令
 		Command); //写入指定的命令
+
+	// printf("[%s] OLED_WriteCommand UnLock\r\n", pcTaskName);
+	g_pDev_I2C_SW->UnLock(g_pDev_I2C_SW);
 }
 
 /**
@@ -159,6 +166,10 @@ void OLED_WriteCommand(uint8_t Command)
   */
 void OLED_WriteData(uint8_t* Data, uint8_t Count)
 {
+	// const char* pcTaskName = pcTaskGetName(NULL); // 获取当前任务的名称
+	// printf("[%s] OLED_WriteData Lock\r\n", pcTaskName);
+	g_pDev_I2C_SW->Lock(g_pDev_I2C_SW);
+
 	g_pDev_I2C_SW->Start(g_pDev_I2C_SW);
 	g_pDev_I2C_SW->SendByte(g_pDev_I2C_SW, 0x78); //发送OLED的I2C从机地址
 	g_pDev_I2C_SW->SendByte(g_pDev_I2C_SW, 0x40); //控制字节，给0x40，表示即将写数量
@@ -168,6 +179,9 @@ void OLED_WriteData(uint8_t* Data, uint8_t Count)
 		g_pDev_I2C_SW->SendByte(g_pDev_I2C_SW, Data[i]);
 	}
 	g_pDev_I2C_SW->Stop(g_pDev_I2C_SW);
+
+	// printf("[%s] OLED_WriteData UnLock\r\n", pcTaskName);
+	g_pDev_I2C_SW->UnLock(g_pDev_I2C_SW);
 }
 
 
@@ -345,25 +359,12 @@ uint8_t OLED_IsInAngle(int16_t X, int16_t Y, int16_t StartAngle, int16_t EndAngl
   */
 void OLED_Update(void)
 {
-	vTaskSuspendAll();	//关调度器
+	/*
+	* FreeRTOS 下严禁在此处挂起调度器，
+	* 否则 OLED_SetCursor 和 OLED_WriteData 加锁时，
+	* 挂起调度器会导致互斥锁无法进行优先级继承，导致死锁
+	*/
 
-	//{OLED_Printf(128-6*6, 0, 6,"FPS %d", Get_FPS());	}	//显示帧率;解除注释开启
-
-	uint8_t j;
-	/*遍历每一页*/
-	for (j = 0; j < 8; j++)
-	{
-		/*设置光标位置为每一页的第一列*/
-		OLED_SetCursor(j, 0);
-		/*连续写入128个数据，将显存数组的数据写入到OLED硬件*/
-		OLED_WriteData(OLED_DisplayBuf[j], 128);
-	}
-
-	xTaskResumeAll();	//开调度器
-}
-
-void OLED_Update_Pure(void)
-{
 	//{OLED_Printf(128-6*6, 0, 6,"FPS %d", Get_FPS());	}	//显示帧率;解除注释开启
 
 	uint8_t j;
